@@ -29,7 +29,7 @@ export const TaskContainer: React.FC<TaskContainerProps> = ({ onSignOut }) => {
       <ScrollArea className="p-6">
         <div className="w-[700] h-[600] min-h-custom min-w-custom">
           <h1 className="text-2xl font-bold mb-4 text-center items-center">
-            To-Do List
+            To-Do
           </h1>
           <TaskForm onAddTask={addTask} />
           <TaskList
