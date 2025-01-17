@@ -1,10 +1,10 @@
 "use client";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import TaskForm from "@/components/TaskForm";
-import TaskList from "@/components/ui/TaskList";
-import PaginationDemo from "@/components/PaginationS";
-import { useTaskContext } from "@/context/TaskContext";
+import TaskForm from "@/app/dashboard/app/to-do/TaskForm";
+import TaskList from "@/app/dashboard/app/to-do/TaskList";
+import PaginationDemo from "@/app/dashboard/app/to-do/PaginationS";
+import { useTaskContext } from "@/app/dashboard/app/to-do/context/TaskContext";
 import { Button } from "@/components/ui/button";
 
 interface TaskContainerProps {
@@ -25,16 +25,16 @@ export const TaskContainer: React.FC<TaskContainerProps> = ({ onSignOut }) => {
   } = useTaskContext();
 
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className="flex justify-center items-center h-screen ml-[var(--sidebar-width)]">
       <ScrollArea className="p-6">
-        <div className="w-[700] h-[600] min-h-custom min-w-custom">
+        <div className="w-[700px] h-[600px] min-h-custom min-w-custom">
           <h1 className="text-2xl font-bold mb-4 text-center items-center">
-            To-Do
+            To-Do 
           </h1>
           <TaskForm onAddTask={addTask} />
           <TaskList
-            tasks={[...tasks].sort((a, b) => {
-              const statusOrder = {
+            tasks={[...tasks].sort((a: { status: 'ongoing' | 'not-started' | 'completed' }, b: { status: 'ongoing' | 'not-started' | 'completed' }) => {
+              const statusOrder: { [key in 'ongoing' | 'not-started' | 'completed']: number } = {
                 ongoing: 1,
                 "not-started": 2,
                 completed: 3,

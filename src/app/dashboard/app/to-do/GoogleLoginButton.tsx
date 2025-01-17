@@ -1,8 +1,8 @@
 // components/GoogleLoginButton.js
 'use client';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '../database/firebase';
-import { Button } from './ui/button';
+import { auth } from './database/firebase';
+import { Button } from '../../../../components/ui/button';
 import Image from 'next/image';
 // import { useRouter } from 'next/compat/router';
 import { useRouter } from 'next/navigation';
@@ -14,7 +14,7 @@ const GoogleLoginButton = () => {
     try {
       const result = await signInWithPopup(auth, provider);
       console.log('User signed in:', result.user);
-      router.push('/'); // Redirect to the home page or any other page
+      router.push('/dashboard'); // Redirect to the home page or any other page
       // Redirect or handle user data
     } catch (error) {
       console.error('Error during Google sign-in:', error);
