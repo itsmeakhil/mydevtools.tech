@@ -1,7 +1,7 @@
 // components/TaskList.js
 "use client";
 
-import TaskItem from "../TaskItem";
+import TaskItem from "./TaskItem";
 
 interface Task {
   id: string;

@@ -21,10 +21,10 @@ import {
   QuerySnapshot,
   where,
 } from "firebase/firestore";
-import { db } from "../database/firebase";
-import { Task, NewTask } from "@/types/Task";
+import { db } from "@/app/tools/to-do/database/firebase";
+import { Task, NewTask } from "@/app/tools/to-do/types/Task";
 import { format } from "date-fns";
-import useAuth from "../utils/useAuth";
+import useAuth from "@/utils/useAuth";
 
 interface TaskContextType {
   tasks: Task[];

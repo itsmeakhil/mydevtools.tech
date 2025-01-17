@@ -1,10 +1,10 @@
 "use client";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import TaskForm from "@/components/TaskForm";
-import TaskList from "@/components/ui/TaskList";
-import PaginationDemo from "@/components/PaginationS";
-import { useTaskContext } from "@/context/TaskContext";
+import TaskForm from "@/app/tools/to-do/TaskForm";
+import TaskList from "@/app/tools/to-do/TaskList";
+import PaginationDemo from "@/app/tools/to-do/PaginationS";
+import { useTaskContext } from "@/app/tools/to-do/context/TaskContext";
 import { Button } from "@/components/ui/button";
 
 interface TaskContainerProps {
@@ -29,7 +29,7 @@ export const TaskContainer: React.FC<TaskContainerProps> = ({ onSignOut }) => {
       <ScrollArea className="p-6">
         <div className="w-[700] h-[600] min-h-custom min-w-custom">
           <h1 className="text-2xl font-bold mb-4 text-center items-center">
-            To-Do
+            To-Do 
           </h1>
           <TaskForm onAddTask={addTask} />
           <TaskList

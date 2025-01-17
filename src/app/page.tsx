@@ -1,32 +1,12 @@
-"use client";
+import React from 'react';
 
-import { getAuth, signOut as firebaseSignOut } from "firebase/auth";
-import { useRouter } from 'next/navigation';
-import useAuth from "@/utils/useAuth";
-import { TaskProvider } from "@/context/TaskContext";
-import { TaskContainer } from "@/components/TaskContainer";
-
-export default function Home() {
-  const user = useAuth();
-  const auth = getAuth();
-  const router = useRouter();
-
-  const handleSignOut = async () => {
-    try {
-      await firebaseSignOut(auth);
-      router.push('/login');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
-
-  if (!user) {
-    return null;
-  }
-
+const Page: React.FC = () => {
   return (
-    <TaskProvider>
-      <TaskContainer onSignOut={handleSignOut} />
-    </TaskProvider>
+    <div>
+      <h1>Welcome to My Dev Tools</h1>
+      <p>This is a boilerplate page for your application.</p>
+    </div>
   );
-}
+};
+
+export default Page;
