@@ -3,8 +3,8 @@
 import { getAuth, signOut as firebaseSignOut } from "firebase/auth";
 import { useRouter } from 'next/navigation';
 import useAuth from "@/utils/useAuth";
-import { TaskProvider } from "@/app/tools/to-do/context/TaskContext";
-import { TaskContainer } from "@/app/tools/to-do/TaskContainer";
+import { TaskProvider } from "@/app/dashboard/app/to-do/context/TaskContext";
+import { TaskContainer } from "@/app/dashboard/app/to-do/TaskContainer";
 
 export default function Home() {
   const user = useAuth();
