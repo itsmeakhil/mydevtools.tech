@@ -5,13 +5,13 @@ import TaskForm from "@/app/dashboard/app/to-do/TaskForm";
 import TaskList from "@/app/dashboard/app/to-do/TaskList";
 import PaginationDemo from "@/app/dashboard/app/to-do/PaginationS";
 import { useTaskContext } from "@/app/dashboard/app/to-do/context/TaskContext";
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 
-interface TaskContainerProps {
-  onSignOut: () => void;
-}
+// interface TaskContainerProps {
+//   onSignOut: () => void;
+// }
 
-export const TaskContainer: React.FC<TaskContainerProps> = ({ onSignOut }) => {
+export const TaskContainer = () => {
   const {
     tasks,
     currentPage,
@@ -53,9 +53,9 @@ export const TaskContainer: React.FC<TaskContainerProps> = ({ onSignOut }) => {
             onPreviousPage={fetchPreviousPage}
             onPageChange={handlePageChange}
           />
-          <Button variant="secondary" onClick={onSignOut}>
+          {/* <Button variant="secondary" onClick={onSignOut}>
             Sign Out
-          </Button>
+          </Button> */}
         </div>
       </ScrollArea>
     </div>

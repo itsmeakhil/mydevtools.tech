@@ -1,4 +1,5 @@
 'use client'
+import { useEffect, useState } from 'react'
 import {
   Sidebar,
   SidebarContent,
@@ -10,8 +11,42 @@ import { NavGroup } from './nav-group'
 import { NavUser } from './nav-user'
 import { TeamSwitcher } from './team-switcher'
 import { sidebarData } from './data/sidebar-data'
+import { onAuthStateChanged,signOut as firebaseSignOut } from 'firebase/auth'
+import { auth } from '../app/to-do/database/firebase'
+import { useRouter } from 'next/navigation'; // Ensure you have initialized Firebase in this file
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [user, setUser] = useState({
+    name: '',
+    email: '',
+    avatar: ''
+  })
+
+  const router = useRouter();
+  
+  const handleSignOut = async () => {
+      try {
+        await firebaseSignOut(auth);
+        router.push('/login');
+      } catch (error) {
+        console.error('Error signing out:', error);
+      }
+    };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUser({
+          name: user.displayName || '',
+          email: user.email || '',
+          avatar: user.photoURL || ''
+        })
+      }
+    })
+
+    return () => unsubscribe()
+  }, [])
+
   return (
     <Sidebar collapsible='icon' variant='floating' {...props}>
       <SidebarHeader>
@@ -23,7 +58,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ))}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={sidebarData.user} />
+        <NavUser user={user} onSignout={handleSignOut}/>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
