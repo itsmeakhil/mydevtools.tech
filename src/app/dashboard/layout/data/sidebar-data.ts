@@ -1,21 +1,21 @@
 import {
   IconBarrierBlock,
-  IconBrowserCheck,
+  // IconBrowserCheck,
   IconBug,
   IconChecklist,
   IconError404,
-  IconHelp,
+  // IconHelp,
   // IconLayoutDashboard,
   IconLock,
   IconLockAccess,
   // IconMessages,
-  IconNotification,
-  IconPackages,
-  IconPalette,
+  // IconNotification,
+  // IconPackages,
+  // IconPalette,
   IconServerOff,
-  IconSettings,
-  IconTool,
-  IconUserCog,
+  // IconSettings,
+  // IconTool,
+  // IconUserCog,
   IconUserOff,
   // IconUsers,
   // IconJson,
@@ -52,11 +52,11 @@ export const sidebarData: SidebarData = {
           url: '/dashboard/app/to-do',
           icon: IconChecklist,
         },
-        {
-          title: 'Util tools',
-          url: '#',
-          icon: IconPackages,
-        },
+        // {
+        //   title: 'Util tools',
+        //   url: '#',
+        //   icon: IconPackages,
+        // },
         {
           title: 'Bookmarks Manager',
           url: '#',
@@ -74,12 +74,12 @@ export const sidebarData: SidebarData = {
       title: 'Specific Tools',
       items: [
         {
-          title: 'Crypto',
+          title: 'Util Tools',
           icon: IconLockAccess,
           items: [
             {
-              title: 'tool 1',
-              url: '#',
+              title: 'Uuid Generator',
+              url: '/dashboard/app/uuid-generator',
             },
             {
               title: 'tool 2',
@@ -132,46 +132,46 @@ export const sidebarData: SidebarData = {
         },
       ],
     },
-    {
-      title: 'Other',
-      items: [
-        {
-          title: 'Settings',
-          icon: IconSettings,
-          items: [
-            {
-              title: 'Profile',
-              url: '#',
-              icon: IconUserCog,
-            },
-            {
-              title: 'Account',
-              url: '#',
-              icon: IconTool,
-            },
-            {
-              title: 'Appearance',
-              url: '#',
-              icon: IconPalette,
-            },
-            {
-              title: 'Notifications',
-              url: '#',
-              icon: IconNotification,
-            },
-            {
-              title: 'Display',
-              url: '#',
-              icon: IconBrowserCheck,
-            },
-          ],
-        },
-        {
-          title: 'Help Center',
-          url: '#',
-          icon: IconHelp,
-        },
-      ],
-    },
+    // {
+    //   title: 'Other',
+    //   items: [
+    //     {
+    //       title: 'Settings',
+    //       icon: IconSettings,
+    //       items: [
+    //         {
+    //           title: 'Profile',
+    //           url: '#',
+    //           icon: IconUserCog,
+    //         },
+    //         {
+    //           title: 'Account',
+    //           url: '#',
+    //           icon: IconTool,
+    //         },
+    //         {
+    //           title: 'Appearance',
+    //           url: '#',
+    //           icon: IconPalette,
+    //         },
+    //         {
+    //           title: 'Notifications',
+    //           url: '#',
+    //           icon: IconNotification,
+    //         },
+    //         {
+    //           title: 'Display',
+    //           url: '#',
+    //           icon: IconBrowserCheck,
+    //         },
+    //       ],
+    //     },
+    //     {
+    //       title: 'Help Center',
+    //       url: '#',
+    //       icon: IconHelp,
+    //     },
+    //   ],
+    // },
   ],
 }
