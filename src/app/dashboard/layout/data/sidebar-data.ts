@@ -74,12 +74,12 @@ export const sidebarData: SidebarData = {
       title: 'Specific Tools',
       items: [
         {
-          title: 'Crypto',
+          title: 'Util Tools',
           icon: IconLockAccess,
           items: [
             {
               title: 'Uuid Generator',
-              url: '#',
+              url: '/dashboard/app/uuid-generator',
             },
             {
               title: 'tool 2',
