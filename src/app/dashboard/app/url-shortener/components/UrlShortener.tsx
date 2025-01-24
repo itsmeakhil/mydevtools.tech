@@ -51,6 +51,7 @@ export default function UrlShortener() {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
+      console.error(err)
       setError("Failed to copy URL")
     }
   }
