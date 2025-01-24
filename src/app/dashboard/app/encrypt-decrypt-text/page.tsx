@@ -30,7 +30,7 @@ export default function EncryptDecrypt() {
     
     const decrypted = CryptoJS.AES.decrypt(encrypted, defaultKey)
     const result = decrypted.toString(CryptoJS.enc.Utf8)
-    setDecryptedText(result || "Decryption failed")
+    setDecryptedText(result || "Your string hash")
   }, [])
 
   const encrypt = (text: string, key: string, algorithm: Algorithm) => {
@@ -79,11 +79,25 @@ export default function EncryptDecrypt() {
           decrypted = ""
           return
       }
-      const result = decrypted.toString(CryptoJS.enc.Utf8)
-      setDecryptedText(result || "Decryption failed")
+      
+      // Check if the decryption result is valid before converting to string
+      if (decrypted.sigBytes > 0) {
+        try {
+          const result = decrypted.toString(CryptoJS.enc.Utf8)
+          if (result) {
+            setDecryptedText(result)
+            return
+          }
+        } catch {
+          // If string conversion fails, show placeholder
+          setDecryptedText("Your string hash")
+          return
+        }
+      }
+      setDecryptedText("Your string hash")
     } catch (error) {
       console.error("Decryption error:", error)
-      setDecryptedText("Decryption failed")
+      setDecryptedText("Your string hash")
     }
   }
 
