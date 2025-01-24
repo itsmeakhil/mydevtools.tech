@@ -33,6 +33,20 @@ export default function EncryptDecrypt() {
     setDecryptedText(result || "Your string hash")
   }, [])
 
+  // Add this useEffect to handle textarea resizing
+  useEffect(() => {
+    const adjustTextarea = (textarea: HTMLTextAreaElement) => {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    };
+
+    const encryptedTextarea = document.querySelector('textarea[name="encrypted"]') as HTMLTextAreaElement;
+    const decryptTextarea = document.querySelector('textarea[name="decrypt"]') as HTMLTextAreaElement;
+    
+    if (encryptedTextarea) adjustTextarea(encryptedTextarea);
+    if (decryptTextarea) adjustTextarea(decryptTextarea);
+  }, [encryptedText, textToDecrypt]);
+
   const encrypt = (text: string, key: string, algorithm: Algorithm) => {
     try {
       let encrypted
@@ -168,9 +182,10 @@ export default function EncryptDecrypt() {
               <div className="space-y-2">
                 <Label>Your text encrypted:</Label>
                 <Textarea 
+                  name="encrypted"
                   value={encryptedText} 
                   readOnly 
-                  className="font-sans text-sm leading-relaxed bg-gray-50 border-gray-200"
+                  className="font-sans text-sm leading-relaxed bg-gray-50 border-gray-200 min-h-[100px] resize-none overflow-hidden"
                 />
               </div>
             </CardContent>
@@ -185,13 +200,14 @@ export default function EncryptDecrypt() {
               <div className="space-y-2">
                 <Label>Your encrypted text:</Label>
                 <Textarea
+                  name="decrypt"
                   value={textToDecrypt}
                   onChange={(e) => {
                     setTextToDecrypt(e.target.value)
                     decrypt(e.target.value, decryptKey, decryptAlgo)
                   }}
                   placeholder="Enter text to decrypt"
-                  className="font-sans text-sm leading-relaxed bg-gray-50 border-gray-200"
+                  className="font-sans text-sm leading-relaxed bg-gray-50 border-gray-200 min-h-[100px] resize-none overflow-hidden"
                 />
               </div>
 
