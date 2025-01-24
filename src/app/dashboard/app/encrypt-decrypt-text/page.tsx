@@ -127,7 +127,7 @@ export default function EncryptDecrypt() {
                     encrypt(e.target.value, encryptKey, encryptAlgo)
                   }}
                   placeholder="Enter text to encrypt"
-                  className="font-mono bg-gray-50 border-gray-200"
+                  className="font-sans bg-gray-50 border-gray-200"
                 />
               </div>
 
@@ -140,7 +140,7 @@ export default function EncryptDecrypt() {
                     encrypt(plainText, e.target.value, encryptAlgo)
                   }}
                   placeholder="Enter secret key"
-                  className="font-mono bg-gray-50 border-gray-200"
+                  className="font-sans bg-gray-50 border-gray-200"
                 />
               </div>
 
@@ -167,7 +167,11 @@ export default function EncryptDecrypt() {
 
               <div className="space-y-2">
                 <Label>Your text encrypted:</Label>
-                <Textarea value={encryptedText} readOnly className="font-mono bg-gray-50 border-gray-200" />
+                <Textarea 
+                  value={encryptedText} 
+                  readOnly 
+                  className="font-sans text-sm leading-relaxed bg-gray-50 border-gray-200"
+                />
               </div>
             </CardContent>
           </Card>
@@ -187,7 +191,7 @@ export default function EncryptDecrypt() {
                     decrypt(e.target.value, decryptKey, decryptAlgo)
                   }}
                   placeholder="Enter text to decrypt"
-                  className="font-mono bg-gray-50 border-gray-200"
+                  className="font-sans text-sm leading-relaxed bg-gray-50 border-gray-200"
                 />
               </div>
 
@@ -200,7 +204,7 @@ export default function EncryptDecrypt() {
                     decrypt(textToDecrypt, e.target.value, decryptAlgo)
                   }}
                   placeholder="Enter secret key"
-                  className="font-mono bg-gray-50 border-gray-200"
+                  className="font-sans bg-gray-50 border-gray-200"
                 />
               </div>
 
@@ -227,7 +231,7 @@ export default function EncryptDecrypt() {
 
               <div className="space-y-2">
                 <Label>Your decrypted text:</Label>
-                <Textarea value={decryptedText} readOnly className="font-mono bg-gray-50 border-gray-200" />
+                <Textarea value={decryptedText} readOnly className="font-sans bg-gray-50 border-gray-200" />
               </div>
             </CardContent>
           </Card>
