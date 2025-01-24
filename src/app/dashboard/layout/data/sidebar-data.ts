@@ -1,22 +1,22 @@
 import {
-  IconBarrierBlock,
+  // IconBarrierBlock,
   // IconBrowserCheck,
-  IconBug,
+  // IconBug,
   IconChecklist,
-  IconError404,
+  // IconError404,
   // IconHelp,
   // IconLayoutDashboard,
-  IconLock,
+  // IconLock,
   IconLockAccess,
   // IconMessages,
   // IconNotification,
   // IconPackages,
   // IconPalette,
-  IconServerOff,
+  // IconServerOff,
   // IconSettings,
   // IconTool,
   // IconUserCog,
-  IconUserOff,
+  // IconUserOff,
   // IconUsers,
   // IconJson,
   IconBookmarks,
@@ -85,51 +85,51 @@ export const sidebarData: SidebarData = {
               title: 'Encrypt/Decrypt Text',
               url: '/dashboard/app/encrypt-decrypt-text',
             },
-            {
-              title: 'tool 3',
-              url: '#',
-            },
-            {
-              title: 'tool 4',
-              url: '#',
-            },
-            {
-              title: 'tool 5',
-              url: '#',
-            },
+            // {
+            //   title: 'tool 3',
+            //   url: '#',
+            // },
+            // {
+            //   title: 'tool 4',
+            //   url: '#',
+            // },
+            // {
+            //   title: 'tool 5',
+            //   url: '#',
+            // },
           ],
         },
-        {
-          title: 'Converters',
-          icon: IconBug,
-          items: [
-            {
-              title: 'converter 1',
-              url: '#',
-              icon: IconLock,
-            },
-            {
-              title: 'converter 2',
-              url: '#',
-              icon: IconUserOff,
-            },
-            {
-              title: 'converter 3',
-              url: '#',
-              icon: IconError404,
-            },
-            {
-              title: 'converter 4',
-              url: '#',
-              icon: IconServerOff,
-            },
-            {
-              title: 'converter 5',
-              url: '#',
-              icon: IconBarrierBlock,
-            },
-          ],
-        },
+        // {
+        //   title: 'Converters',
+        //   icon: IconBug,
+        //   items: [
+        //     {
+        //       title: 'converter 1',
+        //       url: '#',
+        //       icon: IconLock,
+        //     },
+        //     {
+        //       title: 'converter 2',
+        //       url: '#',
+        //       icon: IconUserOff,
+        //     },
+        //     {
+        //       title: 'converter 3',
+        //       url: '#',
+        //       icon: IconError404,
+        //     },
+        //     {
+        //       title: 'converter 4',
+        //       url: '#',
+        //       icon: IconServerOff,
+        //     },
+        //     {
+        //       title: 'converter 5',
+        //       url: '#',
+        //       icon: IconBarrierBlock,
+        //     },
+        //   ],
+        // },
       ],
     },
     // {
