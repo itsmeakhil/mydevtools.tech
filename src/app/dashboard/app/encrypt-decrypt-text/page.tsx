@@ -1,7 +1,7 @@
 "use client"
 
 import * as CryptoJS from "crypto-js"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
@@ -11,13 +11,27 @@ import { Card, CardContent, CardHeader, CardTitle, } from "@/components/ui/card"
 type Algorithm = "AES" | "TripleDES" | "Rabbit" | "RC4"
 
 export default function EncryptDecrypt() {
-  const [plainText, setPlainText] = useState("")
-  const [encryptKey, setEncryptKey] = useState("")
+  const defaultText = "Lorem ipsum dolor sit amet"
+  const defaultKey = "my secret key"
+  
+  const [plainText, setPlainText] = useState(defaultText)
+  const [encryptKey, setEncryptKey] = useState(defaultKey)
   const [encryptedText, setEncryptedText] = useState("")
-  const [decryptKey, setDecryptKey] = useState("")
+  const [textToDecrypt, setTextToDecrypt] = useState("")
+  const [decryptKey, setDecryptKey] = useState(defaultKey)
   const [decryptedText, setDecryptedText] = useState("")
   const [encryptAlgo, setEncryptAlgo] = useState<Algorithm>("AES")
   const [decryptAlgo, setDecryptAlgo] = useState<Algorithm>("AES")
+
+  useEffect(() => {
+    const encrypted = CryptoJS.AES.encrypt(defaultText, defaultKey).toString()
+    setEncryptedText(encrypted)
+    setTextToDecrypt(encrypted)
+    
+    const decrypted = CryptoJS.AES.decrypt(encrypted, defaultKey)
+    const result = decrypted.toString(CryptoJS.enc.Utf8)
+    setDecryptedText(result || "Decryption failed")
+  }, [])
 
   const encrypt = (text: string, key: string, algorithm: Algorithm) => {
     try {
@@ -153,9 +167,9 @@ export default function EncryptDecrypt() {
               <div className="space-y-2">
                 <Label>Your encrypted text:</Label>
                 <Textarea
-                  value={encryptedText}
+                  value={textToDecrypt}
                   onChange={(e) => {
-                    setEncryptedText(e.target.value)
+                    setTextToDecrypt(e.target.value)
                     decrypt(e.target.value, decryptKey, decryptAlgo)
                   }}
                   placeholder="Enter text to decrypt"
@@ -169,7 +183,7 @@ export default function EncryptDecrypt() {
                   value={decryptKey}
                   onChange={(e) => {
                     setDecryptKey(e.target.value)
-                    decrypt(encryptedText, e.target.value, decryptAlgo)
+                    decrypt(textToDecrypt, e.target.value, decryptAlgo)
                   }}
                   placeholder="Enter secret key"
                   className="font-mono bg-gray-50 border-gray-200"
@@ -182,7 +196,7 @@ export default function EncryptDecrypt() {
                   value={decryptAlgo}
                   onValueChange={(value: Algorithm) => {
                     setDecryptAlgo(value)
-                    decrypt(encryptedText, decryptKey, value)
+                    decrypt(textToDecrypt, decryptKey, value)
                   }}
                 >
                   <SelectTrigger className="bg-gray-50 border-gray-200">
