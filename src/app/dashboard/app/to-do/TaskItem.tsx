@@ -1,4 +1,3 @@
-// components/TaskItem.js
 "use client";
 
 import {
@@ -30,65 +29,45 @@ export default function TaskItem({
 }: TaskItemProps) {
   return (
     <li
-      className={`flex items-center gap-4 mb-4 p-2 border rounded ${
-        task.status === "ongoing"
-          ? "bg-orange-200"
-          : task.status === "not-started"
-          ? "bg-gray-200"
-          : task.status === "completed"
-          ? "bg-green-200"
-          : ""
-      }`}
+      className={`flex items-center gap-4 mb-4 p-2 border rounded transition-colors 
+        dark:bg-black dark:border-white dark:text-white
+        ${
+          task.status === "ongoing"
+            ? "bg-orange-200 dark:bg-transparent"
+            : task.status === "not-started"
+            ? "bg-gray-200 dark:bg-transparent"
+            : task.status === "completed"
+            ? "bg-green-200 dark:bg-transparent"
+            : ""
+        }`}
     >
       <span
-        className={`flex-1 ${
-          task.status === "completed"
-            ? "line-through text-gray-500"
-            : "text-gray-900"
-        }`}
+        className={`flex-1 transition-colors 
+          ${task.status === "completed" ? "line-through text-gray-500 dark:text-gray-400" : "text-gray-900 dark:text-white"}`}
       >
         {task.text}
       </span>
-      <p className="text-xs text-gray-500">{task.createdAt}</p>
-      {/* </div> */}
+      <p className="text-xs text-gray-500 dark:text-gray-400">{task.createdAt}</p>
 
-      {/* <li
-      className={`flex items-center gap-4 mb-4 p-2 border rounded ${
-        task.status === "ongoing" ? "bg-orange-200" : ""
-      }`}
-    >
-      <span
-        className={`flex-1 ${
-          task.status === "completed"
-            ? "line-through text-gray-500"
-            : "text-gray-900"
-        }`}
-      > */}
       <Select
         value={task.status}
         onValueChange={(newStatus) =>
           onUpdateStatus(task.id, newStatus as Task["status"])
         }
       >
-        <SelectTrigger className="w-[150px]">
+        <SelectTrigger className="w-[150px] dark:border-white dark:text-white">
           <SelectValue placeholder="Status" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="dark:bg-black dark:border-white">
           <SelectItem value="not-started">Not Started</SelectItem>
           <SelectItem value="ongoing">Ongoing</SelectItem>
           <SelectItem value="completed">Completed</SelectItem>
         </SelectContent>
       </Select>
-      {/* <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => onDeleteTask(task.id)}
-        aria-label="Delete task"
-      > */}
+
       <div className="pr-2">
         <DeleteButton onDelete={() => onDeleteTask(task.id)} />
       </div>
-      {/* </Button> */}
     </li>
   );
 }

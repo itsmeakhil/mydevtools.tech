@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, } from "@/components/ui/card"
 
+
 type Algorithm = "AES" | "TripleDES" | "Rabbit" | "RC4"
 
 export default function EncryptDecrypt() {
@@ -32,6 +33,20 @@ export default function EncryptDecrypt() {
     const result = decrypted.toString(CryptoJS.enc.Utf8)
     setDecryptedText(result || "Your string hash")
   }, [])
+
+  // Add this useEffect to handle textarea resizing
+  useEffect(() => {
+    const adjustTextarea = (textarea: HTMLTextAreaElement) => {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    };
+
+    const encryptedTextarea = document.querySelector('textarea[name="encrypted"]') as HTMLTextAreaElement;
+    const decryptTextarea = document.querySelector('textarea[name="decrypt"]') as HTMLTextAreaElement;
+    
+    if (encryptedTextarea) adjustTextarea(encryptedTextarea);
+    if (decryptTextarea) adjustTextarea(decryptTextarea);
+  }, [encryptedText, textToDecrypt]);
 
   const encrypt = (text: string, key: string, algorithm: Algorithm) => {
     try {
@@ -105,7 +120,8 @@ export default function EncryptDecrypt() {
     <div className="min-h-screen p-6 lg:ml-[var(--sidebar-width)] flex justify-center ">
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="text-center">
-          <h1 className="text-4xl font-semibold text-gray-900">Encrypt / decrypt text</h1>
+          <h1 className="text-4xl font-semibold text-gray-900 dark:text-gray-100">Encrypt / decrypt text</h1>
+          
           <p className="mt-2 text-gray-500">
             Encrypt clear text and decrypt ciphertext using crypto algorithms like AES, TripleDES, Rabbit or RC4.
           </p>
@@ -113,7 +129,7 @@ export default function EncryptDecrypt() {
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Encrypt Section */}
-          <Card className="bg-white border-gray-200">
+          <Card className="bg-transparent  border-gray-200">
             <CardHeader>
               <CardTitle>Encrypt</CardTitle>
             </CardHeader>
@@ -127,7 +143,7 @@ export default function EncryptDecrypt() {
                     encrypt(e.target.value, encryptKey, encryptAlgo)
                   }}
                   placeholder="Enter text to encrypt"
-                  className="font-sans bg-gray-50 border-gray-200"
+                  className="font-sans bg-transparent border-gray-200"
                 />
               </div>
 
@@ -140,7 +156,7 @@ export default function EncryptDecrypt() {
                     encrypt(plainText, e.target.value, encryptAlgo)
                   }}
                   placeholder="Enter secret key"
-                  className="font-sans bg-gray-50 border-gray-200"
+                  className="font-sans bg-transparent border-gray-200"
                 />
               </div>
 
@@ -153,7 +169,7 @@ export default function EncryptDecrypt() {
                     encrypt(plainText, encryptKey, value)
                   }}
                 >
-                  <SelectTrigger className="bg-gray-50 border-gray-200">
+                  <SelectTrigger className="bg-transparent border-gray-200">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -168,30 +184,31 @@ export default function EncryptDecrypt() {
               <div className="space-y-2">
                 <Label>Your text encrypted:</Label>
                 <Textarea 
+                  name="encrypted"
                   value={encryptedText} 
                   readOnly 
-                  className="font-sans text-sm leading-relaxed bg-gray-50 border-gray-200"
+                  className="font-sans text-sm leading-relaxed bg-transparent border-gray-200 min-h-[100px] resize-none overflow-hidden"
                 />
               </div>
             </CardContent>
           </Card>
 
           {/* Decrypt Section */}
-          <Card className="bg-white border-gray-200">
-            <CardHeader>
+          <Card className="bg-transparent border-gray-200">            <CardHeader>
               <CardTitle>Decrypt</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Your encrypted text:</Label>
                 <Textarea
+                  name="decrypt"
                   value={textToDecrypt}
                   onChange={(e) => {
                     setTextToDecrypt(e.target.value)
                     decrypt(e.target.value, decryptKey, decryptAlgo)
                   }}
                   placeholder="Enter text to decrypt"
-                  className="font-sans text-sm leading-relaxed bg-gray-50 border-gray-200"
+                  className="font-sans text-sm leading-relaxed bg-transparent border-gray-200 min-h-[100px] resize-none overflow-hidden"
                 />
               </div>
 
@@ -204,7 +221,7 @@ export default function EncryptDecrypt() {
                     decrypt(textToDecrypt, e.target.value, decryptAlgo)
                   }}
                   placeholder="Enter secret key"
-                  className="font-sans bg-gray-50 border-gray-200"
+                  className="font-sans bg-transparent border-gray-200"
                 />
               </div>
 
@@ -217,7 +234,7 @@ export default function EncryptDecrypt() {
                     decrypt(textToDecrypt, decryptKey, value)
                   }}
                 >
-                  <SelectTrigger className="bg-gray-50 border-gray-200">
+                  <SelectTrigger className="bg-transparent border-gray-200">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -231,7 +248,7 @@ export default function EncryptDecrypt() {
 
               <div className="space-y-2">
                 <Label>Your decrypted text:</Label>
-                <Textarea value={decryptedText} readOnly className="font-sans bg-gray-50 border-gray-200" />
+                <Textarea value={decryptedText} readOnly className="font-sans bg-transparent border-gray-200" />
               </div>
             </CardContent>
           </Card>
