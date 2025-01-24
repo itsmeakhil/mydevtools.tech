@@ -82,8 +82,8 @@ export const sidebarData: SidebarData = {
               url: '/dashboard/app/uuid-generator',
             },
             {
-              title: 'tool 2',
-              url: '#',
+              title: 'Encrypt/Decrypt Text',
+              url: '/dashboard/app/encrypt-decrypt-text',
             },
             {
               title: 'tool 3',
