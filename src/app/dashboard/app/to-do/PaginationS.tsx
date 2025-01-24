@@ -57,7 +57,7 @@ import {
     };
   
     return (
-      <Pagination>
+      <Pagination className="pt-3">
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious className="cursor-pointer" onClick={onPreviousPage} />
