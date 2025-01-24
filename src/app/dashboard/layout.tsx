@@ -10,7 +10,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <ModeToggle />
       </div>
       <main>
-        {/* <SidebarTrigger /> */}
+
         {children}
       </main>
     </SidebarProvider>
