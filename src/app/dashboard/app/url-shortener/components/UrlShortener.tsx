@@ -31,7 +31,11 @@ export default function UrlShortener() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to shorten URL")
+        // Modify data.error to your custom message
+        const customErrorMessage = "The alias might be unavailable, try another one!";
+
+  
+        throw new Error(customErrorMessage)
       }
 
       setShortUrl(data.short_url)
