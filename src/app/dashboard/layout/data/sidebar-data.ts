@@ -19,6 +19,7 @@ import {
   // IconUserOff,
   // IconUsers,
   // IconJson,
+  IconUnlink,
   IconBookmarks,
   IconCodeDots
 } from '@tabler/icons-react'
@@ -52,11 +53,11 @@ export const sidebarData: SidebarData = {
           url: '/dashboard/app/to-do',
           icon: IconChecklist,
         },
-        // {
-        //   title: 'Util tools',
-        //   url: '#',
-        //   icon: IconPackages,
-        // },
+        {
+          title: 'Url Shortener',
+          url: '/dashboard/app/url-shortener',
+          icon: IconUnlink,
+        },
         {
           title: 'Bookmarks Manager',
           url: '#',
