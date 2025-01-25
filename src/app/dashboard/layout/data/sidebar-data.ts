@@ -86,10 +86,10 @@ export const sidebarData: SidebarData = {
               title: 'Encrypt/Decrypt Text',
               url: '/dashboard/app/encrypt-decrypt-text',
             },
-            // {
-            //   title: 'tool 3',
-            //   url: '#',
-            // },
+            {
+              title: 'Token Generator',
+              url: '/dashboard/app/token-generator',
+            },
             // {
             //   title: 'tool 4',
             //   url: '#',
