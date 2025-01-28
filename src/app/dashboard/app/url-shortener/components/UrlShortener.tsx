@@ -41,9 +41,12 @@ export default function UrlShortener() {
       setShortUrl(data.short_url)
       setError("")
     } catch (error) {
-      setError(error.message)
+      console.log(error)
+      //TODO - Modify the error message
+      // setError(error.message)
+      setError("The alias might be unavailable, try another one!")      
     }
-  }
+  } 
 
   const copyToClipboard = async () => {
     try {
@@ -51,6 +54,7 @@ export default function UrlShortener() {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
+      console.error(err)
       setError("Failed to copy URL")
     }
   }

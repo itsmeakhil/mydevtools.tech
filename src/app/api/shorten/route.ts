@@ -42,6 +42,8 @@ export async function POST(request: Request) {
     // Return the short URL to the client
     return NextResponse.json(data);
   } catch (error) {
+    console.error("Error occurred:", error); // Log the error
+
     // Handle unexpected errors gracefully
     return NextResponse.json(
       { error: "An error occurred while processing your request." },
