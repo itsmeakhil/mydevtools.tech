@@ -90,6 +90,7 @@ export const sidebarData: SidebarData = {
               title: 'Token Generator',
               url: '/dashboard/app/token-generator',
             },
+
             {
               title: 'Hash Generator',
               url: '/dashboard/app/hash-generator',
