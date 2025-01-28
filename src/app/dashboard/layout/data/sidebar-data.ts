@@ -94,10 +94,10 @@ export const sidebarData: SidebarData = {
               title: 'Hash Generator',
               url: '/dashboard/app/hash-generator',
             },
-            // {
-            //   title: 'tool 5',
-            //   url: '#',
-            // },
+            {
+              title: 'Bcrypt',
+              url: '/dashboard/app/bcrypt',
+            },
           ],
         },
         // {
