@@ -9,10 +9,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div className="mt-2">
       <ModeToggle />
       </div>
-      <main>
+      
 
         {children}
-      </main>
+
     </SidebarProvider>
   )
 }
