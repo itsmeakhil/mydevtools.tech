@@ -14,6 +14,7 @@ import { sidebarData } from './data/sidebar-data'
 import { onAuthStateChanged,signOut as firebaseSignOut } from 'firebase/auth'
 import { auth } from '../app/to-do/database/firebase'
 import { useRouter } from 'next/navigation'; // Ensure you have initialized Firebase in this file
+import { ModeToggle } from "../../../components/modeToggle"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [user, setUser] = useState({
@@ -50,7 +51,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible='icon' variant='floating' {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={sidebarData.teams} />
+        <div className="flex items-center justify-between w-full">
+          <TeamSwitcher teams={sidebarData.teams} />
+          <ModeToggle />
+        </div>
       </SidebarHeader>
       <SidebarContent>
         {sidebarData.navGroups.map((props) => (
