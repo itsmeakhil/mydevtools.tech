@@ -24,7 +24,7 @@ export default function HashGenerator() {
     
     // Handle SHA3 separately using crypto-js
     if (algorithm === "SHA3") {
-      return CryptoJS.SHA3(text).toString(CryptoJS.enc.Hex)
+      return CryptoJS.SHA3(text, { outputLength: 256 }).toString(CryptoJS.enc.Hex)
     }
 
     // Existing crypto implementation for other algorithms
