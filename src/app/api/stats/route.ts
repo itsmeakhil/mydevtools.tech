@@ -24,7 +24,7 @@ export async function GET() {
     return NextResponse.json(stats);
   } catch (error) {
     // Handle errors and return an appropriate response
-    console.error("Error fetching analytics stats:", error.message);
+    console.error("Error fetching analytics stats:", error);
     return NextResponse.json(
       { error: "Failed to fetch analytics stats." },
       { status: 500 }
