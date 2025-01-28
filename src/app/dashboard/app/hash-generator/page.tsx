@@ -3,12 +3,13 @@
 import { useState } from "react"
 import { Heart } from "lucide-react"
 import { createHash } from "crypto"
+import * as CryptoJS from 'crypto-js'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-type HashFunction = "MD5" | "SHA1" | "SHA256" | "SHA224" | "SHA512" | "SHA384" | "RIPEMD160"
+type HashFunction = "MD5" | "SHA1" | "SHA256" | "SHA224" | "SHA512" | "SHA384" | "RIPEMD160" | "SHA3"
 type DigestEncoding = "hex" | "base64" | "binary"
 
 export default function HashGenerator() {
@@ -16,10 +17,17 @@ export default function HashGenerator() {
   const [encoding, setEncoding] = useState<DigestEncoding>("hex")
   const [favorite, setFavorite] = useState(false)
 
-  const hashFunctions: HashFunction[] = ["MD5", "SHA1", "SHA256", "SHA224", "SHA512", "SHA384", "RIPEMD160"]
+  const hashFunctions: HashFunction[] = ["MD5", "SHA1", "SHA256", "SHA224", "SHA512", "SHA384", "RIPEMD160", "SHA3"]
 
   const generateHash = (algorithm: string) => {
     if (!text) return ""
+    
+    // Handle SHA3 separately using crypto-js
+    if (algorithm === "SHA3") {
+      return CryptoJS.SHA3(text).toString(CryptoJS.enc.Hex)
+    }
+
+    // Existing crypto implementation for other algorithms
     const hash = createHash(algorithm.toLowerCase())
     hash.update(text)
     return hash.digest(encoding)
