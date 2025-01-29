@@ -7,7 +7,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import DeleteButton from "../../../../components/ui/DeleteButton";
+import DeleteButton from "../../../components/ui/DeleteButton";
 
 interface Task {
   id: string;

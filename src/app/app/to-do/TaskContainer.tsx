@@ -1,10 +1,10 @@
 "use client";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import TaskForm from "@/app/dashboard/app/to-do/TaskForm";
-import TaskList from "@/app/dashboard/app/to-do/TaskList";
-import PaginationDemo from "@/app/dashboard/app/to-do/PaginationS";
-import { useTaskContext } from "@/app/dashboard/app/to-do/context/TaskContext";
+import TaskForm from "@/app/app/to-do/TaskForm";
+import TaskList from "@/app/app/to-do/TaskList";
+import PaginationDemo from "@/app/app/to-do/PaginationS";
+import { useTaskContext } from "@/app/app/to-do/context/TaskContext";
 // import { Button } from "@/components/ui/button";
 
 // interface TaskContainerProps {

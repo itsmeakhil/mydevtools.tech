@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { useToast } from "../../../../hooks/use-toast"
+import { useToast } from "../../../hooks/use-toast"
 import { useULID } from "./hooks/use-ulid"
 import type { ULIDGeneratorProps } from "./types/ulid"
 
