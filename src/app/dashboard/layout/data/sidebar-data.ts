@@ -98,6 +98,10 @@ export const sidebarData: SidebarData = {
               title: 'Bcrypt',
               url: '/dashboard/app/bcrypt',
             },
+            {
+              title: 'Ulid Generator',
+              url: '/dashboard/app/ulid-generator',
+            },
           ],
         },
         // {
