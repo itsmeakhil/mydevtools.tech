@@ -44,7 +44,7 @@ export const sidebarData: SidebarData = {
       title: 'General Tools',
       items: [
         // {
-        //   title: 'Dashboard',
+        //   title: 'Dashboar',
         //   url: '/',
         //   icon: IconLayoutDashboard,
         // },
