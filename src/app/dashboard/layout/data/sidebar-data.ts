@@ -83,6 +83,10 @@ export const sidebarData: SidebarData = {
               url: '/dashboard/app/uuid-generator',
             },
             {
+              title: 'Ulid Generator',
+              url: '/dashboard/app/ulid-generator',
+            },
+            {
               title: 'Encrypt/Decrypt Text',
               url: '/dashboard/app/encrypt-decrypt-text',
             },
@@ -95,10 +99,11 @@ export const sidebarData: SidebarData = {
               title: 'Hash Generator',
               url: '/dashboard/app/hash-generator',
             },
-            // {
-            //   title: 'tool 5',
-            //   url: '#',
-            // },
+            {
+              title: 'Bcrypt',
+              url: '/dashboard/app/bcrypt',
+            },
+            
           ],
         },
         // {

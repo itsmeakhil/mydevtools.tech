@@ -23,6 +23,7 @@ export default function HashGenerator() {
     if (!text) return ""
     
     // Handle SHA3 separately using crypto-js
+    //testing
     if (algorithm === "SHA3") {
       return CryptoJS.SHA3(text, { outputLength: 256 }).toString(CryptoJS.enc.Hex)
     }
