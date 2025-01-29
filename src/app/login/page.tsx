@@ -1,4 +1,4 @@
-import { LoginForm } from "@/app/dashboard/app/to-do/login-page"
+import { LoginForm } from "@/app/app/to-do/login-page"
 
 export default function Page() {
   return (

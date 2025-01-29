@@ -44,18 +44,18 @@ export const sidebarData: SidebarData = {
       title: 'General Tools',
       items: [
         // {
-        //   title: 'Dashboard',
+        //   title: 'Dashboar',
         //   url: '/',
         //   icon: IconLayoutDashboard,
         // },
         {
           title: 'Tasks',
-          url: '/dashboard/app/to-do',
+          url: '/app/to-do',
           icon: IconChecklist,
         },
         {
           title: 'Url Shortener',
-          url: '/dashboard/app/url-shortener',
+          url: '/app/url-shortener',
           icon: IconUnlink,
         },
         {
@@ -80,28 +80,28 @@ export const sidebarData: SidebarData = {
           items: [
             {
               title: 'UUID Generator',
-              url: '/dashboard/app/uuid-generator',
+              url: '/app/uuid-generator',
             },
             {
               title: 'ULID Generator',
-              url: '/dashboard/app/ulid-generator',
+              url: '/app/ulid-generator',
             },
             {
               title: 'Encrypt / Decrypt Text',
-              url: '/dashboard/app/encrypt-decrypt-text',
+              url: '/app/encrypt-decrypt-text',
             },
             {
               title: 'Token Generator',
-              url: '/dashboard/app/token-generator',
+              url: '/app/token-generator',
             },
 
             {
               title: 'Hash Generator',
-              url: '/dashboard/app/hash-generator',
+              url: '/app/hash-generator',
             },
             {
               title: 'Bcrypt',
-              url: '/dashboard/app/bcrypt',
+              url: '/app/bcrypt',
             },
             
           ],

@@ -12,7 +12,7 @@ import { NavUser } from './nav-user'
 import { TeamSwitcher } from './team-switcher'
 import { sidebarData } from './data/sidebar-data'
 import { onAuthStateChanged,signOut as firebaseSignOut } from 'firebase/auth'
-import { auth } from '../app/to-do/database/firebase'
+import { auth } from '../../app/to-do/database/firebase'
 import { useRouter } from 'next/navigation'; // Ensure you have initialized Firebase in this file
 import { ModeToggle } from "../../../components/modeToggle"
 
