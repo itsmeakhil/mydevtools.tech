@@ -3,7 +3,8 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./layout/app-sidebar";
 import { ModeToggle } from "@/components/modeToggle";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+// Memoize the Layout component to prevent unnecessary re-renders
+const Layout = React.memo(function Layout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <div className="flex h-screen">
@@ -24,4 +25,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
     </SidebarProvider>
   )
-}
+})
+
+export default Layout
