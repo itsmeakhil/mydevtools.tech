@@ -13,10 +13,14 @@ import { useDebouncedCallback } from "use-debounce"
 
 export default function BcryptPage() {
   const { toast } = useToast()
-  const [hashState, setHashState] = useState({
+  const [hashState, setHashState] = useState<{
+    string: string;
+    saltRounds: number;
+    hash: string | undefined;
+  }>({
     string: "",
     saltRounds: 10,
-    hash: ""
+    hash: undefined
   })
   
   const [compareState, setCompareState] = useState({
@@ -38,7 +42,7 @@ export default function BcryptPage() {
 
   const handleHash = useDebouncedCallback(async (string: string, saltRounds: number) => {
     if (!string) {
-      setHashState(prev => ({ ...prev, hash: "" }))
+      setHashState(prev => ({ ...prev, hash: undefined }))
       return
     }
 
@@ -105,7 +109,7 @@ export default function BcryptPage() {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(hashState.hash)
+      await navigator.clipboard.writeText(hashState.hash || "")
       toast({
         title: "Copied",
         description: "Hash has been copied to clipboard",
