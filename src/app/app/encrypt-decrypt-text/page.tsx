@@ -1,7 +1,7 @@
 "use client"
 
 import * as CryptoJS from "crypto-js"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
@@ -10,114 +10,202 @@ import { Card, CardContent, CardHeader, CardTitle, } from "@/components/ui/card"
 
 
 type Algorithm = "AES" | "TripleDES" | "Rabbit" | "RC4"
+type CryptoOperations = {
+  encrypt: (text: string, key: string) => string
+  decrypt: (encrypted: string, key: string) => CryptoJS.lib.WordArray
+}
 
 export default function EncryptDecrypt() {
-  const defaultText = "Lorem ipsum dolor sit amet"
-  const defaultKey = "my secret key"
-  
-  const [plainText, setPlainText] = useState(defaultText)
-  const [encryptKey, setEncryptKey] = useState(defaultKey)
-  const [encryptedText, setEncryptedText] = useState("")
-  const [textToDecrypt, setTextToDecrypt] = useState("")
-  const [decryptKey, setDecryptKey] = useState(defaultKey)
-  const [decryptedText, setDecryptedText] = useState("")
-  const [encryptAlgo, setEncryptAlgo] = useState<Algorithm>("AES")
-  const [decryptAlgo, setDecryptAlgo] = useState<Algorithm>("AES")
+  // Combined state objects
+  const [encryptState, setEncryptState] = useState<{
+    text: string;
+    key: string;
+    algorithm: Algorithm;
+    result: string;
+  }>({
+    text: "Lorem ipsum dolor sit amet",
+    key: "my secret key",
+    algorithm: "AES" as Algorithm,
+    result: ""
+  })
 
-  useEffect(() => {
-    const encrypted = CryptoJS.AES.encrypt(defaultText, defaultKey).toString()
-    setEncryptedText(encrypted)
-    setTextToDecrypt(encrypted)
-    
-    const decrypted = CryptoJS.AES.decrypt(encrypted, defaultKey)
-    const result = decrypted.toString(CryptoJS.enc.Utf8)
-    setDecryptedText(result || "Your string hash")
+  const [decryptState, setDecryptState] = useState<{
+    text: string;
+    key: string;
+    algorithm: Algorithm;
+    result: string;
+  }>({
+    text: "",
+    key: "my secret key",
+    algorithm: "AES" as Algorithm,
+    result: "Your string hash"
+  })
+
+  // Algorithm operations lookup
+  const cryptoOperations = useMemo<Record<Algorithm, CryptoOperations>>(
+    () => ({
+      AES: {
+        encrypt: (t, k) => CryptoJS.AES.encrypt(t, k).toString(),
+        decrypt: (e, k) => CryptoJS.AES.decrypt(e, k)
+      },
+      TripleDES: {
+        encrypt: (t, k) => CryptoJS.TripleDES.encrypt(t, k).toString(),
+        decrypt: (e, k) => CryptoJS.TripleDES.decrypt(e, k)
+      },
+      Rabbit: {
+        encrypt: (t, k) => CryptoJS.Rabbit.encrypt(t, k).toString(),
+        decrypt: (e, k) => CryptoJS.Rabbit.decrypt(e, k)
+      },
+      RC4: {
+        encrypt: (t, k) => CryptoJS.RC4.encrypt(t, k).toString(),
+        decrypt: (e, k) => CryptoJS.RC4.decrypt(e, k)
+      }
+    }),
+    []
+  )
+
+  // Unified crypto handler
+  const handleCrypto = useCallback(
+    (type: "encrypt" | "decrypt") => {
+      try {
+        const state = type === "encrypt" ? encryptState : decryptState
+        const operation = cryptoOperations[state.algorithm][type]
+        
+        if (type === "encrypt") {
+          const result = operation(state.text, state.key)
+          setEncryptState(prev => ({ ...prev, result }))
+          setDecryptState(prev => ({ ...prev, text: result }))
+        } else {
+          const decryptedWordArray = operation(state.text, state.key) as CryptoJS.lib.WordArray
+          const result = decryptedWordArray.sigBytes > 0 
+            ? decryptedWordArray.toString(CryptoJS.enc.Utf8) 
+            : "Your string hash"
+          setDecryptState(prev => ({ ...prev, result }))
+        }
+      } catch (error) {
+        console.error(`${type}ion error:`, error)
+        const message = type === "encrypt" ? "Encryption failed" : "Your string hash"
+        type === "encrypt"
+          ? setEncryptState(prev => ({ ...prev, result: message }))
+          : setDecryptState(prev => ({ ...prev, result: message }))
+      }
+    },
+    [encryptState, decryptState, cryptoOperations]
+  )
+
+  // Auto-resize textareas using ref callback
+  const textareaRefs = useRef<{
+    encrypted?: HTMLTextAreaElement
+    decrypt?: HTMLTextAreaElement
+  }>({})
+
+  const adjustHeight = useCallback((element: HTMLTextAreaElement) => {
+    element.style.height = 'auto'
+    element.style.height = `${element.scrollHeight}px`
   }, [])
 
-  // Add this useEffect to handle textarea resizing
+  // Effect for initial setup
   useEffect(() => {
-    const adjustTextarea = (textarea: HTMLTextAreaElement) => {
-      textarea.style.height = 'auto';
-      textarea.style.height = `${textarea.scrollHeight}px`;
-    };
+    handleCrypto("encrypt")
+    handleCrypto("decrypt")
+  }, [])
 
-    const encryptedTextarea = document.querySelector('textarea[name="encrypted"]') as HTMLTextAreaElement;
-    const decryptTextarea = document.querySelector('textarea[name="decrypt"]') as HTMLTextAreaElement;
-    
-    if (encryptedTextarea) adjustTextarea(encryptedTextarea);
-    if (decryptTextarea) adjustTextarea(decryptTextarea);
-  }, [encryptedText, textToDecrypt]);
+  // Effect for textarea resizing
+  useEffect(() => {
+    Object.values(textareaRefs.current).forEach(adjustHeight)
+  }, [encryptState.result, decryptState.text, adjustHeight])
 
-  const encrypt = (text: string, key: string, algorithm: Algorithm) => {
-    try {
-      let encrypted
-      switch (algorithm) {
-        case "AES":
-          encrypted = CryptoJS.AES.encrypt(text, key).toString()
-          break
-        case "TripleDES":
-          encrypted = CryptoJS.TripleDES.encrypt(text, key).toString()
-          break
-        case "Rabbit":
-          encrypted = CryptoJS.Rabbit.encrypt(text, key).toString()
-          break
-        case "RC4":
-          encrypted = CryptoJS.RC4.encrypt(text, key).toString()
-          break
-        default:
-          encrypted = ""
-      }
-      setEncryptedText(encrypted)
-    } catch (error) {
-      console.error("Encryption error:", error)
-      setEncryptedText("Encryption failed")
-    }
-  }
+  // Reusable input handlers
+  const createStateHandler = useCallback(
+    (
+      type: "encrypt" | "decrypt",
+      field: "text" | "key" | "algorithm" // Exclude 'result'
+    ) =>
+    (value: string | Algorithm) => {
+      const updater = type === "encrypt" ? setEncryptState : setDecryptState
+      updater(prev => ({ ...prev, [field]: value }))
+      setTimeout(() => handleCrypto(type), 0)
+    },
+    [handleCrypto]
+  )
 
-  const decrypt = (encrypted: string, key: string, algorithm: Algorithm) => {
-    try {
-      let decrypted
-      switch (algorithm) {
-        case "AES":
-          decrypted = CryptoJS.AES.decrypt(encrypted, key)
-          break
-        case "TripleDES":
-          decrypted = CryptoJS.TripleDES.decrypt(encrypted, key)
-          break
-        case "Rabbit":
-          decrypted = CryptoJS.Rabbit.decrypt(encrypted, key)
-          break
-        case "RC4":
-          decrypted = CryptoJS.RC4.decrypt(encrypted, key)
-          break
-        default:
-          decrypted = ""
-          return
-      }
+  // Memoized card components
+  const CryptoCard = useCallback(
+    ({ type }: { type: "encrypt" | "decrypt" }) => {
+      const state = type === "encrypt" ? encryptState : decryptState
+      const isEncrypt = type === "encrypt"
       
-      // Check if the decryption result is valid before converting to string
-      if (decrypted.sigBytes > 0) {
-        try {
-          const result = decrypted.toString(CryptoJS.enc.Utf8)
-          if (result) {
-            setDecryptedText(result)
-            return
-          }
-        } catch {
-          // If string conversion fails, show placeholder
-          setDecryptedText("Your string hash")
-          return
-        }
-      }
-      setDecryptedText("Your string hash")
-    } catch (error) {
-      console.error("Decryption error:", error)
-      setDecryptedText("Your string hash")
-    }
-  }
+      return (
+        <Card className="bg-transparent border-gray-200">
+          <CardHeader>
+            <CardTitle>{isEncrypt ? "Encrypt" : "Decrypt"}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Textarea Input */}
+            <div className="space-y-2">
+              <Label>{isEncrypt ? "Your text:" : "Your encrypted text:"}</Label>
+              <Textarea
+                ref={useCallback((el: HTMLTextAreaElement | null) => {
+                  if (el) {
+                    textareaRefs.current[isEncrypt ? "encrypted" : "decrypt"] = el
+                  }
+                }, [isEncrypt])}
+                value={isEncrypt ? state.text : decryptState.text}
+                onChange={(e) => createStateHandler(type, "text")(e.target.value)}
+                placeholder={`Enter text to ${type}`}
+                className="font-sans bg-transparent border-gray-200"
+              />
+            </div>
+
+            {/* Secret Key Input */}
+            <div className="space-y-2">
+              <Label>Your secret key:</Label>
+              <Input
+                value={state.key}
+                onChange={(e) => createStateHandler(type, "key")(e.target.value)}
+                placeholder="Enter secret key"
+                className="font-sans bg-transparent border-gray-200"
+              />
+            </div>
+
+            {/* Algorithm Selector */}
+            <div className="space-y-2">
+              <Label>Encryption algorithm:</Label>
+              <Select
+                value={state.algorithm}
+                onValueChange={(value: Algorithm) => createStateHandler(type, "algorithm")(value)}
+              >
+                <SelectTrigger className="bg-transparent border-gray-200">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.keys(cryptoOperations).map((algo) => (
+                    <SelectItem key={algo} value={algo}>
+                      {algo}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Result Display */}
+            <div className="space-y-2">
+              <Label>{isEncrypt ? "Your text encrypted:" : "Your decrypted text:"}</Label>
+              <Textarea
+                value={state.result}
+                readOnly
+                className="font-sans bg-transparent border-gray-200"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )
+    },
+    [encryptState, decryptState, cryptoOperations, createStateHandler]
+  )
 
   return (
-    <div className="min-h-screen p-6 lg:ml-[var(--sidebar-width)] flex justify-center ">
+    <div className="min-h-screen p-6 lg:ml-[var(--sidebar-width)] flex justify-center">
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="text-center">
           <h1 className="text-4xl font-semibold text-gray-900 dark:text-gray-100">Encrypt / decrypt text</h1>
@@ -128,130 +216,8 @@ export default function EncryptDecrypt() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          {/* Encrypt Section */}
-          <Card className="bg-transparent  border-gray-200">
-            <CardHeader>
-              <CardTitle>Encrypt</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Your text:</Label>
-                <Textarea
-                  value={plainText}
-                  onChange={(e) => {
-                    setPlainText(e.target.value)
-                    encrypt(e.target.value, encryptKey, encryptAlgo)
-                  }}
-                  placeholder="Enter text to encrypt"
-                  className="font-sans bg-transparent border-gray-200"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Your secret key:</Label>
-                <Input
-                  value={encryptKey}
-                  onChange={(e) => {
-                    setEncryptKey(e.target.value)
-                    encrypt(plainText, e.target.value, encryptAlgo)
-                  }}
-                  placeholder="Enter secret key"
-                  className="font-sans bg-transparent border-gray-200"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Encryption algorithm:</Label>
-                <Select
-                  value={encryptAlgo}
-                  onValueChange={(value: Algorithm) => {
-                    setEncryptAlgo(value)
-                    encrypt(plainText, encryptKey, value)
-                  }}
-                >
-                  <SelectTrigger className="bg-transparent border-gray-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="AES">AES</SelectItem>
-                    <SelectItem value="TripleDES">TripleDES</SelectItem>
-                    <SelectItem value="Rabbit">Rabbit</SelectItem>
-                    <SelectItem value="RC4">RC4</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Your text encrypted:</Label>
-                <Textarea 
-                  name="encrypted"
-                  value={encryptedText} 
-                  readOnly 
-                  className="font-sans text-sm leading-relaxed bg-transparent border-gray-200 min-h-[100px] resize-none overflow-hidden"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Decrypt Section */}
-          <Card className="bg-transparent border-gray-200">            <CardHeader>
-              <CardTitle>Decrypt</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Your encrypted text:</Label>
-                <Textarea
-                  name="decrypt"
-                  value={textToDecrypt}
-                  onChange={(e) => {
-                    setTextToDecrypt(e.target.value)
-                    decrypt(e.target.value, decryptKey, decryptAlgo)
-                  }}
-                  placeholder="Enter text to decrypt"
-                  className="font-sans text-sm leading-relaxed bg-transparent border-gray-200 min-h-[100px] resize-none overflow-hidden"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Your secret key:</Label>
-                <Input
-                  value={decryptKey}
-                  onChange={(e) => {
-                    setDecryptKey(e.target.value)
-                    decrypt(textToDecrypt, e.target.value, decryptAlgo)
-                  }}
-                  placeholder="Enter secret key"
-                  className="font-sans bg-transparent border-gray-200"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Encryption algorithm:</Label>
-                <Select
-                  value={decryptAlgo}
-                  onValueChange={(value: Algorithm) => {
-                    setDecryptAlgo(value)
-                    decrypt(textToDecrypt, decryptKey, value)
-                  }}
-                >
-                  <SelectTrigger className="bg-transparent border-gray-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="AES">AES</SelectItem>
-                    <SelectItem value="TripleDES">TripleDES</SelectItem>
-                    <SelectItem value="Rabbit">Rabbit</SelectItem>
-                    <SelectItem value="RC4">RC4</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Your decrypted text:</Label>
-                <Textarea value={decryptedText} readOnly className="font-sans bg-transparent border-gray-200" />
-              </div>
-            </CardContent>
-          </Card>
+          <CryptoCard type="encrypt" />
+          <CryptoCard type="decrypt" />
         </div>
       </div>
     </div>

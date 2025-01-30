@@ -16,11 +16,11 @@ export default function BcryptPage() {
   const [hashState, setHashState] = useState<{
     string: string;
     saltRounds: number;
-    hash: string | undefined;
+    hash: string;
   }>({
     string: "",
     saltRounds: 10,
-    hash: undefined
+    hash: ""
   })
   
   const [compareState, setCompareState] = useState({
@@ -42,7 +42,7 @@ export default function BcryptPage() {
 
   const handleHash = useDebouncedCallback(async (string: string, saltRounds: number) => {
     if (!string) {
-      setHashState(prev => ({ ...prev, hash: undefined }))
+      setHashState(prev => ({ ...prev, hash: "" }))
       return
     }
 
@@ -50,7 +50,7 @@ export default function BcryptPage() {
     try {
       const result = await hashString(string, saltRounds)
       if (result.success && result.hash) {
-        setHashState(prev => ({ ...prev, hash: result.hash }))
+        setHashState(prev => ({ ...prev, hash: result.hash! }))
       }
     } finally {
       setUiState(prev => ({ ...prev, isHashing: false }))
@@ -61,13 +61,13 @@ export default function BcryptPage() {
     handleHash(hashState.string, hashState.saltRounds)
   }, [hashState.string, hashState.saltRounds, handleHash])
 
-  const handleHashChange = (field: keyof typeof hashState, value: string | number) => {
+  const handleHashChange = useCallback((field: keyof typeof hashState, value: string | number) => {
     setHashState(prev => ({ ...prev, [field]: value }))
-  }
+  }, [])
 
-  const handleCompareChange = (field: keyof typeof compareState, value: string) => {
+  const handleCompareChange = useCallback((field: keyof typeof compareState, value: string) => {
     setCompareState(prev => ({ ...prev, [field]: value }))
-  }
+  }, [])
 
   const handleCompare = useCallback(async () => {
     if (!compareState.string || !compareState.hash) {
@@ -107,9 +107,9 @@ export default function BcryptPage() {
     }
   }, [compareState.string, compareState.hash, debouncedCompare])
 
-  const handleCopy = async () => {
+  const handleCopy = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(hashState.hash || "")
+      await navigator.clipboard.writeText(hashState.hash)
       toast({
         title: "Copied",
         description: "Hash has been copied to clipboard",
@@ -121,7 +121,7 @@ export default function BcryptPage() {
         variant: "destructive",
       })
     }
-  }
+  }, [hashState.hash, toast])
 
   const SaltRoundsInput = () => (
     <div className="flex items-center space-x-2">
