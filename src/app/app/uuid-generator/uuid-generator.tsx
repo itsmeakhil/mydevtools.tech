@@ -73,7 +73,7 @@ export function UUIDGenerator() {
           <div className="flex justify-between items-start">
             <div>
                 <div className='flex justify-center items-center'>
-              <CardTitle className="text-2xl font-light mb-2">UUIDs generator</CardTitle>
+              <CardTitle className="text-3xl  mb-2 font-semibold text-gray-900 dark:text-gray-100">UUID Generator</CardTitle>
               </div>
               <CardDescription>Generate Universally Unique Identifiers (UUIDs) of various versions.</CardDescription>
             </div>

@@ -30,7 +30,7 @@ export default function ULIDGenerator({ initialQuantity = 1 }: ULIDGeneratorProp
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-3xl font-bold tracking-tight">ULID generator</CardTitle>
+        <CardTitle className="text-3xl font-bold tracking-tight text-center">ULID Generator</CardTitle>
         <CardDescription>
           Generate random Universally Unique Lexicographically Sortable Identifier (ULID).
         </CardDescription>

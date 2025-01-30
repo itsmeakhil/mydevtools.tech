@@ -47,7 +47,7 @@ export default function HashGenerator() {
     <div className="container mx-auto p-4 max-w-3xl">
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-3xl font-bold">Hash text</CardTitle>
+          <CardTitle className="text-center text-3xl font-bold">Hash Text</CardTitle>
           <Button variant="ghost" size="icon" onClick={() => setFavorite(!favorite)} className="hover:text-primary">
             <Heart className={favorite ? "fill-current" : ""} />
           </Button>

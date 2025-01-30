@@ -76,7 +76,7 @@ export default function TokenGenerator() {
     <div className="p-6 lg:ml-[var(--sidebar-width)] flex justify-center ">
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-3xl font-bold">Token generator</CardTitle>
+        <CardTitle className="text-center text-3xl font-bold">Token Generator</CardTitle>
         <CardDescription>
           Generate random string with the chars you want, uppercase or lowercase letters, numbers and/or symbols.
         </CardDescription>

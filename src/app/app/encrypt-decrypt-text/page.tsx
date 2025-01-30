@@ -208,7 +208,7 @@ export default function EncryptDecrypt() {
     <div className="min-h-screen p-6 lg:ml-[var(--sidebar-width)] flex justify-center">
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="text-center">
-          <h1 className="text-4xl font-semibold text-gray-900 dark:text-gray-100">Encrypt / decrypt text</h1>
+          <h1 className="text-4xl font-semibold text-gray-900 dark:text-gray-100">Encrypt / Decrypt Text</h1>
           
           <p className="mt-2 text-gray-500">
             Encrypt clear text and decrypt ciphertext using crypto algorithms like AES, TripleDES, Rabbit or RC4.
