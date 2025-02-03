@@ -39,7 +39,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn("min-h-screen bg-background font-sans antialiased", geistSans.variable, geistMono.variable)}>
+      <body className={cn("min-h-screen bg-background font-sans antialiased", geistSans.variable, geistMono.variable)} suppressHydrationWarning>
         {/* <main className="flex-1 "> */}
         <ThemeProvider
             attribute="class"

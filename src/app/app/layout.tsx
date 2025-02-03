@@ -18,7 +18,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 flex items-center justify-center">
+        <main className="flex-1 p-4">
           {children}
         </main>
       </div>
