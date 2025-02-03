@@ -106,6 +106,52 @@ export const sidebarData: SidebarData = {
             
           ],
         },
+        {
+          title: 'Converters',
+          icon: IconLockAccess,
+          items: [
+            {
+              title: 'JSON to XML',
+              url: '/app/json-xml',
+            },
+            {
+              title: 'JSON to TOML',
+              url: '/app/json-toml',
+            },
+            {
+              title: 'JSON to YAML',
+              url: '/app/json-yaml',
+            },
+            {
+              title: 'TOML to JSON',
+              url: '/app/toml-json',
+            },
+
+            // {
+            //   title: 'TOML to JSON',
+            //   url: '/app/toml-json',
+            // },
+            {
+              title: 'TOML to YAML',
+              url: '/app/toml-yaml',
+            },
+            {
+              title: 'XML to JSON',
+              url: '/app/xml-json',
+            },
+
+            {
+              title: 'YAML to JSON',
+              url: '/app/yaml-json',
+            },
+            {
+              title: 'YAML to TOML',
+              url: '/app/yaml-toml',
+            },
+            
+            
+          ],
+        },
         // {
         //   title: 'Converters',
         //   icon: IconBug,
