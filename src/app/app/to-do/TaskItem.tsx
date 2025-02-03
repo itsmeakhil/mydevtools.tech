@@ -30,7 +30,7 @@ export default function TaskItem({
   return (
     <li
       className={`flex items-center gap-4 mb-4 p-2 border rounded transition-colors 
-        dark:bg-black dark:border-white dark:text-white
+        dark:bg-black dark:border-white dark:text-white mb-2
         ${
           task.status === "ongoing"
             ? "bg-orange-200 dark:bg-transparent"

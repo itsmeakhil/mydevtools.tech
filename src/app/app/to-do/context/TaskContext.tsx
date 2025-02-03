@@ -21,7 +21,7 @@ import {
   QuerySnapshot,
   where,
 } from "firebase/firestore";
-import { db } from "@/app/app/to-do/database/firebase";
+import { db } from "../../../../database/firebase";
 import { Task, NewTask } from "@/app/app/to-do/types/Task";
 import { format } from "date-fns";
 import useAuth from "@/utils/useAuth";
