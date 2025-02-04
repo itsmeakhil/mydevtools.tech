@@ -30,7 +30,7 @@ export function Header() {
           </nav>
           <div className="flex items-center space-x-4">
             <ModeToggle />
-            <Link href="https://github.com/mydevtools/repo" target="_blank" rel="noreferrer">
+            <Link href="https://github.com/itsmeakhil/mydevtools.tech" target="_blank" rel="noreferrer">
               <Button
                 variant="outline"
                 size="icon"
@@ -41,7 +41,7 @@ export function Header() {
               </Button>
             </Link>
             <Button asChild className="hidden sm:flex px-4">
-              <Link href="/login">Get Started</Link>
+              <Link href="/dashboard">Get Started</Link>
             </Button>
             <Button variant="ghost" size="icon" className="sm:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -61,11 +61,11 @@ export function Header() {
             <Link href="#docs" className="transition hover:text-foreground/80">
               Docs
             </Link>
-            <Link href="/login" className="transition hover:text-foreground/80">
+            <Link href="/dashboard" className="transition hover:text-foreground/80">
               Get Started
             </Link>
             <Link
-              href="https://github.com/mydevtools/repo"
+              href="https://github.com/itsmeakhil/mydevtools.tech"
               target="_blank"
               rel="noreferrer"
               className="transition hover:text-foreground/80"
