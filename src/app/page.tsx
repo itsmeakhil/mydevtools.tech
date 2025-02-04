@@ -1,6 +1,6 @@
 'use client'
 import React from 'react';
-import useAuth from '@/utils/useAuth';
+// import useAuth from '@/utils/useAuth';
 import { Button } from '@/components/ui/button';
 // import { useRouter } from 'next/navigation';
 
@@ -10,12 +10,12 @@ import {  FileJson, ListTodo, StickyNote, Github, Terminal, Boxes } from "lucide
 import { Header } from '@/components/header';
 
 const Page: React.FC = () => {
-  const user = useAuth();
-  // const router = useRouter();
+  // const user = useAuth();
+  // // const router = useRouter();
 
-  if (!user) {
-    return null;
-  }
+  // if (!user) {
+  //   return null;
+  // }
 
   // const handleRedirect = () => {
   //   router.push('/dashboard');
