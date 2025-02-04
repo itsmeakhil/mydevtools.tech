@@ -10,11 +10,12 @@ export const metadata: Metadata = {
   description: "Login to access your developer tools and workspace",
 }
 
+
 export default function LoginPage() {
   return (
     <>
     <Header/>
-    <div className="container relative min-h-[calc(100vh-4rem)] flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+    <div className={`container relative min-h-[calc(100vh-4rem)] flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0 font-mono`}>
       <div className="relative hidden h-full flex-col bg-muted/40 p-8 dark:bg-muted/10 lg:flex">
         <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background/40" />
         <div className="relative z-20 flex-grow flex flex-col justify-center">

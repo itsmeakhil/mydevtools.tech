@@ -8,7 +8,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       {/* <Header/> */}
-      <div className="flex h-screen">
+      <div className="flex h-screen font-mono">
         {/* Sidebar with ModeToggle */}
 
         <aside className="w-[var(--sidebar-width)] border-r p-4 flex flex-col">
@@ -21,7 +21,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-4">
+        <main className="flex-1 p-4 font-mono">
           {children}
         </main>
       </div>

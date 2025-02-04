@@ -18,27 +18,11 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 
 const Page: React.FC = () => {
-  // const user = useAuth();
-  // // const router = useRouter();
-
-  // if (!user) {
-  //   return null;
-  // }
-
-  // const handleRedirect = () => {
-  //   router.push('/dashboard');
-  // };
 
   return (
-    // <div className="flex flex-col items-center justify-center h-screen text-center">
-    //   <h1 className="text-4xl font-bold mb-4">Welcome to My Dev Tools</h1>
-    //   <p className="text-xl">We are working on things!</p>
-    //   <Button className="mt-4" onClick={handleRedirect}>
-    //     Go to Dashboard
-    //   </Button>
-    // </div>
 
-    <div className="flex flex-col min-h-screen">
+
+    <div className="flex flex-col min-h-screen antialiased font-mono">
       {/* Hero Section */}
       <Header />
       <section className="relative flex flex-col items-center justify-center space-y-4 py-12 px-4 text-center md:py-24 lg:py-32 border-b border-border/50">
