@@ -23,7 +23,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     avatar: ''
   })
 
-  const router = useRouter();
+
+  const router = useRouter(); //router
   
   const handleSignOut = async () => {
       try {
