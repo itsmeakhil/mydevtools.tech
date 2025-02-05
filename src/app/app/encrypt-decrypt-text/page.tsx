@@ -117,7 +117,7 @@ export default function EncryptDecrypt() {
   }
 
   return (
-    <div className="min-h-screen p-6 lg:ml-[var(--sidebar-width)] flex justify-center ">
+    <div className="min-h-screen p-2 lg:ml-[var(--sidebar-width)] flex justify-center ">
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="text-center">
           <h1 className="text-4xl font-semibold text-gray-900 dark:text-gray-100">Encrypt / decrypt text</h1>

@@ -20,9 +20,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 p-4 font-mono">
-          {children}
+        {/* Updated main content area */}
+        <main className="flex-1 p-4 font-mono flex flex-col">
+          <div className="max-w-6xl mx-auto w-full h-full flex flex-col">
+            <div className="flex-1 flex flex-col gap-4">
+              {children}
+            </div>
+          </div>
         </main>
       </div>
     </SidebarProvider>
