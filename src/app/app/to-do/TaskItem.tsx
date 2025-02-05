@@ -30,7 +30,7 @@ export default function TaskItem({
   return (
     <li
       className={`flex items-center gap-4 mb-4 p-2 border rounded transition-colors 
-        dark:bg-black dark:border-white dark:text-white
+        dark:bg-black dark:border-white dark:text-white 
         ${
           task.status === "ongoing"
             ? "bg-orange-200 dark:bg-transparent"
@@ -42,8 +42,8 @@ export default function TaskItem({
         }`}
     >
       <span
-        className={`flex-1 transition-colors 
-          ${task.status === "completed" ? "line-through text-gray-500 dark:text-gray-400" : "text-gray-900 dark:text-white"}`}
+        className={`flex-1 transition-colors font-normal
+          ${task.status === "completed" ? "line-through text-gray-500 dark:text-gray-400" : "text-gray-800 dark:text-white"} `}
       >
         {task.text}
       </span>

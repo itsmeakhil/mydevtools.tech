@@ -1,9 +1,10 @@
 // hooks/useAuth.js
 'use client';
 
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth } from "../app/app/to-do/database/firebase";
+import { auth } from "../database/firebase";
 import { User } from 'firebase/auth';
 // import { setPersistence, browserSessionPersistence } from 'firebase/auth';
 

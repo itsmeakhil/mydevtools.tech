@@ -1,4 +1,4 @@
-import { FormatConverter } from "../components/format-converter"
+import { FormatConverter } from "../../../components/format-converter"
 import { conversionConfigs } from "../types/converter"
 
 export const metadata = {
