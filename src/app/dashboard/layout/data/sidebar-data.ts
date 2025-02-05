@@ -79,15 +79,15 @@ export const sidebarData: SidebarData = {
           icon: IconLockAccess,
           items: [
             {
-              title: 'Uuid Generator',
+              title: 'UUID Generator',
               url: '/app/uuid-generator',
             },
             {
-              title: 'Ulid Generator',
+              title: 'ULID Generator',
               url: '/app/ulid-generator',
             },
             {
-              title: 'Encrypt/Decrypt Text',
+              title: 'Encrypt / Decrypt Text',
               url: '/app/encrypt-decrypt-text',
             },
             {
