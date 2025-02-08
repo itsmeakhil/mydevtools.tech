@@ -63,157 +63,150 @@ const Page: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="container space-y-6 py-12 md:py-24">
-        <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
-          <h2 className="text-2xl font-bold tracking-tighter sm:text-3xl md:text-4xl">
-            Features
-          </h2>
-          <p className="max-w-[85%] text-sm text-muted-foreground sm:text-base">
-            Essential tools designed to boost your productivity
-          </p>
-        </div>
-        <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3">
-          {[
-            {
-              icon: ListTodo,
-              title: "To-Do App",
-              description: "Track tasks and manage your workflow efficiently",
-            },
-            {
-              icon: StickyNote,
-              title: "Note Taking",
-              description: "Capture and organize your development notes",
-            },
-            {
-              icon: FileJson,
-              title: "JSON/YAML Tools",
-              description: "Convert and format data structures with ease",
-            },
-          ].map((feature, index) => (
-            <Card
-              key={index}
-              className="group relative overflow-hidden border border-border/50 bg-background p-6 transition-all hover:border-foreground/20"
-            >
-              <div className="flex flex-col items-center space-y-4">
-                <feature.icon className="h-12 w-12" />
-                <div className="space-y-2 text-center">
-                  <h3 className="font-bold">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {feature.description}
-                  </p>
-                </div>
-              </div>
-            </Card>
-          ))}
+      <section id="features" className="relative flex flex-col items-center py-12 md:py-24">
+        <div className="container">
+          <div className="flex flex-col items-center space-y-6 text-center">
+            <h2 className="text-3xl font-bold sm:text-4xl">Features</h2>
+            <p className="max-w-[700px] text-muted-foreground sm:text-lg">
+              Essential tools designed to boost your productivity
+            </p>
+            <div className="mx-auto grid max-w-6xl gap-6 sm:grid-cols-2 md:grid-cols-3">
+              {[
+                {
+                  icon: ListTodo,
+                  title: "To-Do App",
+                  description: "Track tasks and manage your workflow efficiently",
+                },
+                {
+                  icon: StickyNote,
+                  title: "Note Taking",
+                  description: "Capture and organize your development notes",
+                },
+                {
+                  icon: FileJson,
+                  title: "JSON/YAML Tools",
+                  description: "Convert and format data structures with ease",
+                },
+              ].map((feature, index) => (
+                <Card
+                  key={index}
+                  className="group relative overflow-hidden border border-border/50 bg-background p-6 transition-all hover:border-foreground/20"
+                >
+                  <div className="flex flex-col items-center space-y-4">
+                    <feature.icon className="h-12 w-12" />
+                    <div className="space-y-2 text-center">
+                      <h3 className="font-bold">{feature.title}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {feature.description}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Community Section */}
-      <section id="community" className="border-t border-border/50">
-        <div className="container space-y-6 py-12 md:py-24">
-          <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
-            <h2 className="text-2xl font-bold tracking-tighter sm:text-3xl md:text-4xl">
-              Open Source
-            </h2>
-            <p className="max-w-[85%] text-sm text-muted-foreground sm:text-base">
+      <section id="community" className="relative flex flex-col items-center border-t border-border/50 py-12 md:py-24">
+        <div className="container">
+          <div className="flex flex-col items-center space-y-6 text-center">
+            <h2 className="text-3xl font-bold sm:text-4xl">Open Source</h2>
+            <p className="max-w-[700px] text-muted-foreground sm:text-lg">
               Join our community and contribute to the future of developer tools
             </p>
-          </div>
-          <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3">
-            {[
-              {
-                icon: Github,
-                title: "GitHub",
-                description: "Contribute to our open source codebase",
-              },
-              {
-                icon: Terminal,
-                title: "CLI Tools",
-                description: "Build and share command-line tools",
-              },
-              {
-                icon: Boxes,
-                title: "Extensions",
-                description: "Create plugins and extensions",
-              },
-            ].map((feature, index) => (
-              <Card
-                key={index}
-                className="group relative overflow-hidden border border-border/50 bg-background p-6 transition-all hover:border-foreground/20"
-              >
-                <div className="flex flex-col items-center space-y-4">
-                  <feature.icon className="h-12 w-12" />
-                  <div className="space-y-2 text-center">
-                    <h3 className="font-bold">{feature.title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {feature.description}
-                    </p>
+            <div className="mx-auto grid max-w-6xl gap-6 sm:grid-cols-2 md:grid-cols-3">
+              {[
+                {
+                  icon: Github,
+                  title: "GitHub",
+                  description: "Contribute to our open source codebase",
+                },
+                {
+                  icon: Terminal,
+                  title: "CLI Tools",
+                  description: "Build and share command-line tools",
+                },
+                {
+                  icon: Boxes,
+                  title: "Extensions",
+                  description: "Create plugins and extensions",
+                },
+              ].map((feature, index) => (
+                <Card
+                  key={index}
+                  className="group relative overflow-hidden border border-border/50 bg-background p-6 transition-all hover:border-foreground/20"
+                >
+                  <div className="flex flex-col items-center space-y-4">
+                    <feature.icon className="h-12 w-12" />
+                    <div className="space-y-2 text-center">
+                      <h3 className="font-bold">{feature.title}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {feature.description}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       {/* Why Section */}
-      <section className="border-t border-border/50">
-        <div className="container space-y-6 py-12 md:py-24">
-          <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
-            <h2 className="text-2xl font-bold tracking-tighter sm:text-3xl md:text-4xl">
-              Why MyDevTools?
-            </h2>
-            <p className="max-w-[85%] text-sm text-muted-foreground sm:text-base">
+      <section className="relative flex flex-col items-center border-t border-border/50 py-12 md:py-24">
+        <div className="container">
+          <div className="flex flex-col items-center space-y-6 text-center">
+            <h2 className="text-3xl font-bold sm:text-4xl">Why MyDevTools?</h2>
+            <p className="max-w-[700px] text-muted-foreground sm:text-lg">
               Built by developers, for developers
             </p>
-          </div>
-          <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem]">
-            {[
-              {
-                title: "All-in-One Solution",
-                description:
-                  "Access all your essential development tools in one place, saving time and reducing context switching.",
-              },
-              {
-                title: "Open Source",
-                description:
-                  "Fully open source and community-driven development ensures transparency and continuous improvement.",
-              },
-            ].map((feature, index) => (
-              <Card
-                key={index}
-                className="group relative overflow-hidden border border-border/50 bg-background p-6 transition-all hover:border-foreground/20"
-              >
-                <div className="space-y-2">
-                  <h3 className="font-bold">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {feature.description}
-                  </p>
-                </div>
-              </Card>
-            ))}
+            <div className="mx-auto grid max-w-6xl gap-6 sm:grid-cols-2">
+              {[
+                {
+                  title: "All-in-One Solution",
+                  description:
+                    "Access all your essential development tools in one place, saving time and reducing context switching.",
+                },
+                {
+                  title: "Open Source",
+                  description:
+                    "Fully open source and community-driven development ensures transparency and continuous improvement.",
+                },
+              ].map((feature, index) => (
+                <Card
+                  key={index}
+                  className="group relative overflow-hidden border border-border/50 bg-background p-6 transition-all hover:border-foreground/20"
+                >
+                  <div className="space-y-2">
+                    <h3 className="font-bold">{feature.title}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {feature.description}
+                    </p>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="border-t border-border/50">
-        <div className="container space-y-6 py-12 md:py-24">
-          <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
-            <h2 className="text-2xl font-bold tracking-tighter sm:text-3xl md:text-4xl">
-              Ready to Get Started?
-            </h2>
-            <p className="max-w-[85%] text-sm text-muted-foreground sm:text-base">
+      <section className="relative flex flex-col items-center border-t border-border/50 py-12 md:py-24">
+        <div className="container">
+          <div className="flex flex-col items-center space-y-6 text-center">
+            <h2 className="text-3xl font-bold sm:text-4xl">Ready to Get Started?</h2>
+            <p className="max-w-[700px] text-muted-foreground sm:text-lg">
               Join thousands of developers who are already using MyDevTools
             </p>
-            <Link
-              href="/dashboard"
-              rel="noopener noreferrer"
-            >
-              <Button size="lg" className="h-10 px-6 sm:h-11 sm:px-8">
-                Try MyDevTools Now
-              </Button>
-            </Link>
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <Link href="/dashboard">
+                <Button size="lg" className="px-8 py-6 text-lg">
+                  Try MyDevTools Now
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
