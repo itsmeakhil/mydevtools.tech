@@ -6,8 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle, } from "@/components/ui/card"
-
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type Algorithm = "AES" | "TripleDES" | "Rabbit" | "RC4"
 
@@ -117,142 +116,146 @@ export default function EncryptDecrypt() {
   }
 
   return (
-    <div className="min-h-screen p-2 lg:ml-[var(--sidebar-width)] flex justify-center ">
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="text-center">
-          <h1 className="text-4xl font-semibold text-gray-900 dark:text-gray-100">Encrypt / decrypt text</h1>
-          
-          <p className="mt-2 text-gray-500">
-            Encrypt clear text and decrypt ciphertext using crypto algorithms like AES, TripleDES, Rabbit or RC4.
-          </p>
-        </div>
+    <div className="min-h-screen p-6 lg:ml-[var(--sidebar-width)] flex justify-center">
+      <div className="w-full max-w-5xl">
+        <Card className="w-full m-2">
+          <CardHeader>
+            <CardTitle className="text-3xl font-bold text-center">
+              Encrypt / decrypt text
+            </CardTitle>
+            <p className="text-center text-muted-foreground mt-2">
+              Encrypt clear text and decrypt ciphertext using crypto algorithms like AES, TripleDES, Rabbit or RC4.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6 md:grid-cols-2 mt-6">
+              {/* Encrypt Section */}
+              <Card className="bg-transparent  border-gray-200">
+                <CardHeader>
+                  <CardTitle>Encrypt</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Your text:</Label>
+                    <Textarea
+                      value={plainText}
+                      onChange={(e) => {
+                        setPlainText(e.target.value)
+                        encrypt(e.target.value, encryptKey, encryptAlgo)
+                      }}
+                      placeholder="Enter text to encrypt"
+                      className="font-sans bg-transparent border-gray-200"
+                    />
+                  </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Encrypt Section */}
-          <Card className="bg-transparent  border-gray-200">
-            <CardHeader>
-              <CardTitle>Encrypt</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Your text:</Label>
-                <Textarea
-                  value={plainText}
-                  onChange={(e) => {
-                    setPlainText(e.target.value)
-                    encrypt(e.target.value, encryptKey, encryptAlgo)
-                  }}
-                  placeholder="Enter text to encrypt"
-                  className="font-sans bg-transparent border-gray-200"
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label>Your secret key:</Label>
+                    <Input
+                      value={encryptKey}
+                      onChange={(e) => {
+                        setEncryptKey(e.target.value)
+                        encrypt(plainText, e.target.value, encryptAlgo)
+                      }}
+                      placeholder="Enter secret key"
+                      className="font-sans bg-transparent border-gray-200"
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <Label>Your secret key:</Label>
-                <Input
-                  value={encryptKey}
-                  onChange={(e) => {
-                    setEncryptKey(e.target.value)
-                    encrypt(plainText, e.target.value, encryptAlgo)
-                  }}
-                  placeholder="Enter secret key"
-                  className="font-sans bg-transparent border-gray-200"
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label>Encryption algorithm:</Label>
+                    <Select
+                      value={encryptAlgo}
+                      onValueChange={(value: Algorithm) => {
+                        setEncryptAlgo(value)
+                        encrypt(plainText, encryptKey, value)
+                      }}
+                    >
+                      <SelectTrigger className="bg-transparent border-gray-200">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="AES">AES</SelectItem>
+                        <SelectItem value="TripleDES">TripleDES</SelectItem>
+                        <SelectItem value="Rabbit">Rabbit</SelectItem>
+                        <SelectItem value="RC4">RC4</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="space-y-2">
-                <Label>Encryption algorithm:</Label>
-                <Select
-                  value={encryptAlgo}
-                  onValueChange={(value: Algorithm) => {
-                    setEncryptAlgo(value)
-                    encrypt(plainText, encryptKey, value)
-                  }}
-                >
-                  <SelectTrigger className="bg-transparent border-gray-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="AES">AES</SelectItem>
-                    <SelectItem value="TripleDES">TripleDES</SelectItem>
-                    <SelectItem value="Rabbit">Rabbit</SelectItem>
-                    <SelectItem value="RC4">RC4</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                  <div className="space-y-2">
+                    <Label>Your text encrypted:</Label>
+                    <Textarea 
+                      name="encrypted"
+                      value={encryptedText} 
+                      readOnly 
+                      className="font-sans text-sm leading-relaxed bg-transparent border-gray-200 min-h-[100px] resize-none overflow-hidden"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
-              <div className="space-y-2">
-                <Label>Your text encrypted:</Label>
-                <Textarea 
-                  name="encrypted"
-                  value={encryptedText} 
-                  readOnly 
-                  className="font-sans text-sm leading-relaxed bg-transparent border-gray-200 min-h-[100px] resize-none overflow-hidden"
-                />
-              </div>
-            </CardContent>
-          </Card>
+              {/* Decrypt Section */}
+              <Card className="bg-transparent border-gray-200">            <CardHeader>
+                  <CardTitle>Decrypt</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Your encrypted text:</Label>
+                    <Textarea
+                      name="decrypt"
+                      value={textToDecrypt}
+                      onChange={(e) => {
+                        setTextToDecrypt(e.target.value)
+                        decrypt(e.target.value, decryptKey, decryptAlgo)
+                      }}
+                      placeholder="Enter text to decrypt"
+                      className="font-sans text-sm leading-relaxed bg-transparent border-gray-200 min-h-[100px] resize-none overflow-hidden"
+                    />
+                  </div>
 
-          {/* Decrypt Section */}
-          <Card className="bg-transparent border-gray-200">            <CardHeader>
-              <CardTitle>Decrypt</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Your encrypted text:</Label>
-                <Textarea
-                  name="decrypt"
-                  value={textToDecrypt}
-                  onChange={(e) => {
-                    setTextToDecrypt(e.target.value)
-                    decrypt(e.target.value, decryptKey, decryptAlgo)
-                  }}
-                  placeholder="Enter text to decrypt"
-                  className="font-sans text-sm leading-relaxed bg-transparent border-gray-200 min-h-[100px] resize-none overflow-hidden"
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label>Your secret key:</Label>
+                    <Input
+                      value={decryptKey}
+                      onChange={(e) => {
+                        setDecryptKey(e.target.value)
+                        decrypt(textToDecrypt, e.target.value, decryptAlgo)
+                      }}
+                      placeholder="Enter secret key"
+                      className="font-sans bg-transparent border-gray-200"
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <Label>Your secret key:</Label>
-                <Input
-                  value={decryptKey}
-                  onChange={(e) => {
-                    setDecryptKey(e.target.value)
-                    decrypt(textToDecrypt, e.target.value, decryptAlgo)
-                  }}
-                  placeholder="Enter secret key"
-                  className="font-sans bg-transparent border-gray-200"
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label>Encryption algorithm:</Label>
+                    <Select
+                      value={decryptAlgo}
+                      onValueChange={(value: Algorithm) => {
+                        setDecryptAlgo(value)
+                        decrypt(textToDecrypt, decryptKey, value)
+                      }}
+                    >
+                      <SelectTrigger className="bg-transparent border-gray-200">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="AES">AES</SelectItem>
+                        <SelectItem value="TripleDES">TripleDES</SelectItem>
+                        <SelectItem value="Rabbit">Rabbit</SelectItem>
+                        <SelectItem value="RC4">RC4</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="space-y-2">
-                <Label>Encryption algorithm:</Label>
-                <Select
-                  value={decryptAlgo}
-                  onValueChange={(value: Algorithm) => {
-                    setDecryptAlgo(value)
-                    decrypt(textToDecrypt, decryptKey, value)
-                  }}
-                >
-                  <SelectTrigger className="bg-transparent border-gray-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="AES">AES</SelectItem>
-                    <SelectItem value="TripleDES">TripleDES</SelectItem>
-                    <SelectItem value="Rabbit">Rabbit</SelectItem>
-                    <SelectItem value="RC4">RC4</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Your decrypted text:</Label>
-                <Textarea value={decryptedText} readOnly className="font-sans bg-transparent border-gray-200" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  <div className="space-y-2">
+                    <Label>Your decrypted text:</Label>
+                    <Textarea value={decryptedText} readOnly className="font-sans bg-transparent border-gray-200" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
