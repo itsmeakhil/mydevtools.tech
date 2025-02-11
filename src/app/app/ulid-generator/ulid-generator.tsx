@@ -28,8 +28,8 @@ export default function ULIDGenerator({ initialQuantity = 1 }: ULIDGeneratorProp
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
+    <Card className="w-full max-w-4xl mx-auto">
+      <CardHeader className="justify-center items-center">
         <CardTitle className="text-3xl font-bold tracking-tight">ULID generator</CardTitle>
         <CardDescription>
           Generate random Universally Unique Lexicographically Sortable Identifier (ULID).
