@@ -43,7 +43,7 @@ export default function HashGenerator() {
   }
 
   return (
-    <div className="min-h-screen p-6 lg:ml-[var(--sidebar-width)] flex justify-center ">
+    <div className="min-h-screen p-6 flex justify-center ">
     <div className="container mx-auto p-4 max-w-3xl">
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">

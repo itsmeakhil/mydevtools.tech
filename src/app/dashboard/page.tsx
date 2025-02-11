@@ -13,7 +13,7 @@ const DashboardPage: React.FC = () => {
 
   return (
     
-    <div className="flex justify-center items-center h-screen ml-[var(--sidebar-width)]">
+    <div className="flex justify-center items-center h-screen ">
       <h1 style={{ fontSize: '3rem', fontWeight: 'bold' }}>Dashboard</h1>
       <p style={{ fontSize: '1.5rem' }} className='ml-10'>We are working on things!</p>
     </div>

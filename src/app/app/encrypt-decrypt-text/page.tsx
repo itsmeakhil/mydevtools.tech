@@ -116,7 +116,7 @@ export default function EncryptDecrypt() {
   }
 
   return (
-    <div className="min-h-screen p-6 lg:ml-[var(--sidebar-width)] flex justify-center">
+    <div className="min-h-screen p-6 flex justify-center">
       <div className="w-full max-w-5xl">
         <Card className="w-full m-2">
           <CardHeader>

@@ -34,7 +34,7 @@ export const TaskContainer = () => {
   });
 
   return (
-    <div className="flex justify-center items-center h-screen ml-[var(--sidebar-width)] font-sans">
+    <div className="flex justify-center items-center h-screen font-sans">
       <ScrollArea className="p-3">
         <div className="w-[700px] min-h-[600px] flex flex-col justify-between">
           <div className="space-y-4">

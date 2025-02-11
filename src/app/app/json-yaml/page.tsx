@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function JsonToYamlPage() {
   return (
-    <div className="grid place-items-center min-h-screen lg:ml-[var(--sidebar-width)]">
+    <div className="grid place-items-center min-h-screen ">
       <div className="w-full max-w-8xl px-8">
         <FormatConverter type="json-yaml" config={conversionConfigs["json-yaml"]} />
       </div>
