@@ -34,7 +34,8 @@ export const TaskContainer = () => {
   });
 
   return (
-    <div className="flex justify-center items-center h-screen font-sans">
+    <div className="flex justify-center h-auto font-sans">
+      <div className="border border-gray-300 rounded-md p-4 flex flex-col gap-4 bg-white mt-2 mb-3">
       <ScrollArea className="p-3">
         <div className="w-[700px] min-h-[600px] flex flex-col justify-between">
           <div className="space-y-4">
@@ -58,6 +59,7 @@ export const TaskContainer = () => {
           </div>
         </div>
       </ScrollArea>
+      </div>
     </div>
   );
 };
