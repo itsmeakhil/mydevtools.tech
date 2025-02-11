@@ -73,17 +73,17 @@ export default function TokenGenerator() {
   }, [generateToken])
 
   return (
-    <div className="p-6 flex justify-center ">
-    <Card className="w-full max-w-2xl mx-auto">
+    <div className="p-6 flex justify-center">
+    <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-3xl font-bold">Token generator</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-3xl font-bold mx-auto w-fit">Token generator</CardTitle>
+        <CardDescription className="mx-auto w-fit">
           Generate random string with the chars you want, uppercase or lowercase letters, numbers and/or symbols.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between max-w-[250px] ml-16">
             <label htmlFor="uppercase" className="text-sm font-medium">
               Uppercase (ABC...)
             </label>
@@ -93,7 +93,7 @@ export default function TokenGenerator() {
               onCheckedChange={(checked) => setChars((prev) => ({ ...prev, uppercase: checked }))}
             />
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between max-w-[250px] ml-16">
             <label htmlFor="numbers" className="text-sm font-medium">
               Numbers (123...)
             </label>
@@ -103,7 +103,7 @@ export default function TokenGenerator() {
               onCheckedChange={(checked) => setChars((prev) => ({ ...prev, numbers: checked }))}
             />
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between max-w-[250px] ml-16">
             <label htmlFor="lowercase" className="text-sm font-medium">
               Lowercase (abc...)
             </label>
@@ -113,7 +113,7 @@ export default function TokenGenerator() {
               onCheckedChange={(checked) => setChars((prev) => ({ ...prev, lowercase: checked }))}
             />
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between max-w-[250px] ml-16">
             <label htmlFor="symbols" className="text-sm font-medium">
               Symbols (!-;...)
             </label>

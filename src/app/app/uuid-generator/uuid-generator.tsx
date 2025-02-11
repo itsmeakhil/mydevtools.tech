@@ -70,10 +70,11 @@ export function UUIDGenerator() {
     <div className="min-h-screen bg-background text-foreground p-4">
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
+          <div className="flex justify-center items-center">
+            <div className='w-full text-center'>
                 <div className='flex justify-center items-center'>
-              <CardTitle className="text-2xl font-light mb-2">UUIDs generator</CardTitle>
+
+              <CardTitle className="text-2xl font-bold mb-2">UUIDs generator</CardTitle>
               </div>
               <CardDescription>Generate Universally Unique Identifiers (UUIDs) of various versions.</CardDescription>
             </div>
