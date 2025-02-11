@@ -99,7 +99,7 @@ export default function BcryptPage() {
   }
 
   return (
-    <div className="min-h-screen p-6 lg:ml-[var(--sidebar-width)]">
+    <div className="min-h-screen p-6 ">
       <div className="mx-auto max-w-3xl">
         <Card className="w-full">
           <CardHeader>

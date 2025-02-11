@@ -13,7 +13,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         <aside className="w-[var(--sidebar-width)] border-r p-4 flex flex-col">
           <div className="flex-1">
-            <AppSidebar />
+            <AppSidebar /> 
           </div>
           <div className="mt-auto flex justify-center">
             <ModeToggle />
@@ -21,11 +21,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </aside>
 
         {/* Updated main content area */}
-        <main className="flex-1 p-4 font-mono flex flex-col">
-          <div className="max-w-6xl mx-auto w-full h-full flex flex-col">
-            <div className="flex-1 flex flex-col gap-4">
-              {children}
-            </div>
+        <main className="flex-1 p-6 font-mono">
+          <div className="mx-auto w-full max-w-[1200px]">
+            {children}
           </div>
         </main>
       </div>

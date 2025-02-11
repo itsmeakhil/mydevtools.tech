@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function Home() {
     return (
-        <div className="min-h-screen p-6 lg:ml-[var(--sidebar-width)] flex justify-center ">
+        <div className="min-h-screen p-6 flex justify-center ">
       <main className="w-full max-w-2xl"> {/* Adjust width as needed */}
         <h1 className="text-4xl font-bold text-center mb-8">Fast & Simple URL Shortener</h1>
         <p className="text-center text-gray-600 mb-12">
