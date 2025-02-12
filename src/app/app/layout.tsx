@@ -22,7 +22,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
         <main className={`flex-1 pt-4 font-mono flex flex-col transition-all duration-300 ease-in-out ${state === 'collapsed' ? 'pl-0' : ''}`}>
           <div className="w-full h-full flex flex-col items-center">
-            <div className="w-full max-w-4xl px-4">
+            <div className="w-full max-w-5xl px-4">
               {children}
             </div>
           </div>

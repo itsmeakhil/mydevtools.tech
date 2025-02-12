@@ -73,7 +73,7 @@ export default function TokenGenerator() {
   }, [generateToken])
 
   return (
-    <div className="p-6 flex justify-center">
+    <div className="p-2 flex justify-center">
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
         <CardTitle className="text-3xl font-bold mx-auto w-fit">Token generator</CardTitle>
