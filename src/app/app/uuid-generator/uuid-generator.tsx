@@ -1,7 +1,7 @@
 "use client"
 
 import { toast } from 'sonner'
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useState } from "react"
 import { Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -27,7 +27,7 @@ export function UUIDGenerator() {
   const [name, setName] = useState("")
   const [uuids, setUuids] = useState<string[]>([])
 
-  const generateUUID = (version: UUIDVersion): string => {
+  const generateUUID = useCallback((version: UUIDVersion): string => {
     switch (version) {
       case "NIL":
         return "00000000-0000-0000-0000-000000000000"
@@ -46,14 +46,19 @@ export function UUIDGenerator() {
       default:
         return v4()
     }
-  }
+  }, [name, namespace])
 
-  const handleGenerate = () => {
+  const handleGenerate = useCallback(() => {
     const newUUIDs = Array(quantity)
       .fill(0)
       .map(() => generateUUID(version))
     setUuids(newUUIDs)
-  }
+  }, [quantity, version, generateUUID])
+
+  // Add useEffect to generate UUIDs on mount
+  useEffect(() => {
+    handleGenerate()
+  }, [handleGenerate])
 
   const handleCopy = useCallback(async () => {
     try {
@@ -151,7 +156,7 @@ export function UUIDGenerator() {
 
           <div className="flex gap-2">
             <Button onClick={handleGenerate} variant="default" size="sm">
-              Generate
+              Regenerate
             </Button>
             <Button onClick={handleCopy} variant="outline" size="sm">
               Copy

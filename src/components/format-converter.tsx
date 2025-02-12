@@ -79,7 +79,7 @@ export function FormatConverter({ type, config }: FormatConverterProps) {
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mt-2">
                 {config.outputLabel}
               </label>
               {output && (
