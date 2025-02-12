@@ -43,17 +43,19 @@ export default function HashGenerator() {
   }
 
   return (
-    <div className="min-h-screen p-6 flex justify-center ">
-    <div className="container mx-auto p-4 max-w-3xl">
+    <div className="min-h-screen p-2 flex justify-center ">
+    <div className="container mx-auto p-1 max-w-5xl">
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
+        <div className="flex justify-center w-full">
           <CardTitle className="text-3xl font-bold">Hash text</CardTitle>
+          </div>
           <Button variant="ghost" size="icon" onClick={() => setFavorite(!favorite)} className="hover:text-primary">
             <Heart className={favorite ? "fill-current" : ""} />
           </Button>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <p className="text-muted-foreground">
+        <CardContent className="space-y-6 text-">
+          <p className="text-muted-foreground text-center">
             Hash a text string using the function you need: MD5, SHA1, SHA256, SHA224, SHA512, SHA384, SHA3 or RIPEMD160
           </p>
 
