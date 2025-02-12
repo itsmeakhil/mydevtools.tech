@@ -28,6 +28,7 @@ import useAuth from "@/utils/useAuth";
 
 interface TaskContextType {
   tasks: Task[];
+  isLoading: boolean;
   currentPage: number;
   totalPages: number;
   fetchNextPage: () => void;
@@ -42,6 +43,7 @@ const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export function TaskProvider({ children }: { children: React.ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [lastDoc, setLastDoc] =
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -124,6 +126,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user || !user.uid) return;
 
+    setIsLoading(true);
     const q = query(
       collection(db, "tasks"),
       where("created_by", "==", user.uid),
@@ -141,6 +144,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         newPageCache.set(1, querySnapshot.docs[0]);
         setPageCache(newPageCache);
       }
+      setIsLoading(false);
     });
     return () => unsubscribe();
   }, [user]);
@@ -294,6 +298,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     <TaskContext.Provider
       value={{
         tasks,
+        isLoading,
         currentPage,
         totalPages,
         fetchNextPage,

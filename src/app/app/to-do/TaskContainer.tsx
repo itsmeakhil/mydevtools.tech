@@ -14,6 +14,7 @@ import { useTaskContext } from "@/app/app/to-do/context/TaskContext";
 export const TaskContainer = () => {
   const {
     tasks,
+    isLoading,
     currentPage,
     totalPages,
     fetchNextPage,
@@ -36,29 +37,31 @@ export const TaskContainer = () => {
   return (
     <div className="flex justify-center h-auto font-sans">
       <div className="border border-gray-300 rounded-md p-4 flex flex-col gap-4 bg-white mt-2 mb-3">
-      <ScrollArea className="p-3">
-        <div className="w-[700px] min-h-[600px] flex flex-col justify-between">
-          <div className="space-y-4">
-            {/* <h1 className="text-2xl font-bold text-center">To-Do</h1> */}
-            <TaskForm onAddTask={addTask} />
-            <TaskList
-              tasks={sortedTasks}
-              onUpdateStatus={updateTaskStatus}
-              onDeleteTask={deleteTask}
-            />
+        <ScrollArea className="p-2">
+          <div className="w-[900px] min-h-[600px] flex flex-col justify-between">
+            <div className="space-y-4">
+              <TaskForm onAddTask={addTask} />
+              <div className="min-h-[400px]"> {/* Add fixed minimum height */}
+                <TaskList
+                  tasks={sortedTasks}
+                  isLoading={isLoading}
+                  onUpdateStatus={updateTaskStatus}
+                  onDeleteTask={deleteTask}
+                />
+              </div>
+            </div>
+            
+            <div className="mt-1">
+              <PaginationDemo
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onNextPage={fetchNextPage}
+                onPreviousPage={fetchPreviousPage}
+                onPageChange={handlePageChange}
+              />
+            </div>
           </div>
-          
-          <div className="mt-1">
-            <PaginationDemo
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onNextPage={fetchNextPage}
-              onPreviousPage={fetchPreviousPage}
-              onPageChange={handlePageChange}
-            />
-          </div>
-        </div>
-      </ScrollArea>
+        </ScrollArea>
       </div>
     </div>
   );
