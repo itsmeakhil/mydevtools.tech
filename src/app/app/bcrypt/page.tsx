@@ -99,21 +99,22 @@ export default function BcryptPage() {
   }
 
   return (
-    <div className="min-h-screen p-6 ">
-      <div className="mx-auto max-w-3xl">
+    <div className="min-h-screen p-4 ">
+      <div className="mx-auto max-w-5xl">
         <Card className="w-full">
-          <CardHeader>
+          {/* <CardHeader>
             <CardTitle>Bcrypt</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          </CardHeader> */}
+          <CardContent className="space-y-4 pt-4">
             <div className="flex items-center justify-between">
-              <h1 className="text-4xl font-bold">Bcrypt</h1>
+              <div className="flex justify-center"></div>
+              <h1 className="text-4xl font-bold ">Bcrypt</h1>
               <Button variant="ghost" size="icon" onClick={() => setIsFavorite(!isFavorite)} className="hover:text-primary">
                 <Heart className={isFavorite ? "fill-current" : ""} />
               </Button>
             </div>
 
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-center">
               Hash and compare text string using bcrypt. Bcrypt is a password-hashing function based on the Blowfish cipher.
             </p>
 

@@ -116,9 +116,9 @@ export default function EncryptDecrypt() {
   }
 
   return (
-    <div className="min-h-screen p-6 flex justify-center">
+    <div className="h-auto p-2 flex justify-center">
       <div className="w-full max-w-5xl">
-        <Card className="w-full m-2">
+        <Card className="w-full m-1">
           <CardHeader>
             <CardTitle className="text-3xl font-bold text-center">
               Encrypt / decrypt text
@@ -128,7 +128,7 @@ export default function EncryptDecrypt() {
             </p>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-6 md:grid-cols-2 mt-6">
+            <div className="grid gap-6 md:grid-cols-2 mt-2">
               {/* Encrypt Section */}
               <Card className="bg-transparent  border-gray-200">
                 <CardHeader>
