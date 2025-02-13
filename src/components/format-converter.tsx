@@ -72,7 +72,7 @@ export function FormatConverter({ type, config }: FormatConverterProps) {
             </label>
             <Textarea
               placeholder={config.inputPlaceholder}
-              className="font-mono min-h-[450px] resize-none"
+              className="font-mono min-h-[470px] resize-none"
               value={input}
               onChange={(e) => setInput(e.target.value)}
             />
@@ -92,7 +92,7 @@ export function FormatConverter({ type, config }: FormatConverterProps) {
             <Textarea
               readOnly
               placeholder={config.outputPlaceholder}
-              className="font-mono min-h-[450px] resize-none"
+              className="font-mono min-h-[470px] resize-none"
               value={error || output}
             />
           </div>
