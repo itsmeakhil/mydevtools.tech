@@ -55,7 +55,7 @@ export function FormatConverter({ type, config }: FormatConverterProps) {
   return (
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-8">
-        <div>
+        <div className="flex flex-col items-center flex-grow text-center">
           <CardTitle className="text-2xl font-bold">{config.title}</CardTitle>
           <CardDescription>{config.description}</CardDescription>
         </div>
@@ -72,7 +72,7 @@ export function FormatConverter({ type, config }: FormatConverterProps) {
             </label>
             <Textarea
               placeholder={config.inputPlaceholder}
-              className="font-mono min-h-[400px] resize-none"
+              className="font-mono min-h-[450px] resize-none"
               value={input}
               onChange={(e) => setInput(e.target.value)}
             />
@@ -92,7 +92,7 @@ export function FormatConverter({ type, config }: FormatConverterProps) {
             <Textarea
               readOnly
               placeholder={config.outputPlaceholder}
-              className="font-mono min-h-[400px] resize-none"
+              className="font-mono min-h-[450px] resize-none"
               value={error || output}
             />
           </div>
