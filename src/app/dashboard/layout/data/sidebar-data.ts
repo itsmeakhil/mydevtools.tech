@@ -23,7 +23,7 @@ import {
   IconBookmarks,
   IconCodeDots
 } from '@tabler/icons-react'
-import {Command, } from 'lucide-react'
+// import {Command, } from 'lucide-react'
 import { type SidebarData } from '../types'
 
 export const sidebarData: SidebarData = {
@@ -32,13 +32,6 @@ export const sidebarData: SidebarData = {
     email: 'User@gmail.com',
     avatar: '/avatars/shadcn.jpg',
   },
-  teams: [
-    {
-      name: 'My Dev Tools',
-      logo: Command,
-      plan: 'toolkit for developers',
-    },],
-
   navGroups: [
     {
       title: 'General Tools',
