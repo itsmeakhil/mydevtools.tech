@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/sidebar'
 import { NavGroup } from './nav-group'
 import { NavUser } from './nav-user'
-import { Command } from 'lucide-react'
+import { Wrench } from 'lucide-react'
 import { sidebarData } from './data/sidebar-data'
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth'
 import { auth } from '../../../database/firebase'
@@ -54,7 +54,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           className="flex items-center space-x-3 px-3 py-2 transition-all duration-200 hover:cursor-pointer hover:bg-accent/50 rounded-md bg-accent/20"
           onClick={() => router.push('/dashboard')}
         >
-          <Command className="h-8 w-8 text-primary hover:scale-105 transition-transform duration-200" />
+          <Wrench className="h-8 w-8 text-primary hover:scale-105 transition-transform duration-200" />
           <div>
         <h2 className="text-lg font-semibold tracking-tight text-primary/90 drop-shadow-sm">MyDevTools</h2>
         <p className="text-xs text-muted-foreground/70 font-medium tracking-wide">Developer&apos;s Toolkit</p>
