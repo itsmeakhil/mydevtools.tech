@@ -49,7 +49,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [])
 
   return (
-    <Sidebar collapsible='icon' variant='floating' className="z-50" {...props}>
+    <Sidebar collapsible='icon' variant='floating' {...props}>
       {state !== 'collapsed' && (
         <SidebarHeader className="border-b border-border/40 pb-3">
           <div 
