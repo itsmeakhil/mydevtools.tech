@@ -2,7 +2,7 @@
 import React from 'react';
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "../dashboard/layout/app-sidebar";
-import { ModeToggle } from "@/components/modeToggle";
+import { NavBar } from '@/components/nav-bar';
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { state } = useSidebar();
@@ -15,12 +15,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           <div className="flex-1">
             <AppSidebar />
           </div>
-          <div className="mt-auto flex justify-center">
-            <ModeToggle />
-          </div>
         </aside>
 
-        <main className={`flex-1 pt-4 font-mono flex flex-col transition-all duration-300 ease-in-out ${state === 'collapsed' ? 'pl-0' : ''}`}>
+        <main className={`flex-1 pt-1 font-mono flex flex-col transition-all duration-300 ease-in-out ${state === 'collapsed' ? 'pl-0' : ''}`}>
+          <NavBar/>
           <div className="w-full h-full flex flex-col items-center">
             <div className="w-full max-w-5xl px-4">
               {children}

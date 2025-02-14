@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function XmlToJsonPage() {
   return (
-    <div className="grid justify-items-center min-h-auto align-items: normal mt-8 ">
+    <div className="grid justify-items-center min-h-auto align-items: normal mt-4 ">
       <div className="w-full max-w-8xl px-8">
         <FormatConverter type="xml-json" config={conversionConfigs["xml-json"]} />
       </div>

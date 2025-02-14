@@ -1,32 +1,39 @@
 "use client";
 
-// import { getAuth, signOut as firebaseSignOut } from "firebase/auth";
-// import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import useAuth from "@/utils/useAuth";
 import { TaskProvider } from "@/app/app/to-do/context/TaskContext";
 import { TaskContainer } from "@/app/app/to-do/TaskContainer";
+import { useEffect } from 'react';
 
 export default function Home() {
   const user = useAuth();
-  // const auth = getAuth();
-  // const router = useRouter();
+  const router = useRouter();
 
-  // const handleSignOut = async () => {
-  //   try {
-  //     await firebaseSignOut(auth);
-  //     router.push('/login');
-  //   } catch (error) {
-  //     console.error('Error signing out:', error);
-  //   }
-  // };
+  useEffect(() => {
+    // Only redirect if we're certain there's no user
+    const timer = setTimeout(() => {
+      if (user === null) {
+        router.push('/login');
+      }
+    }, 1000); // Add a small delay to prevent immediate redirects
 
-  if (!user) {
+    return () => clearTimeout(timer);
+  }, [user, router]);
+
+  // Show loading state while checking auth
+  if (user === undefined) {
+    return <div>Loading...</div>;
+  }
+
+  // Show nothing if not authenticated
+  if (user === null) {
     return null;
   }
 
   return (
     <TaskProvider>
-      <TaskContainer  />
+      <TaskContainer />
     </TaskProvider>
   );
 }

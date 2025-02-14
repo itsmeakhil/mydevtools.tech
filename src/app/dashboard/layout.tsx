@@ -1,7 +1,8 @@
 import React from 'react';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./layout/app-sidebar";
-import { ModeToggle } from "@/components/modeToggle";
+import { NavBar } from '@/components/nav-bar';
+// import { ModeToggle } from "@/components/modeToggle";
 
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -15,13 +16,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex-1">
             <AppSidebar /> 
           </div>
-          <div className="mt-auto flex justify-center">
+          {/* <div className="mt-auto flex justify-center">
             <ModeToggle />
-          </div>
+          </div> */}
         </aside>
 
         {/* Updated main content area */}
-        <main className="flex-1 p-6 font-mono">
+        <main className="flex-1 p-6 font-mono ">
+          <NavBar/>
           <div className="mx-auto w-full max-w-[1200px]">
             {children}
           </div>
