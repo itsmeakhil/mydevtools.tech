@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Github, Search } from "lucide-react"
+import { Github, Home, Search } from "lucide-react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 
 import { Button } from "@/components/ui/button"
@@ -10,12 +10,15 @@ import { ModeToggle } from "./modeToggle"
 
 export function NavBar() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center pr-4">
+    <header className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center pr-4 pl-4">
         <div className="flex items-center gap-2 md:gap-4">
           <SidebarTrigger className="h-8 w-8 md:h-9 md:w-9" />
-          <Button variant="ghost" size="sm" className="hidden md:flex" asChild>
-            <Link href="/dashboard">Dashboard</Link>
+          <Button variant="ghost" size="icon" className="hidden h-10 w-10 md:flex md:h-11 md:w-11" asChild>
+            <Link href="/dashboard">
+              <Home className="h-6 w-6 md:h-7 md:w-7" />
+              <span className="sr-only">Home</span>
+            </Link>
           </Button>
         </div>
 
