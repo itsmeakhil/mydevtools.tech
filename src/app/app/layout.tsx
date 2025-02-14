@@ -2,7 +2,6 @@
 import React from 'react';
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "../dashboard/layout/app-sidebar";
-import { ModeToggle } from "@/components/modeToggle";
 import { NavBar } from '@/components/nav-bar';
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
@@ -15,9 +14,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         <aside className={`${state === 'collapsed' ? 'w-[var(--sidebar-width-icon)]' : 'w-[var(--sidebar-width)]'} ${state === 'collapsed' ? '' : 'border-r'} p-4 flex flex-col`}>
           <div className="flex-1">
             <AppSidebar />
-          </div>
-          <div className="mt-auto flex justify-center">
-            <ModeToggle />
           </div>
         </aside>
 
