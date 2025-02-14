@@ -1,6 +1,7 @@
 import React from 'react';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./layout/app-sidebar";
+import { NavBar } from '@/components/nav-bar';
 // import { ModeToggle } from "@/components/modeToggle";
 
 
@@ -22,6 +23,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Updated main content area */}
         <main className="flex-1 p-6 font-mono ">
+          <NavBar/>
           <div className="mx-auto w-full max-w-[1200px]">
             {children}
           </div>
