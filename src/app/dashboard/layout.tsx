@@ -21,7 +21,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </aside>
 
         {/* Updated main content area */}
-        <main className="flex-1 p-6 font-mono">
+        <main className="flex-1 p-6 font-mono ">
           <div className="mx-auto w-full max-w-[1200px]">
             {children}
           </div>
