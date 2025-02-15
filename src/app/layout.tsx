@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-// import { GeistSans, GeistMono } from 'geist/font';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Toaster } from 'sonner'
@@ -38,20 +37,17 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={cn(
       geistMono.variable
     )}>
-      <body className="min-h-screen bg-background font-sans antialiased">
-        {/* <main className="flex-1 "> */}
+      <body suppressHydrationWarning className="min-h-screen bg-background font-sans antialiased">
         <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
-        {children}
-        
-        <Analytics />
-        <SpeedInsights />
-        <Toaster />
-        {/* </main> */}
+          {children}
+          <Analytics />
+          <SpeedInsights />
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>
