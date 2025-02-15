@@ -1,29 +1,11 @@
 import {
-  // IconBarrierBlock,
-  // IconBrowserCheck,
-  // IconBug,
+
   IconChecklist,
-  // IconError404,
-  // IconHelp,
-  // IconLayoutDashboard,
-  // IconLock,
   IconLockAccess,
-  // IconMessages,
-  // IconNotification,
-  // IconPackages,
-  // IconPalette,
-  // IconServerOff,
-  // IconSettings,
-  // IconTool,
-  // IconUserCog,
-  // IconUserOff,
-  // IconUsers,
-  // IconJson,
   IconUnlink,
   IconBookmarks,
   IconCodeDots
 } from '@tabler/icons-react'
-// import {Command, } from 'lucide-react'
 import { type SidebarData } from '../types'
 
 export const sidebarData: SidebarData = {
@@ -36,11 +18,6 @@ export const sidebarData: SidebarData = {
     {
       title: 'General Tools',
       items: [
-        // {
-        //   title: 'Dashboar',
-        //   url: '/',
-        //   icon: IconLayoutDashboard,
-        // },
         {
           title: 'Tasks',
           url: '/app/to-do',
