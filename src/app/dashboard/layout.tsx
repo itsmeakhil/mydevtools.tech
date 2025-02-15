@@ -1,34 +1,7 @@
+'use client'
 import React from 'react';
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "./layout/app-sidebar";
-import { NavBar } from '@/components/nav-bar';
-// import { ModeToggle } from "@/components/modeToggle";
-
+import { ClientLayout } from './layout/client-layout';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return (
-    <SidebarProvider>
-      {/* <Header/> */}
-      <div className="flex h-screen font-mono w-full">
-        {/* Sidebar with ModeToggle */}
-
-        <aside className="w-[var(--sidebar-width)] border-r p-4 flex flex-col">
-          <div className="flex-1">
-            <AppSidebar /> 
-          </div>
-          {/* <div className="mt-auto flex justify-center">
-            <ModeToggle />
-          </div> */}
-        </aside>
-
-        {/* Updated main content area */}
-        <main className="flex-1 p-1 font-mono ">
-          <NavBar/>
-          <div className="mx-auto w-full max-w-[1200px]">
-            {children}
-          </div>
-        </main>
-      </div>
-    </SidebarProvider>
-  )
+  return <ClientLayout>{children}</ClientLayout>;
 }
