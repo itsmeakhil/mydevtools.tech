@@ -38,20 +38,17 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={cn(
       geistMono.variable
     )}>
-      <body className="min-h-screen bg-background font-sans antialiased">
-        {/* <main className="flex-1 "> */}
+      <body suppressHydrationWarning className="min-h-screen bg-background font-sans antialiased">
         <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
-        {children}
-        
-        <Analytics />
-        <SpeedInsights />
-        <Toaster />
-        {/* </main> */}
+          {children}
+          <Analytics />
+          <SpeedInsights />
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

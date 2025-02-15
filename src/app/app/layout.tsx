@@ -1,4 +1,3 @@
-"use client"
 import React from 'react';
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "../dashboard/layout/app-sidebar";
