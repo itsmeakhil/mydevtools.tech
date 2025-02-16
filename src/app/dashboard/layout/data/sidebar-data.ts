@@ -7,7 +7,6 @@ import {
   // IconHelp,
   // IconLayoutDashboard,
   // IconLock,
-  IconLockAccess,
   // IconMessages,
   // IconNotification,
   // IconPackages,
