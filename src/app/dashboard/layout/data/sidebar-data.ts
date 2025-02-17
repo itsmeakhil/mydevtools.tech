@@ -138,6 +138,11 @@ export const sidebarData: SidebarData = {
               title: 'URL Parser',
               url: '/app/url-parser',
             },
+            {
+              title: 'Device Information',
+              url: '/app/device-info',
+            },
+
             
             
             
