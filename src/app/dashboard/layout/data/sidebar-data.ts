@@ -101,10 +101,6 @@ export const sidebarData: SidebarData = {
               url: '/app/toml-json',
             },
 
-            // {
-            //   title: 'TOML to JSON',
-            //   url: '/app/toml-json',
-            // },
             {
               title: 'TOML to YAML',
               url: '/app/toml-yaml',
