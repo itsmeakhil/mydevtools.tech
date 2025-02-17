@@ -1,10 +1,11 @@
 import {
-
   IconChecklist,
   IconLockAccess,
   IconUnlink,
   IconBookmarks,
-  IconCodeDots
+  IconCodeDots,
+  IconArrowsExchange,
+  IconTool
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
@@ -46,7 +47,7 @@ export const sidebarData: SidebarData = {
       items: [
         {
           title: 'Util Tools',
-          icon: IconLockAccess,
+          icon: IconTool,
           items: [
             {
               title: 'UUID Generator',
@@ -78,7 +79,7 @@ export const sidebarData: SidebarData = {
         },
         {
           title: 'Converters',
-          icon: IconLockAccess,
+          icon: IconArrowsExchange,
           items: [
             {
               title: 'JSON to XML',
