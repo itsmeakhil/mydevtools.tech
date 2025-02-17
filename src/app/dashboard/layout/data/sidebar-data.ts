@@ -122,6 +122,23 @@ export const sidebarData: SidebarData = {
             
           ],
         },
+        {
+          title: 'Web ',
+          icon: IconLockAccess,
+          items: [
+            {
+              title: 'Url Encoder',
+              url: '/app/url-encoder',
+            },
+            {
+              title: 'Escape HTML Entities',
+              url: '/app/html-entity-converter',
+            },
+            
+            
+            
+          ],
+        }
         // {
         //   title: 'Converters',
         //   icon: IconBug,
