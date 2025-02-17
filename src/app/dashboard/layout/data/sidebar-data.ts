@@ -4,9 +4,13 @@ import {
   IconLockAccess,
   IconUnlink,
   IconBookmarks,
-  IconCodeDots
+  IconCodeDots,
+  IconAppWindow
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
+
+// import {app-window } from 'lucide-react'
+
 
 export const sidebarData: SidebarData = {
   user: {
@@ -124,7 +128,7 @@ export const sidebarData: SidebarData = {
         },
         {
           title: 'Web ',
-          icon: IconLockAccess,
+          icon: IconAppWindow,
           items: [
             {
               title: 'Encode/Decode URL',
