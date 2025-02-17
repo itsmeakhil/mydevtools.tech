@@ -1,37 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🔐 MyDevTools Suite
 
-## Getting Started
 
-First, run the development server:
+[![Feature Requests](https://img.shields.io/badge/Feature_Requests-Open-brightgreen)](https://docs.google.com/forms/d/e/1FAIpQLSfrqN2WWGF6weA_hFPsce9U6wjUpvjZzIF7KZABYMvX4xRW3A/viewform?usp=header)
+
+A modern web application featuring essential tools, secure bookmark management, and intelligent task organization with URL support and many more tp come.
+
+
+## ✨ Features
+- **🚀 Apps**
+  - ToDo 
+  - URL Shortner
+  - Notes (**Coming Soon**)
+  - Bookmarks Manager (**Coming Soon**)
+  - Json Editor (**Coming Soon**)
+
+- **🔒 Encryption Tools**
+  - Real-time Encrypt / Decrypt (AES, TripleDES, Rabbit & RC4 algorithms)
+  - Token Generator
+  - Hash Generator
+  - Bcrypt Hash
+  - UUID Generator
+  - ULID Generator
+
+
+- **⚒ Data Converters**
+  - JSON to XML
+  - JSON to TOML
+  - JSON to YAML
+  - TOML to JSON
+  - TOML to YAML
+  - XML to JSON
+  - YAML to JSON
+  - YAML to TOML
+
+- **✅ Intelligent Todo System**
+  - Link attachments with validation
+  - Priority status tracking
+  - Edit-in-place functionality
+  - Paginated history
+
+- **📑 Smart Bookmarks(Coming Soon...)**
+  - Local storage with encryption
+  - Tagging and advanced search
+  - URL validation and previews
+  - Bulk operations
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+
+- npm 9+
+- Git
 
 ```bash
+# Clone repository
+git clone https://github.com/itsmeakhil/mydevtools.tech.git
+
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠 Build Commands
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Command         | Description                          |
+|-----------------|--------------------------------------|
+| `npm run dev`   | Start development server            |
+| `npm run build` | Create production build             |
+| `npm run start` | Start production server            |
+| `npm run lint`  | Analyze code quality                |
+| `npm run format`| Format code with Prettier           |
+| `npm run check` | TypeScript type checking            |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🌟 Roadmap 2025
 
-## Learn More
+### Q1 2025
+- 🔧 Util Applications
+- 📋 Notes 
+- 📑 Bookmarks Manager
 
-To learn more about Next.js, take a look at the following resources:
+### Q2 2025
+- {} Json Viewer 
+- 🔧 Util Applications
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Q3 2025
+- ☁️ Cloud Storage
+- 🛡 Browser extension
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Q4 2025
+- 🤖 AI-powered Applications
+- 🌐 Public API (v1)
 
-## Deploy on Vercel
+### Future Vision
+- 🔑 Hardware key authentication
+- 🎨 Custom theme engine
+- 📊 Usage analytics dashboard
+- 🤞🏻 Full functional one to go solutions for Devs
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 💡 Feature Requests
+We value your ideas! [Suggest a feature](https://docs.google.com/forms/d/e/1FAIpQLSfrqN2WWGF6weA_hFPsce9U6wjUpvjZzIF7KZABYMvX4xRW3A/viewform?usp=header) that could make this tool better for everyone.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# to-do-app-nextjs
+## 🧑💻 Contributors
+<a href="https://github.com/itsmeakhil/mydevtools.tech/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=itsmeakhil/mydevtools.tech" />
+</a>
+
+## 📄 License
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
+
