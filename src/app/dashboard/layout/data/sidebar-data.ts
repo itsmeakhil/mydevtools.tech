@@ -127,12 +127,16 @@ export const sidebarData: SidebarData = {
           icon: IconLockAccess,
           items: [
             {
-              title: 'Url Encoder',
+              title: 'Encode/Decode URL',
               url: '/app/url-encoder',
             },
             {
               title: 'Escape HTML Entities',
               url: '/app/html-entity-converter',
+            },
+            {
+              title: 'URL Parser',
+              url: '/app/url-parser',
             },
             
             
