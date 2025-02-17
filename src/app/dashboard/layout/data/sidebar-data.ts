@@ -1,30 +1,12 @@
 import {
-  // IconBarrierBlock,
-  // IconBrowserCheck,
-  // IconBug,
   IconChecklist,
-  // IconError404,
-  // IconHelp,
-  // IconLayoutDashboard,
-  // IconLock,
-  // IconMessages,
-  // IconNotification,
-  // IconPackages,
-  // IconPalette,
-  // IconServerOff,
-  // IconSettings,
-  // IconTool,
-  // IconUserCog,
-  // IconUserOff,
-  // IconUsers,
-  // IconJson,
+  IconLockAccess,
   IconUnlink,
   IconBookmarks,
   IconCodeDots,
   IconArrowsExchange,
   IconTool
 } from '@tabler/icons-react'
-// import {Command, } from 'lucide-react'
 import { type SidebarData } from '../types'
 
 export const sidebarData: SidebarData = {
@@ -37,11 +19,6 @@ export const sidebarData: SidebarData = {
     {
       title: 'General Tools',
       items: [
-        // {
-        //   title: 'Dashboar',
-        //   url: '/',
-        //   icon: IconLayoutDashboard,
-        // },
         {
           title: 'Tasks',
           url: '/app/to-do',
@@ -146,6 +123,27 @@ export const sidebarData: SidebarData = {
             
           ],
         },
+        {
+          title: 'Web ',
+          icon: IconLockAccess,
+          items: [
+            {
+              title: 'Encode/Decode URL',
+              url: '/app/url-encoder',
+            },
+            {
+              title: 'Escape HTML Entities',
+              url: '/app/html-entity-converter',
+            },
+            {
+              title: 'URL Parser',
+              url: '/app/url-parser',
+            },
+            
+            
+            
+          ],
+        }
         // {
         //   title: 'Converters',
         //   icon: IconBug,
