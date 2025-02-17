@@ -1,10 +1,9 @@
 import {
   IconChecklist,
-  IconLockAccess,
   IconUnlink,
   IconBookmarks,
   IconCodeDots,
-  IconAppWindow
+  IconAppWindow,
   IconArrowsExchange,
   IconTool
 } from '@tabler/icons-react'
