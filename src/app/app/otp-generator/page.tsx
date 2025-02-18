@@ -124,7 +124,7 @@ export default function OTPGenerator() {
     <div className="container mx-auto p-4 max-w-5xl">
       <Card className="bg-background">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-3xl text-center">OTP code generator</CardTitle>
+          <CardTitle className="text-3xl text-center">OTP Code Generator</CardTitle>
           <CardDescription className="text-center">
             Generate and validate time-based OTP (one time password) for multi-factor authentication.
           </CardDescription>

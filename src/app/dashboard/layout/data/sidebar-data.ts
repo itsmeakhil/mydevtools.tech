@@ -150,6 +150,11 @@ export const sidebarData: SidebarData = {
               title: 'JWT Parser',
               url: '/app/jwt-parser',
             },
+            {
+              title: 'HTTP Status Codes',
+              url: '/app/http-status-codes',
+            },
+
           ],
         }
         // {
