@@ -27,7 +27,7 @@ export default function OTPGenerator() {
   const { toast } = useToast()
 
   const regenerateSecret = useCallback(() => {
-    // Generate new secret
+ 
     const newSecret = authenticator.generateSecret()
     setSecret(newSecret)
 
