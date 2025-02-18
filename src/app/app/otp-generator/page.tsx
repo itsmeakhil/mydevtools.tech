@@ -51,8 +51,6 @@ export default function OTPGenerator() {
     const currentEpoch = Math.floor(now / 1000)
     const currentCounter = Math.floor(currentEpoch / 30)
     
-    setEpoch(currentEpoch.toString())
-
     try {
       // Previous window
       authenticator.options = { epoch: (currentCounter - 1) * 30 * 1000 }
@@ -84,14 +82,18 @@ export default function OTPGenerator() {
     let animationFrameId: number
 
     const animate = () => {
-      const currentEpoch = Math.floor(Date.now() / 1000)
+      const now = Date.now()
+      const currentEpoch = Math.floor(now / 1000)
       const secondsInWindow = currentEpoch % 30
-      const millisecondsOffset = Date.now() % 1000
+      const millisecondsOffset = now % 1000
 
+      // Update epoch continuously
+      setEpoch(currentEpoch.toString())
+      
       // Calculate progress (0-100)
       const newProgress = ((secondsInWindow * 1000 + millisecondsOffset) / (30 * 1000)) * 100
       setProgress(newProgress)
-      setTimeLeft(30 - secondsInWindow)
+      setTimeLeft(29 - secondsInWindow)
 
       // Generate new OTPs when we cross the 30-second boundary
       if (secondsInWindow === 0 && millisecondsOffset < 50) {
@@ -101,7 +103,7 @@ export default function OTPGenerator() {
       animationFrameId = requestAnimationFrame(animate)
     }
 
-    generateOTPs() // Initial generationn
+    generateOTPs() // Initial generation
     animationFrameId = requestAnimationFrame(animate)
 
     return () => {
@@ -230,7 +232,7 @@ export default function OTPGenerator() {
                   window.open(`otpauth://totp/Example:user@example.com?secret=${secret}&issuer=Example`, "_blank")
                 }
               >
-                Open Key URI in new tab
+                Open Key URL in new tab
               </Button>
             </div>
           </div>
