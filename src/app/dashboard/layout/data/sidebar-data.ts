@@ -146,6 +146,10 @@ export const sidebarData: SidebarData = {
               title: 'OTP Generator',
               url: '/app/otp-generator',
             },
+            {
+              title: 'JWT Parser',
+              url: '/app/jwt-parser',
+            },
           ],
         }
         // {
