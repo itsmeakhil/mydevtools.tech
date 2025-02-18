@@ -31,7 +31,6 @@ export default function OTPGenerator() {
     const newSecret = authenticator.generateSecret()
     setSecret(newSecret)
 
-    // Convert base32 to hex
     const base32Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
     const binary = newSecret
       .split("")
