@@ -101,7 +101,7 @@ export default function OTPGenerator() {
       animationFrameId = requestAnimationFrame(animate)
     }
 
-    generateOTPs() // Initial generation
+    generateOTPs() // Initial generationn
     animationFrameId = requestAnimationFrame(animate)
 
     return () => {
