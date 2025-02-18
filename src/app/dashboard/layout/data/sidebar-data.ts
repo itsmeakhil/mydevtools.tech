@@ -142,10 +142,10 @@ export const sidebarData: SidebarData = {
               title: 'Device Information',
               url: '/app/device-info',
             },
-
-            
-            
-            
+            {
+              title: 'OTP Generator',
+              url: '/app/otp-generator',
+            },
           ],
         }
         // {
