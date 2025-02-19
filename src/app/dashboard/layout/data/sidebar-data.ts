@@ -6,7 +6,8 @@ import {
   IconAppWindow,
   IconArrowsExchange,
   IconTool,
-  IconPhotoVideo
+  IconPhotoVideo,
+  IconBlocks
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
@@ -175,6 +176,23 @@ export const sidebarData: SidebarData = {
               title: ' Wifi QR Code Generator',
               url: '/app/wifi-qr-generator',
             },
+            
+            
+
+          ],
+        },
+        {
+          title: 'Development',
+          icon: IconBlocks,
+          items: [
+            {
+              title: 'Git Commands',
+              url: '/app/git-commands',
+            },
+            // {
+            //   title: ' Wifi QR Code Generator',
+            //   url: '/app/wifi-qr-generator',
+            // },
             
             
 
