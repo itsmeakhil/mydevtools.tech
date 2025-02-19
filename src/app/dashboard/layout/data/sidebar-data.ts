@@ -154,6 +154,10 @@ export const sidebarData: SidebarData = {
               title: 'HTTP Status Codes',
               url: '/app/http-status-codes',
             },
+            {
+              title: 'Json diff',
+              url: '/app/json-diff',
+            },
 
           ],
         }
