@@ -205,8 +205,8 @@ export default function JsonDiff() {
   }, [firstJson, secondJson, compareObjects, generateDiffOutput])
 
   return (
-    <div className="container mx-auto p-4">
-      <Card className="relative overflow-hidden rounded-xl border shadow-sm dark:bg-gray-900">
+    <div className="container mx-auto p-4 relative -z-10">
+      <Card className="relative overflow-hidden rounded-xl border shadow-sm dark:bg-gray-900 z-0">
         <div className="p-6">
           {/* Header Section */}
           <div className="relative mb-6">
