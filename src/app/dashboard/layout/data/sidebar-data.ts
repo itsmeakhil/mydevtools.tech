@@ -171,6 +171,10 @@ export const sidebarData: SidebarData = {
               title: 'QR Code Generator',
               url: '/app/qr-code-generator',
             },
+            {
+              title: ' Wifi QR Code Generator',
+              url: '/app/wifi-qr-generator',
+            },
             
             
 
