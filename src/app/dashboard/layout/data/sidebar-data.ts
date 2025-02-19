@@ -5,7 +5,8 @@ import {
   IconCodeDots,
   IconAppWindow,
   IconArrowsExchange,
-  IconTool
+  IconTool,
+  IconPhotoVideo
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
@@ -155,12 +156,27 @@ export const sidebarData: SidebarData = {
               url: '/app/http-status-codes',
             },
             {
-              title: 'Json diff',
+              title: 'Json Diff',
               url: '/app/json-diff',
             },
+            
+
+          ],
+        },
+        {
+          title: 'Images and Videos',
+          icon: IconPhotoVideo,
+          items: [
+            {
+              title: 'QR Code Generator',
+              url: '/app/qr-code-generator',
+            },
+            
+            
 
           ],
         }
+        
         // {
         //   title: 'Converters',
         //   icon: IconBug,
