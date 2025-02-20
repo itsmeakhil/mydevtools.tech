@@ -189,10 +189,10 @@ export const sidebarData: SidebarData = {
               title: 'Git Commands',
               url: '/app/git-commands',
             },
-            // {
-            //   title: ' Wifi QR Code Generator',
-            //   url: '/app/wifi-qr-generator',
-            // },
+            {
+              title: 'Crontab Generator',
+              url: '/app/crontab-generator',
+            },
             
             
 
