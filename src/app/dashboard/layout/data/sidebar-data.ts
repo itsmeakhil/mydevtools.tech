@@ -99,6 +99,10 @@ export const sidebarData: SidebarData = {
               url: '/app/json-yaml',
             },
             {
+              title: 'JSON to CSV',
+              url: '/app/json-csv',
+            },
+            {
               title: 'TOML to JSON',
               url: '/app/toml-json',
             },
@@ -120,6 +124,7 @@ export const sidebarData: SidebarData = {
               title: 'YAML to TOML',
               url: '/app/yaml-toml',
             },
+            
             
             
           ],
@@ -157,7 +162,7 @@ export const sidebarData: SidebarData = {
               url: '/app/http-status-codes',
             },
             {
-              title: 'Json Diff',
+              title: 'JSON Diff',
               url: '/app/json-diff',
             },
             
@@ -193,6 +198,7 @@ export const sidebarData: SidebarData = {
               title: 'Crontab Generator',
               url: '/app/crontab-generator',
             },
+            
             
             
 
