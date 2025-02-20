@@ -198,6 +198,10 @@ export const sidebarData: SidebarData = {
               title: 'Crontab Generator',
               url: '/app/crontab-generator',
             },
+            {
+              title: 'Chmod Calculator',
+              url: '/app/chmod-calculator',
+            },
             
             
             
