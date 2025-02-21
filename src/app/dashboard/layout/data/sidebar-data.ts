@@ -221,7 +221,10 @@ export const sidebarData: SidebarData = {
               title: 'IPv4 Subnet Calculator',
               url: '/app/ipv4-subnet-calculator',
             },
-            
+            {
+              title: 'IPv4 Address Calculator',
+              url: '/app/ipv4-address-calculator',
+            },
             
             
             
