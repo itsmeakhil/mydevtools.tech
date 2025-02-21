@@ -7,7 +7,8 @@ import {
   IconArrowsExchange,
   IconTool,
   IconPhotoVideo,
-  IconBlocks
+  IconBlocks,
+  IconNetwork
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
@@ -206,6 +207,21 @@ export const sidebarData: SidebarData = {
               title: 'Regex Cheatsheet',
               url: '/app/regex-cheatsheet',
             },
+            
+            
+            
+
+          ],
+        },
+        {
+          title: 'Network',
+          icon: IconNetwork,
+          items: [
+            {
+              title: 'IPv4 Subnet Calculator',
+              url: '/app/ipv4-subnet-calculator',
+            },
+            
             
             
             
