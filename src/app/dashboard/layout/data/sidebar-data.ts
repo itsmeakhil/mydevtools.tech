@@ -202,6 +202,10 @@ export const sidebarData: SidebarData = {
               title: 'Chmod Calculator',
               url: '/app/chmod-calculator',
             },
+            {
+              title: 'Regex Cheatsheet',
+              url: '/app/regex-cheatsheet',
+            },
             
             
             
