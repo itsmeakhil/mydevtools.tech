@@ -7,7 +7,8 @@ import {
   IconArrowsExchange,
   IconTool,
   IconPhotoVideo,
-  IconBlocks
+  IconBlocks,
+  IconNetwork
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
@@ -202,6 +203,21 @@ export const sidebarData: SidebarData = {
               title: 'Chmod Calculator',
               url: '/app/chmod-calculator',
             },
+            
+            
+            
+
+          ],
+        },
+        {
+          title: 'Network',
+          icon: IconNetwork,
+          items: [
+            {
+              title: 'IPv4 Subnet Calculator',
+              url: '/app/ipv4-subnet-calculator',
+            },
+            
             
             
             
