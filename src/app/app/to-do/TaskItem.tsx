@@ -31,11 +31,11 @@ export default function TaskItem({
   const getStatusColor = (status: Task["status"]) => {
     switch (status) {
       case "not-started":
-        return "bg-gray-200 dark:bg-gray-200 dark:text-black";
+        return "bg-gray-200 dark:bg-gray-700 dark:text-gray-300";
       case "ongoing":
-        return "bg-orange-200 dark:bg-orange-200 dark:text-black";
+        return "bg-orange-200 dark:bg-amber-700 dark:text-gray-300";
       case "completed":
-        return "bg-green-200 dark:bg-green-200 dark:text-black";
+        return "bg-green-200 dark:bg-green-700 dark:text-gray-300";
       default:
         return "";
     }
@@ -43,21 +43,20 @@ export default function TaskItem({
 
   return (
     <li
-      className={`flex items-center gap-4 mb-4 p-2 border rounded-sm transition-colors border-gray-300 dark:border-gray-300 ${getStatusColor(
-        task.status
-      )}`}
+      className={`flex items-center gap-4 mb-4 p-2 border rounded-md transition-colors 
+                  border-gray-300 dark:border-gray-600 ${getStatusColor(task.status)}`}
     >
       <span
         className={`flex-1 font-normal ${
           task.status === "completed"
-            ? "text-gray-500 line-through dark:text-gray-400" // Light gray text when completed
-            : "text-gray-900 dark:text-black" // Default text color
+            ? "text-gray-500 line-through dark:text-gray-300"
+            : "text-gray-900 dark:text-gray-100"
         }`}
       >
         {task.text}
       </span>
 
-      <p className="text-xs text-gray-600 dark:text-gray-600">
+      <p className="text-xs text-gray-600 dark:text-gray-400">
         {task.createdAt}
       </p>
 
@@ -69,30 +68,30 @@ export default function TaskItem({
         }
       >
         <SelectTrigger
-          className={`w-[150px] border-gray-400 dark:border-gray-400 dark:text-black ${getStatusColor(
+          className={`w-[150px] border-gray-300 dark:border-gray-500 dark:text-white ${getStatusColor(
             task.status
           )}`}
         >
           <SelectValue placeholder="Status" />
         </SelectTrigger>
 
-        {/* Dropdown Content Always White with Black Text in Both Modes */}
-        <SelectContent className="bg-white text-black border-gray-200 shadow-md rounded-lg">
+        {/* Dropdown Content with Improved Dark Mode Styling */}
+        <SelectContent className="bg-white dark:bg-gray-900 text-black dark:text-gray-300 border-gray-300 dark:border-gray-600 shadow-md rounded-lg">
           <SelectItem
             value="not-started"
-            className="!text-black hover:bg-gray-100 focus:bg-gray-100"
+            className="!text-black dark:!text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             Not Started
           </SelectItem>
           <SelectItem
             value="ongoing"
-            className="!text-black hover:bg-gray-100 focus:bg-gray-100"
+            className="!text-black dark:!text-gray-300 hover:bg-gray-100 dark:hover:bg-amber-700"
           >
             Ongoing
           </SelectItem>
           <SelectItem
             value="completed"
-            className="!text-black hover:bg-gray-100 focus:bg-gray-100"
+            className="!text-black dark:!text-gray-300 hover:bg-gray-100 dark:hover:bg-green-700"
           >
             Completed
           </SelectItem>

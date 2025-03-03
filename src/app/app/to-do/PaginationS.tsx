@@ -36,8 +36,8 @@ export default function PaginationDemo({
           <PaginationItem key={i}>
             <PaginationLink
               className="cursor-pointer bg-white text-black 
-                         dark:bg-white dark:text-black 
-                         hover:bg-gray-200 dark:hover:bg-gray-200 rounded-md px-3 py-1"
+                         hover:bg-gray-200 rounded-md px-3 py-1
+                         dark:bg-black dark:text-white dark:hover:bg-gray-800"
               isActive={i === currentPage}
               onClick={() => onPageChange(i)}
             >
@@ -59,13 +59,13 @@ export default function PaginationDemo({
   };
 
   return (
-    <Pagination className="bg-white dark:bg-white">
+    <Pagination className="bg-white dark:bg-black rounded-md p-2">
       <PaginationContent>
         <PaginationItem>
           <PaginationPrevious
             className="cursor-pointer bg-white text-black 
-                       dark:bg-white dark:text-black 
-                       hover:bg-gray-200 dark:hover:bg-gray-200 rounded-md px-3 py-1"
+                       hover:bg-gray-200 rounded-md px-3 py-1
+                       dark:bg-black dark:text-white dark:hover:bg-gray-800"
             onClick={onPreviousPage}
           />
         </PaginationItem>
@@ -73,8 +73,8 @@ export default function PaginationDemo({
         <PaginationItem>
           <PaginationNext
             className="cursor-pointer bg-white text-black 
-                       dark:bg-white dark:text-black 
-                       hover:bg-gray-200 dark:hover:bg-gray-200 rounded-md px-3 py-1"
+                       hover:bg-gray-200 rounded-md px-3 py-1
+                       dark:bg-black dark:text-white dark:hover:bg-gray-800"
             onClick={onNextPage}
           />
         </PaginationItem>

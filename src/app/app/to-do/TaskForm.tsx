@@ -31,9 +31,10 @@ export default function TaskForm({ onAddTask }: TaskFormProps) {
         value={newTask}
         onChange={(e) => setNewTask(e.target.value)}
         placeholder="Add a new task"
-        className="m-1 px-3 py-2 border rounded-md text-black dark:text-black 
-                   bg-white dark:bg-white border-gray-300 dark:border-gray-400 
-                   focus:ring focus:ring-gray-300 dark:focus:ring-gray-500"
+        className="m-1 px-3 py-2 border rounded-md text-black bg-white border-gray-300
+                   focus:ring focus:ring-gray-300 
+                   dark:text-white dark:bg-black dark:border-gray-500 
+                   dark:focus:ring-gray-600"
         onKeyDown={handleKeyDown}
       />
 
@@ -41,7 +42,9 @@ export default function TaskForm({ onAddTask }: TaskFormProps) {
       <Button
         onClick={handleAddTask}
         className="mt-1 px-4 py-2 rounded-md bg-black text-white 
-                   hover:bg-gray-900 dark:bg-black dark:hover:bg-gray-800"
+                   hover:bg-gray-900 
+                   dark:bg-white dark:text-black dark:hover:bg-gray-200 
+                   border border-gray-300 dark:border-gray-500"
       >
         Add Task
       </Button>
