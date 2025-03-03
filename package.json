@@ -11,8 +11,15 @@
     "clean-dev": "pnpm clean-install && pnpm dev"
   },
   "dependencies": {
+    "@editorjs/code": "^2.8.0",
+    "@editorjs/editorjs": "^2.28.0",
+    "@editorjs/header": "^2.7.0",
+    "@editorjs/list": "^1.8.0",
+    "@editorjs/paragraph": "^2.10.0",
+    "@editorjs/quote": "^2.5.0",
     "@firebase/firestore": "^4.7.5",
     "@iarna/toml": "^2.2.5",
+    "@radix-ui/react-alert-dialog": "^1.1.6",
     "@radix-ui/react-avatar": "^1.1.2",
     "@radix-ui/react-checkbox": "^1.1.4",
     "@radix-ui/react-collapsible": "^1.1.2",
