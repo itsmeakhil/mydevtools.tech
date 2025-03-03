@@ -8,183 +8,120 @@ import { NoteEditorProps } from './types';
 import type EditorJS from '@editorjs/editorjs';
 
 function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
-  const editorRef = useRef<EditorJS>(null);
+  const editorRef = useRef<EditorJS | null>(null);
+  interface EditorInstance {
+    EditorJS: typeof EditorJS;
+    tools: {
+      header: typeof import('@editorjs/header').default;
+      list: typeof import('@editorjs/list').default;
+      quote: typeof import('@editorjs/quote').default;
+      code: typeof import('@editorjs/code').default;
+      paragraph: typeof import('@editorjs/paragraph').default;
+    };
+  }
+  const editorInstanceRef = useRef<EditorInstance | null>(null); // Store the EditorJS class
   const [title, setTitle] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isEditorReady, setIsEditorReady] = useState<boolean>(false);
-  const [currentNoteId, setCurrentNoteId] = useState<string | null>(null);
+  const editorContainerId = 'editorjs';
   
   // Initialize Editor.js
   useEffect(() => {
-    let EditorJS: any;
+    let isMounted = true;
     
-    const initEditor = async () => {
-      if (typeof window === 'undefined') return;
-      
-      const EditorJSPackage = await import('@editorjs/editorjs');
-      EditorJS = EditorJSPackage.default;
-      
-      const Header = (await import('@editorjs/header')).default;
-      const List = (await import('@editorjs/list')).default;
-      const Quote = (await import('@editorjs/quote')).default;
-      const CodeTool = (await import('@editorjs/code')).default;
-      const Paragraph = (await import('@editorjs/paragraph')).default;
-
+    const initializeEditor = async () => {
       try {
-        // Destroy existing instance if it exists
+        // Clean up existing editor instance if it exists
         if (editorRef.current) {
           editorRef.current.destroy();
           editorRef.current = null;
         }
         
-        // Create new instance
-        const editor = new EditorJS({
-          holder: 'editorjs',
-          tools: {
-            header: Header,
-            list: List,
-            quote: Quote,
-            code: CodeTool,
-            paragraph: {
-              config: {
-                inlineToolbar: true,
-              },
-              class: Paragraph,
+        if (!isMounted) return;
+        
+        // Import necessary packages
+        if (!editorInstanceRef.current) {
+          const EditorJSPackage = await import('@editorjs/editorjs');
+          const Header = (await import('@editorjs/header')).default;
+          const List = (await import('@editorjs/list')).default;
+          const Quote = (await import('@editorjs/quote')).default;
+          const CodeTool = (await import('@editorjs/code')).default;
+          const Paragraph = (await import('@editorjs/paragraph')).default;
+          
+          editorInstanceRef.current = {
+            EditorJS: EditorJSPackage.default,
+            tools: {
+              header: Header,
+              list: List,
+              quote: Quote,
+              code: CodeTool,
+              paragraph: Paragraph
             }
-          },
-          placeholder: 'Start typing your note here...',
-          onReady: () => {
-            editorRef.current = editor;
-            setIsEditorReady(true);
-            
-            // If we have a currentNote already, load it now
-            if (currentNote) {
-              loadNoteContent();
-            }
-          },
-          autofocus: true,
-          data: currentNote?.content || {
-            time: Date.now(),
-            blocks: [
-              {
-                type: 'paragraph',
-                data: {
-                  text: ''
-                }
+          };
+        }
+        
+        // Clear the editor container to prevent duplicate instances
+        const editorElement = document.getElementById(editorContainerId);
+        if (editorElement) {
+          editorElement.innerHTML = '';
+        }
+        
+        if (!isMounted) return;
+        
+        // Get current note content or use empty template
+        const contentData = currentNote?.content || {
+          time: Date.now(),
+          blocks: [
+            {
+              type: 'paragraph',
+              data: {
+                text: ''
               }
-            ]
+            }
+          ]
+        };
+        
+        // Set the title from current note
+        setTitle(currentNote?.title || '');
+        
+        // Create a new editor instance
+        const { EditorJS, tools } = editorInstanceRef.current;
+        const editor = new EditorJS({
+          holder: editorContainerId,
+          tools,
+          placeholder: 'Start typing your note here...',
+          data: contentData,
+          autofocus: true,
+          onReady: () => {
+            if (isMounted) {
+              setIsEditorReady(true);
+            }
           }
         });
+        
+        editorRef.current = editor;
+        
       } catch (error) {
         console.error('Editor initialization error:', error);
       }
     };
-
-    initEditor();
-
+    
+    // Initialize the editor
+    initializeEditor();
+    
+    // Cleanup
     return () => {
+      isMounted = false;
       if (editorRef.current) {
-        editorRef.current.destroy();
-        editorRef.current = null;
-        setIsEditorReady(false);
+        try {
+          editorRef.current.destroy();
+          editorRef.current = null;
+        } catch (error) {
+          console.error('Error destroying editor:', error);
+        }
       }
     };
-  }, []); // Only run once on component mount
-
-  // Function to load note content into editor
-  const loadNoteContent = () => {
-    if (!editorRef.current || !isEditorReady || !currentNote) return;
-    
-    try {
-      // Instead of clear + render, we recreate the editor with the new data
-      const currentData = currentNote.content || {
-        time: Date.now(),
-        blocks: [
-          {
-            type: 'paragraph',
-            data: {
-              text: ''
-            }
-          }
-        ]
-      };
-      
-      // Use EditorJS's data replacement method
-      editorRef.current.render(currentData);
-      setTitle(currentNote.title || '');
-      
-    } catch (error) {
-      console.error('Error loading note content:', error);
-    }
-  };
-
-  // Handle note changes
-  useEffect(() => {
-    if (!currentNote) {
-      setTitle('');
-      return;
-    }
-    
-    // Check if we're switching to a different note
-    if (currentNote.id !== currentNoteId) {
-      setCurrentNoteId(currentNote.id);
-      setTitle(currentNote.title || '');
-      
-      // If editor is ready, load the content
-      if (editorRef.current && isEditorReady) {
-        // Small delay to ensure the editor is fully ready
-        setTimeout(() => {
-          try {
-            // First destroy and recreate the editor to avoid block removal errors
-            editorRef.current.destroy();
-            editorRef.current = null;
-            setIsEditorReady(false);
-            
-            // Reinitialize the editor with the new content
-            const initEditor = async () => {
-              if (typeof window === 'undefined') return;
-              
-              const EditorJSPackage = await import('@editorjs/editorjs');
-              const EditorJS = EditorJSPackage.default;
-              
-              const Header = (await import('@editorjs/header')).default;
-              const List = (await import('@editorjs/list')).default;
-              const Quote = (await import('@editorjs/quote')).default;
-              const CodeTool = (await import('@editorjs/code')).default;
-              const Paragraph = (await import('@editorjs/paragraph')).default;
-              
-              const editor = new EditorJS({
-                holder: 'editorjs',
-                tools: {
-                  header: Header,
-                  list: List,
-                  quote: Quote,
-                  code: CodeTool,
-                  paragraph: {
-                    config: {
-                      inlineToolbar: true,
-                    },
-                    class: Paragraph,
-                  }
-                },
-                placeholder: 'Start typing your note here...',
-                onReady: () => {
-                  editorRef.current = editor;
-                  setIsEditorReady(true);
-                },
-                autofocus: true,
-                data: currentNote.content
-              });
-            };
-            
-            initEditor();
-          } catch (err) {
-            console.error('Error switching notes:', err);
-          }
-        }, 50);
-      }
-    }
-  }, [currentNote, isEditorReady, currentNoteId]);
+  }, [currentNote]);
 
   const handleSave = async () => {
     if (!editorRef.current) return;
@@ -224,7 +161,7 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
         </Button>
       </CardHeader>
       <CardContent className="flex-grow p-0">
-        <div id="editorjs" className="min-h-[500px] p-4" />
+        <div id={editorContainerId} className="min-h-[500px] p-4" />
       </CardContent>
     </Card>
   );
