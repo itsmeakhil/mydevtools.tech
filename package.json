@@ -17,6 +17,8 @@
     "@editorjs/list": "^1.8.0",
     "@editorjs/paragraph": "^2.10.0",
     "@editorjs/quote": "^2.5.0",
+
+
     "@firebase/firestore": "^4.7.5",
     "@iarna/toml": "^2.2.5",
     "@radix-ui/react-alert-dialog": "^1.1.6",
