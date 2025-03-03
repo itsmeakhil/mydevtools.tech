@@ -8,7 +8,8 @@ import {
   IconTool,
   IconPhotoVideo,
   IconBlocks,
-  IconNetwork
+  IconNetwork,
+  IconBook2
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
@@ -34,6 +35,11 @@ export const sidebarData: SidebarData = {
           title: 'Url Shortener',
           url: '/app/url-shortener',
           icon: IconUnlink,
+        },
+        {
+          title: 'Notes',
+          url: '/app/notes',
+          icon: IconBook2,
         },
         {
           title: 'Bookmarks Manager',
