@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, addDoc, updateDoc, doc, query, orderBy, onSnapshot, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, query, orderBy, onSnapshot, deleteDoc, where } from 'firebase/firestore';
 import { db } from '../../../database/firebase';
 import { Note } from './types';
 import Sidebar from './Sidebar';
 import dynamic from 'next/dynamic';
 import { OutputData } from '@editorjs/editorjs';
 import { getAuth } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
 // Import NoteEditor with dynamic import to disable SSR
 const NoteEditor = dynamic(() => import('./NoteEditor'), { 
@@ -24,12 +25,35 @@ export default function NotesPage() {
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const auth = getAuth();
   const user = auth.currentUser;
+  const router = useRouter();
+
+  // Check authentication
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        // Redirect to login if not authenticated
+        router.push('/login');
+      } else {
+        setAuthChecked(true);
+      }
+    });
+    
+    return () => unsubscribe();
+  }, [router]);
 
   // Fetch notes from Firebase
   useEffect(() => {
-    const q = query(collection(db, 'notes'), orderBy('updatedAt', 'desc'));
+    if (!authChecked || !user) return;
+
+    // Filter notes by current user ID
+    const q = query(
+      collection(db, 'notes'), 
+      where('created_by', '==', user.uid),
+      orderBy('updatedAt', 'desc')
+    );
     
     const unsubscribe = onSnapshot(
       q,
@@ -50,7 +74,7 @@ export default function NotesPage() {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [user, authChecked]);
 
   const handleSelectNote = (noteId: string) => {
     const selected = notes.find((note) => note.id === noteId) || null;
@@ -58,6 +82,11 @@ export default function NotesPage() {
   };
 
   const handleCreateNewNote = () => {
+    if (!user) {
+      setError(new Error('You must be logged in to create notes'));
+      return;
+    }
+
     // Create a blank note with default values
     setCurrentNote({
       id: '',  // Will be replaced when saved
@@ -75,16 +104,24 @@ export default function NotesPage() {
       },
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      created_by: user?.uid || 'anonymous'
+      created_by: user.uid
     });
   };
 
   const handleSaveNote = async (noteData: { title: string; content: OutputData }) => {
+    if (!user) {
+      throw new Error('You must be logged in to save notes');
+    }
+
     try {
       const timestamp = Date.now();
       
       if (currentNote && currentNote.id) {
-        // Update existing note
+        // Verify the note belongs to the current user before updating
+        if (currentNote.created_by !== user.uid) {
+          throw new Error('You can only edit your own notes');
+        }
+        
         await updateDoc(doc(db, 'notes', currentNote.id), {
           title: noteData.title,
           content: noteData.content,
@@ -105,7 +142,7 @@ export default function NotesPage() {
           content: noteData.content,
           createdAt: timestamp,
           updatedAt: timestamp,
-          created_by: user?.uid || 'anonymous'
+          created_by: user.uid
         });
         
         const newNote = {
@@ -114,7 +151,7 @@ export default function NotesPage() {
           content: noteData.content,
           createdAt: timestamp,
           updatedAt: timestamp,
-          created_by: user?.uid || 'anonymous'
+          created_by: user.uid
         };
         
         setCurrentNote(newNote);
@@ -126,7 +163,18 @@ export default function NotesPage() {
   };
 
   const handleDeleteNote = async (noteId: string) => {
+    if (!user) {
+      throw new Error('You must be logged in to delete notes');
+    }
+
     try {
+      const noteToDelete = notes.find(note => note.id === noteId);
+      
+      // Verify the note belongs to the current user before deleting
+      if (noteToDelete && noteToDelete.created_by !== user.uid) {
+        throw new Error('You can only delete your own notes');
+      }
+      
       await deleteDoc(doc(db, 'notes', noteId));
       
       // If we deleted the currently selected note, clear the selection
@@ -138,6 +186,15 @@ export default function NotesPage() {
       throw err;
     }
   };
+
+  // Do not render content until auth is checked
+  if (!authChecked) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-100px)]">
+        <div className="h-8 w-8 border-4 border-t-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-6 max-w-7xl">

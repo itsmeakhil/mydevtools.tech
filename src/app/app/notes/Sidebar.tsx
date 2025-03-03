@@ -4,7 +4,7 @@ import { SidebarProps } from './types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
 import {
   AlertDialog,
@@ -28,10 +28,12 @@ export default function Sidebar({
 }: SidebarProps) {
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleDeleteClick = (e: React.MouseEvent, noteId: string) => {
     e.stopPropagation(); // Prevent note selection when clicking delete
     setNoteToDelete(noteId);
+    setDeleteError(null);
   };
 
   const confirmDelete = async () => {
@@ -39,12 +41,16 @@ export default function Sidebar({
     
     try {
       setIsDeleting(true);
+      setDeleteError(null);
       await onDeleteNote(noteToDelete);
     } catch (error) {
       console.error('Error deleting note:', error);
+      setDeleteError(error instanceof Error ? error.message : 'Failed to delete note');
     } finally {
       setIsDeleting(false);
-      setNoteToDelete(null);
+      if (!deleteError) {
+        setNoteToDelete(null);
+      }
     }
   };
 
@@ -68,8 +74,9 @@ export default function Sidebar({
             <p className="text-sm text-muted-foreground">Loading notes...</p>
           </div>
         ) : error ? (
-          <div className="flex items-center justify-center h-20 px-4">
-            <p className="text-sm text-red-500">Failed to load notes</p>
+          <div className="flex flex-col items-center justify-center h-20 px-4 py-6 gap-2">
+            <AlertCircle className="h-6 w-6 text-destructive" />
+            <p className="text-sm text-destructive">{error.message || 'Failed to load notes'}</p>
           </div>
         ) : notes.length === 0 ? (
           <div className="flex items-center justify-center h-20 px-4">
@@ -114,6 +121,13 @@ export default function Sidebar({
               Are you sure you want to delete this note? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          
+          {deleteError && (
+            <div className="bg-destructive/10 p-3 rounded-md text-destructive text-sm mb-2">
+              {deleteError}
+            </div>
+          )}
+          
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction 

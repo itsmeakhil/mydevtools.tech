@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { NoteEditorProps } from './types';
 import type EditorJS from '@editorjs/editorjs';
+import { getAuth } from 'firebase/auth';
+import { AlertCircle } from 'lucide-react';
 
 function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
   const editorRef = useRef<EditorJS | null>(null);
@@ -23,7 +25,22 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
   const [title, setTitle] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isEditorReady, setIsEditorReady] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const auth = getAuth();
   const editorContainerId = 'editorjs';
+  
+  // Check if user can edit this note
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (currentNote?.id && currentNote?.created_by && user) {
+      if (currentNote.created_by !== user.uid) {
+        setError("You don't have permission to edit this note");
+        setIsEditorReady(false);
+      } else {
+        setError(null);
+      }
+    }
+  }, [currentNote, auth]);
   
   // Initialize Editor.js
   useEffect(() => {
@@ -107,7 +124,9 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
     };
     
     // Initialize the editor
-    initializeEditor();
+    if (!error) {
+      initializeEditor();
+    }
     
     // Cleanup
     return () => {
@@ -121,10 +140,10 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
         }
       }
     };
-  }, [currentNote]);
+  }, [currentNote, error]);
 
   const handleSave = async () => {
-    if (!editorRef.current) return;
+    if (!editorRef.current || !auth.currentUser) return;
     
     try {
       setIsSaving(true);
@@ -137,10 +156,31 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
       
     } catch (error) {
       console.error('Failed to save note:', error);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Failed to save note');
+      }
     } finally {
       setIsSaving(false);
     }
   };
+
+  if (error) {
+    return (
+      <Card className="flex flex-col h-full">
+        <CardContent className="flex items-center justify-center h-full">
+          <div className="text-center p-6">
+            <div className="flex items-center justify-center mb-4">
+              <AlertCircle className="h-10 w-10 text-destructive" />
+            </div>
+            <h3 className="text-xl font-medium mb-2 text-destructive">Error</h3>
+            <p className="text-muted-foreground">{error}</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="flex flex-col h-full">
