@@ -201,7 +201,7 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
         </Button>
       </CardHeader>
       <CardContent className="flex-grow p-0">
-        <div id={editorContainerId} className="min-h-[500px] p-4" />
+        <div id={editorContainerId} className="min-h-[500px] p-4 pl-16" />
       </CardContent>
     </Card>
   );
