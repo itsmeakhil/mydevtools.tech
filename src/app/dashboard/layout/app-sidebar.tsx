@@ -6,7 +6,6 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-  useSidebar,
 } from '@/components/ui/sidebar'
 import { NavGroup } from './nav-group'
 import { NavUser } from './nav-user'
@@ -22,7 +21,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     email: '',
     avatar: ''
   })
-  const { state } = useSidebar()
+
   const router = useRouter(); //router
   
   const handleSignOut = async () => {
@@ -50,21 +49,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible='icon' variant='floating' {...props}>
-      {state !== 'collapsed' && (
-        <SidebarHeader className="border-b border-border/40 pb-3">
-          <div 
-            className="flex items-center space-x-3 px-3 py-2 transition-all duration-200 hover:cursor-pointer hover:bg-accent/50 rounded-md bg-accent/20"
-            onClick={() => router.push('/dashboard')}
-          >
-            <Wrench className="h-8 w-8 text-primary hover:scale-105 transition-transform duration-200" />
-            <div>
-              <h2 className="text-lg font-semibold tracking-tight text-primary/90 drop-shadow-sm">MyDevTools</h2>
-              <p className="text-xs text-muted-foreground/70 font-medium tracking-wide">Developer&apos;s Toolkit</p>
-            </div>
+      <SidebarHeader className="border-b border-border/40 pb-3">
+        <div 
+          className="flex items-center space-x-3 px-3 py-2 transition-all duration-200 hover:cursor-pointer hover:bg-accent/50 rounded-md bg-accent/20"
+          onClick={() => router.push('/dashboard')}
+        >
+          <Wrench className="h-8 w-8 text-primary hover:scale-105 transition-transform duration-200" />
+          <div>
+        <h2 className="text-lg font-semibold tracking-tight text-primary/90 drop-shadow-sm">MyDevTools</h2>
+        <p className="text-xs text-muted-foreground/70 font-medium tracking-wide">Developer&apos;s Toolkit</p>
           </div>
-        </SidebarHeader>
-      )}
-      <SidebarContent className="sidebar-scrollbar">
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
         {sidebarData.navGroups.map((props) => (
           <NavGroup key={props.title} {...props} />
         ))}
