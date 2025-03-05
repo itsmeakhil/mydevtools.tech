@@ -235,6 +235,10 @@ export const sidebarData: SidebarData = {
             {
               title: 'IPv4 Range Expander',
               url: '/app/ipv4-range-expander',
+            },
+            {
+              title: 'MAC address lookup',
+              url: '/app/mac-address-lookup',
             }
             
             

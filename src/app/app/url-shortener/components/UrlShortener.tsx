@@ -71,13 +71,14 @@ export default function UrlShortener() {
               placeholder="https://your-long-url.com"
               value={longUrl}
               onChange={(e) => setLongUrl(e.target.value)}
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-black dark:text-white rounded-md"
             />
           </div>
           <div>
             <Label htmlFor="alias">Custom alias (optional)</Label>
             <Input id="alias" placeholder="Custom alias" value={alias} onChange={(e) => setAlias(e.target.value)} />
           </div>
-          <Button onClick={shortenUrl} className="w-full">
+          <Button onClick={shortenUrl} className="w-full w-full bg-black dark:bg-white text-white dark:text-black p-2 rounded-md">
             Shorten
           </Button>
 
