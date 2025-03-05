@@ -1,0 +1,46 @@
+.editorContainer :global(.ce-block__content) {
+  max-width: 100%;
+  padding: 0 1rem;
+}
+
+.editorContainer :global(.ce-toolbar__content) {
+  max-width: 100%;
+}
+
+/* Header Styles */
+.editorContainer :global(.ce-header) {
+  padding: 0.5em 0;
+  margin: 0;
+  line-height: 1.2em;
+  outline: none;
+}
+
+.editorContainer :global(h1.ce-header) {
+  font-size: 2.5em;
+  font-weight: 700;
+}
+
+.editorContainer :global(h2.ce-header) {
+  font-size: 2em;
+  font-weight: 600;
+}
+
+.editorContainer :global(h3.ce-header) {
+  font-size: 1.75em;
+  font-weight: 600;
+}
+
+.editorContainer :global(h4.ce-header) {
+  font-size: 1.5em;
+  font-weight: 500;
+}
+
+.editorContainer :global(h5.ce-header) {
+  font-size: 1.25em;
+  font-weight: 500;
+}
+
+.editorContainer :global(h6.ce-header) {
+  font-size: 1em;
+  font-weight: 500;
+} 

@@ -8,17 +8,16 @@ import { NoteEditorProps } from './types';
 import type EditorJS from '@editorjs/editorjs';
 import { getAuth } from 'firebase/auth';
 import { AlertCircle } from 'lucide-react';
+import styles from './NoteEditor.module.css';
 
 function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
   const editorRef = useRef<EditorJS | null>(null);
   interface EditorInstance {
     EditorJS: typeof EditorJS;
     tools: {
-      header: typeof import('@editorjs/header').default;
-      list: typeof import('@editorjs/list').default;
-      quote: typeof import('@editorjs/quote').default;
-      code: typeof import('@editorjs/code').default;
-      paragraph: typeof import('@editorjs/paragraph').default;
+      /* eslint-disable @typescript-eslint/no-explicit-any */
+      [key: string]: any; // Necessary for EditorJS tool types compatibility
+      /* eslint-enable @typescript-eslint/no-explicit-any */
     };
   }
   const editorInstanceRef = useRef<EditorInstance | null>(null); // Store the EditorJS class
@@ -64,6 +63,7 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
           const Quote = (await import('@editorjs/quote')).default;
           const CodeTool = (await import('@editorjs/code')).default;
           const Paragraph = (await import('@editorjs/paragraph')).default;
+          const Table = (await import('@editorjs/table')).default;
           
           editorInstanceRef.current = {
             EditorJS: EditorJSPackage.default,
@@ -72,7 +72,8 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
               list: List,
               quote: Quote,
               code: CodeTool,
-              paragraph: Paragraph
+              paragraph: Paragraph,
+              table: Table
             }
           };
         }
@@ -105,8 +106,75 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
         const { EditorJS, tools } = editorInstanceRef.current;
         const editor = new EditorJS({
           holder: editorContainerId,
-          tools,
-          placeholder: 'Start typing your note here...',
+          tools: {
+            header: {
+              class: tools.header,
+              inlineToolbar: true,
+              config: {
+                placeholder: 'Enter a header',
+                levels: [1, 2, 3, 4, 5, 6],
+                defaultLevel: 2
+              },
+              toolbox: [
+                {
+                  title: 'Heading 1',
+                  icon: '<svg width="28" height="24" viewBox="0 0 28 24"><text x="3" y="17" font-family="Arial" font-size="16" font-weight="bold" fill="currentColor">H1</text></svg>',
+                  data: { level: 1 }
+                },
+                {
+                  title: 'Heading 2',
+                  icon: '<svg width="28" height="24" viewBox="0 0 28 24"><text x="3" y="17" font-family="Arial" font-size="16" font-weight="bold" fill="currentColor">H2</text></svg>',
+                  data: { level: 2 }
+                },
+                {
+                  title: 'Heading 3',
+                  icon: '<svg width="28" height="24" viewBox="0 0 28 24"><text x="3" y="17" font-family="Arial" font-size="16" font-weight="bold" fill="currentColor">H3</text></svg>',
+                  data: { level: 3 }
+                },
+                {
+                  title: 'Heading 4',
+                  icon: '<svg width="28" height="24" viewBox="0 0 28 24"><text x="3" y="17" font-family="Arial" font-size="16" font-weight="bold" fill="currentColor">H4</text></svg>',
+                  data: { level: 4 }
+                },
+                {
+                  title: 'Heading 5',
+                  icon: '<svg width="28" height="24" viewBox="0 0 28 24"><text x="3" y="17" font-family="Arial" font-size="16" font-weight="bold" fill="currentColor">H5</text></svg>',
+                  data: { level: 5 }
+                },
+                {
+                  title: 'Heading 6',
+                  icon: '<svg width="28" height="24" viewBox="0 0 28 24"><text x="3" y="17" font-family="Arial" font-size="16" font-weight="bold" fill="currentColor">H6</text></svg>',
+                  data: { level: 6 }
+                }
+              ]
+            },
+            paragraph: {
+              class: tools.paragraph,
+              inlineToolbar: true
+            },
+            list: {
+              class: tools.list,
+              inlineToolbar: true
+            },
+            quote: {
+              class: tools.quote,
+              inlineToolbar: true
+            },
+            code: {
+              class: tools.code
+            },
+            table: {
+              class: tools.table,
+              inlineToolbar: true,
+              toolbox: {
+                title: 'Table',
+                icon: '<svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 7v2h2V7H7zm4 0v2h2V7h-2zm4 0v2h2V7h-2zM7 11v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2zM7 15v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2z"/></svg>'
+              }
+            }
+          },
+          defaultBlock: 'paragraph',
+          placeholder: 'Press Tab or click + to insert blocks...',
+          inlineToolbar: ['link', 'bold', 'italic'],
           data: contentData,
           autofocus: true,
           onReady: () => {
@@ -201,7 +269,7 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
         </Button>
       </CardHeader>
       <CardContent className="flex-grow p-0">
-        <div id={editorContainerId} className="min-h-[500px] p-4 pl-16" />
+        <div id={editorContainerId} className={`min-h-[500px] p-4 pl-16 ${styles.editorContainer}`} />
       </CardContent>
     </Card>
   );
