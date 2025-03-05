@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useSidebar } from "@/components/ui/sidebar";
-import { AppSidebar } from "../dashboard/layout/app-sidebar";
+import { AppSidebar } from "../../components/sidebar/app-sidebar";
 import { NavBar } from '@/components/nav-bar';
 
 export function AppContent({ children }: { children: React.ReactNode }) {
