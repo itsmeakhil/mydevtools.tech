@@ -12,7 +12,7 @@ import { NavUser } from './nav-user'
 import { Wrench } from 'lucide-react'
 import { sidebarData } from './data/sidebar-data'
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth'
-import { auth } from '../../../database/firebase'
+import { auth } from '../../database/firebase'
 import { useRouter } from 'next/navigation'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -22,16 +22,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     avatar: ''
   })
 
-  const router = useRouter(); //router
+  const router = useRouter();
   
   const handleSignOut = async () => {
-      try {
-        await firebaseSignOut(auth);
-        router.push('/login');
-      } catch (error) {
-        console.error('Error signing out:', error);
-      }
-    };
+    try {
+      await firebaseSignOut(auth);
+      router.push('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -56,8 +56,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         >
           <Wrench className="h-8 w-8 text-primary hover:scale-105 transition-transform duration-200" />
           <div>
-        <h2 className="text-lg font-semibold tracking-tight text-primary/90 drop-shadow-sm">MyDevTools</h2>
-        <p className="text-xs text-muted-foreground/70 font-medium tracking-wide">Developer&apos;s Toolkit</p>
+            <h2 className="text-lg font-semibold tracking-tight text-primary/90 drop-shadow-sm">MyDevTools</h2>
+            <p className="text-xs text-muted-foreground/70 font-medium tracking-wide">Developer&apos;s Toolkit</p>
           </div>
         </div>
       </SidebarHeader>
