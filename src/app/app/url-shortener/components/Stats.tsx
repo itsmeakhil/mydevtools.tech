@@ -46,7 +46,7 @@ function StatCard({ title, value }: { title: string; value: number }) {
   return (
     <Card>
       <CardContent className="p-4 text-center">
-        <div className="text-2xl font-bold text-blue-600">{value}</div>
+        <div className="text-2xl font-bold text-black dark:text-white">{value}</div>
         <div className="text-sm text-gray-600">{title}</div>
       </CardContent>
     </Card>
