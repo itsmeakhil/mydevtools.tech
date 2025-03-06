@@ -9,7 +9,8 @@ import {
   IconPhotoVideo,
   IconBlocks,
   IconNetwork,
-  IconBook2
+  IconBook2,
+  IconAlignJustified
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
@@ -238,12 +239,20 @@ export const sidebarData: SidebarData = {
             },
             
             
-            
-            
-            
-
           ],
-        }
+        },
+        {
+          title: 'Text',
+          icon: IconAlignJustified,
+          items: [
+            {
+              title: 'Lorem Ipsum Generator',
+              url: '/app/lorem-ipsum-generator',
+            },
+            
+          ]
+
+        },
         
         // {
         //   title: 'Converters',
