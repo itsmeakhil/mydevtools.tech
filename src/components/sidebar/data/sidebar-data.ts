@@ -253,6 +253,10 @@ export const sidebarData: SidebarData = {
               title: 'Text Statistics',
               url: '/app/text-statistics',
             },
+            {
+              title: 'Emoji Picker',
+              url: '/app/emoji-picker',
+            },
           ]
 
         },
