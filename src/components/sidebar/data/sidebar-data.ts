@@ -249,7 +249,10 @@ export const sidebarData: SidebarData = {
               title: 'Lorem Ipsum Generator',
               url: '/app/lorem-ipsum-generator',
             },
-            
+            {
+              title: 'Text Statistics',
+              url: '/app/text-statistics',
+            },
           ]
 
         },
