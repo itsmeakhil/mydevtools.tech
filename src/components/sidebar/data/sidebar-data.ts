@@ -9,12 +9,61 @@ import {
   IconPhotoVideo,
   IconBlocks,
   IconNetwork,
-  IconBook2
+  IconBook2,
+  IconPlus
 } from '@tabler/icons-react'
-import { type SidebarData } from '../types'
+import { type LoadItemsFunction, type SidebarData } from '../types'
+import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from '../../../database/firebase';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
-// import {app-window } from 'lucide-react'
+// Function to fetch parent notes
+const fetchParentNotes: LoadItemsFunction = async () => {
+  return []; // Initial empty state, we'll use subscribe for real data
+};
 
+// Add real-time subscription support
+fetchParentNotes.subscribe = async (callback) => {
+  const auth = getAuth();
+  
+  // Set up auth state listener
+  const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      callback([]);
+      return;
+    }
+
+    // Set up notes listener once we have auth
+    const q = query(
+      collection(db, 'notes'),
+      where('created_by', '==', user.uid),
+      where('isParent', '==', true),
+      orderBy('updatedAt', 'desc')
+    );
+    
+    const unsubscribeNotes = onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(doc => ({
+        title: doc.data().title || 'Untitled Note',
+        url: `/app/notes?id=${doc.id}`,
+        icon: undefined
+      }));
+      callback(items);
+    }, (error) => {
+      console.error('Error in notes subscription:', error);
+      callback([]);
+    });
+
+    // Store the notes unsubscribe function
+    return () => {
+      unsubscribeNotes();
+    };
+  });
+
+  // Return a cleanup function that handles both subscriptions
+  return () => {
+    unsubscribeAuth();
+  };
+};
 
 export const sidebarData: SidebarData = {
   user: {
@@ -36,11 +85,18 @@ export const sidebarData: SidebarData = {
           url: '/app/url-shortener',
           icon: IconUnlink,
         },
-        
         {
           title: 'Notes',
-          url: '/app/notes',
           icon: IconBook2,
+          items: [
+            {
+              title: 'New Note',
+              url: '/app/notes',
+              icon: IconPlus
+            },
+            // Parent notes will be dynamically added here
+          ],
+          loadItems: fetchParentNotes
         },
         {
           title: 'Bookmarks Manager',
@@ -78,7 +134,6 @@ export const sidebarData: SidebarData = {
               title: 'Token Generator',
               url: '/app/token-generator',
             },
-
             {
               title: 'Hash Generator',
               url: '/app/hash-generator',
@@ -87,7 +142,6 @@ export const sidebarData: SidebarData = {
               title: 'Bcrypt',
               url: '/app/bcrypt',
             },
-            
           ],
         },
         {
@@ -114,7 +168,6 @@ export const sidebarData: SidebarData = {
               title: 'TOML to JSON',
               url: '/app/toml-json',
             },
-
             {
               title: 'TOML to YAML',
               url: '/app/toml-yaml',
@@ -123,7 +176,6 @@ export const sidebarData: SidebarData = {
               title: 'XML to JSON',
               url: '/app/xml-json',
             },
-
             {
               title: 'YAML to JSON',
               url: '/app/yaml-json',
@@ -132,13 +184,10 @@ export const sidebarData: SidebarData = {
               title: 'YAML to TOML',
               url: '/app/yaml-toml',
             },
-            
-            
-            
           ],
         },
         {
-          title: 'Web ',
+          title: 'Web Tools',
           icon: IconAppWindow,
           items: [
             {
@@ -173,12 +222,10 @@ export const sidebarData: SidebarData = {
               title: 'JSON Diff',
               url: '/app/json-diff',
             },
-            
-
           ],
         },
         {
-          title: 'Images and Videos',
+          title: 'Media Tools',
           icon: IconPhotoVideo,
           items: [
             {
@@ -186,12 +233,9 @@ export const sidebarData: SidebarData = {
               url: '/app/qr-code-generator',
             },
             {
-              title: ' Wifi QR Code Generator',
+              title: 'Wifi QR Code Generator',
               url: '/app/wifi-qr-generator',
             },
-            
-            
-
           ],
         },
         {
@@ -214,10 +258,6 @@ export const sidebarData: SidebarData = {
               title: 'Regex Cheatsheet',
               url: '/app/regex-cheatsheet',
             },
-            
-            
-            
-
           ],
         },
         {
@@ -232,87 +272,9 @@ export const sidebarData: SidebarData = {
               title: 'IPv4 Address Converter',
               url: '/app/ipv4-address-converter',
             },
-            
-            
-            
-            
-
           ],
-        }
-        
-        // {
-        //   title: 'Converters',
-        //   icon: IconBug,
-        //   items: [
-        //     {
-        //       title: 'converter 1',
-        //       url: '#',
-        //       icon: IconLock,
-        //     },
-        //     {
-        //       title: 'converter 2',
-        //       url: '#',
-        //       icon: IconUserOff,
-        //     },
-        //     {
-        //       title: 'converter 3',
-        //       url: '#',
-        //       icon: IconError404,
-        //     },
-        //     {
-        //       title: 'converter 4',
-        //       url: '#',
-        //       icon: IconServerOff,
-        //     },
-        //     {
-        //       title: 'converter 5',
-        //       url: '#',
-        //       icon: IconBarrierBlock,
-        //     },
-        //   ],
-        // },
+        },
       ],
     },
-    // {
-    //   title: 'Other',
-    //   items: [
-    //     {
-    //       title: 'Settings',
-    //       icon: IconSettings,
-    //       items: [
-    //         {
-    //           title: 'Profile',
-    //           url: '#',
-    //           icon: IconUserCog,
-    //         },
-    //         {
-    //           title: 'Account',
-    //           url: '#',
-    //           icon: IconTool,
-    //         },
-    //         {
-    //           title: 'Appearance',
-    //           url: '#',
-    //           icon: IconPalette,
-    //         },
-    //         {
-    //           title: 'Notifications',
-    //           url: '#',
-    //           icon: IconNotification,
-    //         },
-    //         {
-    //           title: 'Display',
-    //           url: '#',
-    //           icon: IconBrowserCheck,
-    //         },
-    //       ],
-    //     },
-    //     {
-    //       title: 'Help Center',
-    //       url: '#',
-    //       icon: IconHelp,
-    //     },
-    //   ],
-    // },
   ],
 }

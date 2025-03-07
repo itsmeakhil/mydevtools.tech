@@ -1,14 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, addDoc, updateDoc, doc, query, orderBy, onSnapshot, deleteDoc, where } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, query, orderBy, onSnapshot, deleteDoc, where, getDoc } from 'firebase/firestore';
 import { db } from '../../../database/firebase';
 import { Note } from './types';
-import Sidebar from './Sidebar';
 import dynamic from 'next/dynamic';
 import { OutputData } from '@editorjs/editorjs';
 import { getAuth } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 // Import NoteEditor with dynamic import to disable SSR
 const NoteEditor = dynamic(() => import('./NoteEditor'), { 
@@ -29,6 +28,8 @@ export default function NotesPage() {
   const auth = getAuth();
   const user = auth.currentUser;
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const noteId = searchParams.get('id');
 
   // Check authentication
   useEffect(() => {
@@ -43,6 +44,63 @@ export default function NotesPage() {
     
     return () => unsubscribe();
   }, [router]);
+
+  // Create a blank note template
+  const createBlankNote = (): Omit<Note, 'id'> => ({
+    title: '',
+    content: {
+      time: Date.now(),
+      blocks: [
+        {
+          type: 'paragraph',
+          data: {
+            text: ''
+          }
+        }
+      ]
+    },
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    created_by: user?.uid || '',
+    isParent: true
+  });
+
+  // Load note from URL if ID is present
+  useEffect(() => {
+    const loadNoteFromUrl = async () => {
+      if (!user) return;
+
+      if (noteId) {
+        try {
+          const noteDoc = await getDoc(doc(db, 'notes', noteId));
+          if (noteDoc.exists()) {
+            const noteData = noteDoc.data() as Omit<Note, 'id'>;
+            // Verify the note belongs to the current user
+            if (noteData.created_by === user.uid) {
+              setCurrentNote({
+                id: noteDoc.id,
+                ...noteData
+              } as Note);
+            } else {
+              setError(new Error("You don't have permission to view this note"));
+              setCurrentNote(null);
+            }
+          } else {
+            setCurrentNote(null);
+          }
+        } catch (err) {
+          console.error('Error loading note:', err);
+          setError(err instanceof Error ? err : new Error('Failed to load note'));
+          setCurrentNote(null);
+        }
+      } else {
+        // If there's no note ID in the URL, create a blank note
+        setCurrentNote({ ...createBlankNote(), id: '' });
+      }
+    };
+
+    loadNoteFromUrl();
+  }, [noteId, user]);
 
   // Fetch notes from Firebase
   useEffect(() => {
@@ -77,8 +135,7 @@ export default function NotesPage() {
   }, [user, authChecked]);
 
   const handleSelectNote = (noteId: string) => {
-    const selected = notes.find((note) => note.id === noteId) || null;
-    setCurrentNote(selected);
+    router.push(`/app/notes?id=${noteId}`);
   };
 
   const handleCreateNewNote = () => {
@@ -87,25 +144,8 @@ export default function NotesPage() {
       return;
     }
 
-    // Create a blank note with default values
-    setCurrentNote({
-      id: '',  // Will be replaced when saved
-      title: '',
-      content: {
-        time: Date.now(),
-        blocks: [
-          {
-            type: 'paragraph',
-            data: {
-              text: ''
-            }
-          }
-        ]
-      },
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      created_by: user.uid
-    });
+    // Clear the note ID from URL when creating new note
+    router.push('/app/notes');
   };
 
   const handleSaveNote = async (noteData: { title: string; content: OutputData }) => {
@@ -137,24 +177,24 @@ export default function NotesPage() {
         
       } else {
         // Create new note
-        const newNoteRef = await addDoc(collection(db, 'notes'), {
+        const newNoteData = {
+          ...createBlankNote(),
           title: noteData.title,
           content: noteData.content,
           createdAt: timestamp,
           updatedAt: timestamp,
-          created_by: user.uid
-        });
+        };
+        
+        const newNoteRef = await addDoc(collection(db, 'notes'), newNoteData);
         
         const newNote = {
           id: newNoteRef.id,
-          title: noteData.title,
-          content: noteData.content,
-          createdAt: timestamp,
-          updatedAt: timestamp,
-          created_by: user.uid
+          ...newNoteData
         };
         
         setCurrentNote(newNote);
+        // Update URL with new note ID
+        router.push(`/app/notes?id=${newNote.id}`);
       }
     } catch (err) {
       console.error("Error saving note:", err);
@@ -177,9 +217,10 @@ export default function NotesPage() {
       
       await deleteDoc(doc(db, 'notes', noteId));
       
-      // If we deleted the currently selected note, clear the selection
+      // If we deleted the currently selected note, clear the selection and URL
       if (currentNote?.id === noteId) {
         setCurrentNote(null);
+        router.push('/app/notes');
       }
     } catch (err) {
       console.error("Error deleting note:", err);
@@ -200,37 +241,23 @@ export default function NotesPage() {
     <div className="container py-6 max-w-7xl">
       <h1 className="text-3xl font-bold mb-6">Notes</h1>
       
-      <div className="grid grid-cols-12 gap-6 h-[calc(100vh-180px)]">
-        <div className="col-span-3">
-          <Sidebar
-            notes={notes}
-            selectedNoteId={currentNote?.id || null}
-            onSelectNote={handleSelectNote}
-            onCreateNewNote={handleCreateNewNote}
-            onDeleteNote={handleDeleteNote}
-            loading={loading}
-            error={error}
+      <div className="h-[calc(100vh-180px)]">
+        {currentNote ? (
+          <NoteEditor 
+            currentNote={currentNote}
+            onSave={handleSaveNote}
           />
-        </div>
-        
-        <div className="col-span-9 h-full">
-          {currentNote ? (
-            <NoteEditor 
-              currentNote={currentNote}
-              onSave={handleSaveNote}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full border rounded-lg bg-muted/40">
-              <div className="text-center p-6">
-                <h3 className="text-xl font-medium mb-2">No Note Selected</h3>
-                <p className="text-muted-foreground mb-4">
-                  Select an existing note or create a new one to get started.
-                </p>
-                <Button onClick={handleCreateNewNote}>Create New Note</Button>
-              </div>
+        ) : (
+          <div className="flex items-center justify-center h-full border rounded-lg bg-muted/40">
+            <div className="text-center p-6">
+              <h3 className="text-xl font-medium mb-2">No Note Selected</h3>
+              <p className="text-muted-foreground mb-4">
+                Select an existing note or create a new one to get started.
+              </p>
+              <Button onClick={handleCreateNewNote}>Create New Note</Button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

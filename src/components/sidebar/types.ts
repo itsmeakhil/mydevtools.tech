@@ -1,4 +1,5 @@
 import { LinkProps } from 'next/link'
+import { Icon } from '@tabler/icons-react'
 
 interface User {
   name: string
@@ -12,17 +13,28 @@ interface BaseNavItem {
   icon?: React.ElementType
 }
 
-type NavLink = BaseNavItem & {
-  url: LinkProps['href']
-  items?: never
+interface NavLink {
+  title: string
+  url?: string
+  icon?: Icon
+  badge?: string
+  items?: NavLink[]
 }
 
-type NavCollapsible = BaseNavItem & {
-  items: (BaseNavItem & { url: LinkProps['href'] })[]
-  url?: never
+type LoadItemsFunction = (() => Promise<NavLink[]>) & {
+  subscribe?: (callback: (items: NavLink[]) => void) => Promise<() => void>
 }
 
-type NavItem = NavCollapsible | NavLink
+interface NavCollapsible {
+  title: string
+  url?: string
+  icon?: Icon
+  badge?: string
+  items: NavLink[]
+  loadItems?: LoadItemsFunction
+}
+
+type NavItem = NavLink | NavCollapsible
 
 interface NavGroup {
   title: string
@@ -34,4 +46,4 @@ interface SidebarData {
   navGroups: NavGroup[]
 }
 
-export type { SidebarData, NavGroup, NavItem, NavCollapsible, NavLink }
+export type { SidebarData, NavGroup, NavItem, NavCollapsible, NavLink, LoadItemsFunction }

@@ -180,6 +180,17 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
           onReady: () => {
             if (isMounted) {
               setIsEditorReady(true);
+              
+              // Add keyboard event listener for tab key
+              document.getElementById(editorContainerId)?.addEventListener('keydown', (e) => {
+                if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.altKey) {
+                  e.preventDefault();
+                  const plusButton = document.querySelector('.ce-toolbar__plus') as HTMLElement;
+                  if (plusButton) {
+                    plusButton.click();
+                  }
+                }
+              });
             }
           }
         });

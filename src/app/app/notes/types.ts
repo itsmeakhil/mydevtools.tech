@@ -7,6 +7,7 @@ export interface Note {
   createdAt: number;
   updatedAt: number;
   created_by: string;
+  isParent: boolean;
 }
 
 export interface NoteEditorProps {

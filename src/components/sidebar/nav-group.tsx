@@ -1,5 +1,5 @@
 "use client"
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import Link from 'next/link'
 // import { useRouter } from 'next/router'
 import { usePathname } from 'next/navigation'
@@ -43,7 +43,7 @@ export function NavGroup({ title, items }: NavGroup) {
       <SidebarGroupLabel>{title}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
-          const key = `${item.title}-${item.url}`
+          const key = `${item.title}-${item.url || ''}`
 
           if (!item.items)
             return <SidebarMenuLink key={key} item={item} href={pathname} />
@@ -91,6 +91,43 @@ const SidebarMenuCollapsible = ({
   href: string
 }) => {
   const { setOpenMobile } = useSidebar()
+  const [dynamicItems, setDynamicItems] = useState<NavLink[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
+    const loadDynamicItems = async () => {
+      if (item.loadItems) {
+        setIsLoading(true);
+        try {
+          if (item.loadItems.subscribe) {
+            // For real-time subscriptions
+            unsubscribe = await item.loadItems.subscribe(setDynamicItems);
+          } else {
+            // For one-time loads
+            const items = await item.loadItems();
+            setDynamicItems(items);
+          }
+        } catch (error) {
+          console.error('Error loading dynamic items:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadDynamicItems();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [item.loadItems]);
+
+  const allItems = [...item.items, ...dynamicItems]
+
   return (
     <Collapsible
       asChild
@@ -108,20 +145,24 @@ const SidebarMenuCollapsible = ({
         </CollapsibleTrigger>
         <CollapsibleContent className='CollapsibleContent'>
           <SidebarMenuSub>
-            {item.items.map((subItem) => (
-              <SidebarMenuSubItem key={subItem.title}>
-                <SidebarMenuSubButton
-                  asChild
-                  isActive={checkIsActive(href, subItem)}
-                >
-                  <Link href={subItem.url} onClick={() => setOpenMobile(false)}>
-                    {subItem.icon && <subItem.icon />}
-                    <span>{subItem.title}</span>
-                    {subItem.badge && <NavBadge>{subItem.badge}</NavBadge>}
-                  </Link>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-            ))}
+            {isLoading ? (
+              <div className="px-2 py-1 text-sm text-muted-foreground">Loading...</div>
+            ) : (
+              allItems.map((subItem) => (
+                <SidebarMenuSubItem key={subItem.title}>
+                  <SidebarMenuSubButton
+                    asChild
+                    isActive={checkIsActive(href, subItem)}
+                  >
+                    <Link href={subItem.url} onClick={() => setOpenMobile(false)}>
+                      {subItem.icon && <subItem.icon />}
+                      <span>{subItem.title}</span>
+                      {subItem.badge && <NavBadge>{subItem.badge}</NavBadge>}
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              ))
+            )}
           </SidebarMenuSub>
         </CollapsibleContent>
       </SidebarMenuItem>
@@ -136,6 +177,43 @@ const SidebarMenuCollapsedDropdown = ({
   item: NavCollapsible
   href: string
 }) => {
+  const [dynamicItems, setDynamicItems] = useState<NavLink[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
+    const loadDynamicItems = async () => {
+      if (item.loadItems) {
+        setIsLoading(true);
+        try {
+          if (item.loadItems.subscribe) {
+            // For real-time subscriptions
+            unsubscribe = await item.loadItems.subscribe(setDynamicItems);
+          } else {
+            // For one-time loads
+            const items = await item.loadItems();
+            setDynamicItems(items);
+          }
+        } catch (error) {
+          console.error('Error loading dynamic items:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadDynamicItems();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [item.loadItems]);
+
+  const allItems = [...item.items, ...dynamicItems]
+
   return (
     <SidebarMenuItem>
       <DropdownMenu>
@@ -155,20 +233,24 @@ const SidebarMenuCollapsedDropdown = ({
             {item.title} {item.badge ? `(${item.badge})` : ''}
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {item.items.map((sub) => (
-            <DropdownMenuItem key={`${sub.title}-${sub.url}`} asChild>
-              <Link
-                href={sub.url}
-                className={`${checkIsActive(href, sub) ? 'bg-secondary' : ''}`}
-              >
-                {sub.icon && <sub.icon />}
-                <span className='max-w-52 text-wrap'>{sub.title}</span>
-                {sub.badge && (
-                  <span className='ml-auto text-xs'>{sub.badge}</span>
-                )}
-              </Link>
-            </DropdownMenuItem>
-          ))}
+          {isLoading ? (
+            <div className="px-2 py-1 text-sm text-muted-foreground">Loading...</div>
+          ) : (
+            allItems.map((sub) => (
+              <DropdownMenuItem key={`${sub.title}-${sub.url}`} asChild>
+                <Link
+                  href={sub.url}
+                  className={`${checkIsActive(href, sub) ? 'bg-secondary' : ''}`}
+                >
+                  {sub.icon && <sub.icon />}
+                  <span className='max-w-52 text-wrap'>{sub.title}</span>
+                  {sub.badge && (
+                    <span className='ml-auto text-xs'>{sub.badge}</span>
+                  )}
+                </Link>
+              </DropdownMenuItem>
+            ))
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </SidebarMenuItem>
@@ -176,12 +258,14 @@ const SidebarMenuCollapsedDropdown = ({
 }
 
 function checkIsActive(href: string, item: NavItem, mainNav = false) {
+  if (!item.url) return false;
+  
   return (
     href === item.url || // /endpint?search=param
     href.split('?')[0] === item.url || // endpoint
     !!item?.items?.filter((i) => i.url === href).length || // if child nav is active
     (mainNav &&
       href.split('/')[1] !== '' &&
-      href.split('/')[1] === (typeof item.url === 'string' ? item.url.split('/')[1] : ''))
+      href.split('/')[1] === item.url.split('/')[1])
   )
 }
