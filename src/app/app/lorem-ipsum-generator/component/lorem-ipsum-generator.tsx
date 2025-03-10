@@ -9,9 +9,8 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { useTheme } from "next-themes"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Badge } from "@/components/ui/badge"
+
+
 
 // Define interface for SliderWithTooltip props
 interface SliderWithTooltipProps {
@@ -25,7 +24,6 @@ interface SliderWithTooltipProps {
 }
 
 export default function LoremIpsumGenerator() {
-  const { theme } = useTheme()
   const [isFavorite, setIsFavorite] = useState(false)
   const [paragraphs, setParagraphs] = useState(1)
   const [sentencesPerParagraph, setSentencesPerParagraph] = useState(3)
