@@ -1,6 +1,13 @@
 .editorContainer {
   position: relative;
   padding: 1rem 2rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.editorContainer > div {
+  height: 100%;
 }
 
 /* Position the block content with margin to make space for tools on the left */

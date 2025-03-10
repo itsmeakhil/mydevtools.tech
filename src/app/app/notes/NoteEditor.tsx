@@ -258,8 +258,8 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
   }
 
   return (
-    <Card className="flex flex-col h-full">
-      <CardContent className="flex-1 p-0">
+    <Card className="flex flex-col">
+      <CardContent className="p-0">
         <div className={styles.titleContainer}>
           <h1
             ref={titleRef}
@@ -280,7 +280,7 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
           </Button>
         </div>
         <div className={styles.editorContainer}>
-          <div id="editorjs" className="min-h-[calc(100vh-12rem)]" />
+          <div id="editorjs" />
         </div>
       </CardContent>
     </Card>
