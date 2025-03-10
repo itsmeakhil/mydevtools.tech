@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useTheme } from "next-themes"
+
 
 
 export default function TextStatistics() {
@@ -16,7 +16,7 @@ export default function TextStatistics() {
     lines: 0,
     bytes: 0,
   })
-  const { theme, setTheme } = useTheme()
+ 
   const [mounted, setMounted] = useState(false)
   const [favorite, setFavorite] = useState(false)
 

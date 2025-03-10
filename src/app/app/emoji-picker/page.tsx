@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
-import { MoonIcon, SunIcon } from "lucide-react";
+
 
 const API_KEY = "ee810622d3eb68b295a255866d8c6e3ece634a8f";
 const API_URL = `https://emoji-api.com/emojis?access_key=${API_KEY}`;
@@ -21,7 +20,8 @@ export default function EmojiPicker() {
   const [emojis, setEmojis] = useState<Emoji[]>([]);
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { theme } = useTheme();
+
 
   useEffect(() => {
     setMounted(true);
@@ -240,12 +240,12 @@ export default function EmojiPicker() {
               theme === "dark" ? "text-gray-400" : "text-gray-600"
             }`}
           >
-            No emojis found matching "{search}"
+            No emojis found matching {`"${search}"`}
           </div>
         )}
 
         {copiedText && (
-          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg">
+          <div className="fixed bottom-4 text-center transform -translate-x-1/2 bg-white-500 text-black dark: bg-black text-white px-4 py-2 rounded-md shadow-lg">
             Copied: {copiedText}
           </div>
         )}
