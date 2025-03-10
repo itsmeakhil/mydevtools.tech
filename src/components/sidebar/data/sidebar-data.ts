@@ -257,6 +257,11 @@ export const sidebarData: SidebarData = {
               title: 'Emoji Picker',
               url: '/app/emoji-picker',
             },
+            {
+              title: 'String obfuscator',
+              url: '/app/string-obfuscator',
+            },
+            
           ]
 
         },
