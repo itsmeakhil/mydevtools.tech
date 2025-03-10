@@ -261,6 +261,10 @@ export const sidebarData: SidebarData = {
               title: 'String obfuscator',
               url: '/app/string-obfuscator',
             },
+            {
+              title: 'Numeronym generator',
+              url: '/app/numeronym-generator',
+            },
             
           ]
 
