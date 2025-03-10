@@ -1,12 +1,12 @@
 .editorContainer {
   position: relative;
-  padding: 1rem 2rem; /* Remove left padding as we'll handle it differently */
+  padding: 1rem 2rem;
 }
 
-/* Position the block content with margin to make space for tools */
+/* Position the block content with margin to make space for tools on the left */
 .editorContainer :global(.ce-block) {
   margin: 0;
-  margin-left: 2.5rem; /* Create space for tools */
+  margin-left: 2.5rem; /* Create space for tools on the left */
   position: relative;
 }
 
@@ -23,22 +23,40 @@
   padding-left: 2.5rem; /* Align with block content */
 }
 
-/* Position plus button and tools on the left */
+/* Position plus button on the left */
 .editorContainer :global(.ce-toolbar__plus) {
-  left: 0; /* Align to the left edge of the block */
+  left: -30px; /* Position to the left of the block */
+  right: auto;
 }
 
+/* Move toolbar actions to the left */
 .editorContainer :global(.ce-toolbar__actions) {
-  right: 0;
+  right: auto;
+  left: -30px;
 }
 
-/* Ensure block tools appear on the left */
+/* Ensure toolbar components stay on the left */
 .editorContainer :global(.ce-toolbar) {
   left: 0;
+  right: auto;
 }
 
 .editorContainer :global(.ce-block-settings) {
-  left: 0;
+  left: -30px;
+  right: auto;
+}
+
+/* Add hover indicator for blocks on the left */
+.editorContainer :global(.ce-block:hover::after) {
+  content: "";
+  position: absolute;
+  left: -20px;
+  right: auto;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background-color: hsl(var(--primary));
+  opacity: 0.5;
 }
 
 .editorContainer :global(.ce-header) {
@@ -108,4 +126,4 @@
   content: attr(data-placeholder);
   color: #6b7280;
   opacity: 0.8;
-} 
+}
