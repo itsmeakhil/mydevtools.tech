@@ -1,13 +1,46 @@
+.editorContainer {
+  position: relative;
+  padding: 1rem 2rem; /* Remove left padding as we'll handle it differently */
+}
+
+/* Position the block content with margin to make space for tools */
+.editorContainer :global(.ce-block) {
+  margin: 0;
+  margin-left: 2.5rem; /* Create space for tools */
+  position: relative;
+}
+
 .editorContainer :global(.ce-block__content) {
   max-width: 100%;
-  padding: 0 1rem;
+  position: relative;
+  margin: 0;
+  padding: 0;
 }
 
 .editorContainer :global(.ce-toolbar__content) {
   max-width: 100%;
+  margin: 0;
+  padding-left: 2.5rem; /* Align with block content */
 }
 
-/* Header Styles */
+/* Position plus button and tools on the left */
+.editorContainer :global(.ce-toolbar__plus) {
+  left: 0; /* Align to the left edge of the block */
+}
+
+.editorContainer :global(.ce-toolbar__actions) {
+  right: 0;
+}
+
+/* Ensure block tools appear on the left */
+.editorContainer :global(.ce-toolbar) {
+  left: 0;
+}
+
+.editorContainer :global(.ce-block-settings) {
+  left: 0;
+}
+
 .editorContainer :global(.ce-header) {
   padding: 0.5em 0;
   margin: 0;
@@ -43,4 +76,36 @@
 .editorContainer :global(h6.ce-header) {
   font-size: 1em;
   font-weight: 500;
+}
+
+.noteTitle {
+  font-size: 3em;
+  font-weight: 700;
+  line-height: 1.3;
+  padding: 1rem 7rem 1rem 2rem; /* Added right padding for save button */
+  margin: 0;
+  outline: none;
+  border: none;
+  width: 100%;
+  background: transparent;
+  color: inherit;
+}
+
+.titleContainer {
+  position: relative;
+  border-bottom: 1px solid hsl(var(--border)); /* Use theme border color */
+}
+
+.saveButton {
+  position: absolute;
+  right: 2rem;
+  top: 50%;
+  transform: translateY(-50%); /* Center vertically */
+  z-index: 1; /* Ensure button stays above other content */
+}
+
+.noteTitle:empty::before {
+  content: attr(data-placeholder);
+  color: #6b7280;
+  opacity: 0.8;
 } 

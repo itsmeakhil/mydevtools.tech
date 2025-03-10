@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { NoteEditorProps } from './types';
 import type EditorJS from '@editorjs/editorjs';
 import { getAuth } from 'firebase/auth';
@@ -12,6 +11,7 @@ import styles from './NoteEditor.module.css';
 
 function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
   const editorRef = useRef<EditorJS | null>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
   interface EditorInstance {
     EditorJS: typeof EditorJS;
     tools: {
@@ -110,43 +110,12 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
             header: {
               class: tools.header,
               inlineToolbar: true,
+              shortcut: 'CMD+SHIFT+H',
               config: {
                 placeholder: 'Enter a header',
                 levels: [1, 2, 3, 4, 5, 6],
                 defaultLevel: 2
-              },
-              toolbox: [
-                {
-                  title: 'Heading 1',
-                  icon: '<svg width="28" height="24" viewBox="0 0 28 24"><text x="3" y="17" font-family="Arial" font-size="16" font-weight="bold" fill="currentColor">H1</text></svg>',
-                  data: { level: 1 }
-                },
-                {
-                  title: 'Heading 2',
-                  icon: '<svg width="28" height="24" viewBox="0 0 28 24"><text x="3" y="17" font-family="Arial" font-size="16" font-weight="bold" fill="currentColor">H2</text></svg>',
-                  data: { level: 2 }
-                },
-                {
-                  title: 'Heading 3',
-                  icon: '<svg width="28" height="24" viewBox="0 0 28 24"><text x="3" y="17" font-family="Arial" font-size="16" font-weight="bold" fill="currentColor">H3</text></svg>',
-                  data: { level: 3 }
-                },
-                {
-                  title: 'Heading 4',
-                  icon: '<svg width="28" height="24" viewBox="0 0 28 24"><text x="3" y="17" font-family="Arial" font-size="16" font-weight="bold" fill="currentColor">H4</text></svg>',
-                  data: { level: 4 }
-                },
-                {
-                  title: 'Heading 5',
-                  icon: '<svg width="28" height="24" viewBox="0 0 28 24"><text x="3" y="17" font-family="Arial" font-size="16" font-weight="bold" fill="currentColor">H5</text></svg>',
-                  data: { level: 5 }
-                },
-                {
-                  title: 'Heading 6',
-                  icon: '<svg width="28" height="24" viewBox="0 0 28 24"><text x="3" y="17" font-family="Arial" font-size="16" font-weight="bold" fill="currentColor">H6</text></svg>',
-                  data: { level: 6 }
-                }
-              ]
+              }
             },
             paragraph: {
               class: tools.paragraph,
@@ -154,26 +123,25 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
             },
             list: {
               class: tools.list,
-              inlineToolbar: true
+              inlineToolbar: true,
+              shortcut: 'CMD+SHIFT+L'
             },
             quote: {
               class: tools.quote,
-              inlineToolbar: true
+              inlineToolbar: true,
+              shortcut: 'CMD+SHIFT+O'
             },
             code: {
-              class: tools.code
+              class: tools.code,
+              shortcut: 'CMD+SHIFT+C'
             },
             table: {
               class: tools.table,
-              inlineToolbar: true,
-              toolbox: {
-                title: 'Table',
-                icon: '<svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 7v2h2V7H7zm4 0v2h2V7h-2zm4 0v2h2V7h-2zM7 11v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2zM7 15v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2z"/></svg>'
-              }
+              inlineToolbar: true
             }
           },
           defaultBlock: 'paragraph',
-          placeholder: 'Press Tab or click + to insert blocks...',
+          placeholder: 'Press "/" for commands...',
           inlineToolbar: ['link', 'bold', 'italic'],
           data: contentData,
           autofocus: true,
@@ -181,16 +149,41 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
             if (isMounted) {
               setIsEditorReady(true);
               
-              // Add keyboard event listener for tab key
-              document.getElementById(editorContainerId)?.addEventListener('keydown', (e) => {
+              const editorElement = document.getElementById(editorContainerId);
+              if (!editorElement) return;
+
+              // Combined keyboard event handler
+              const handleKeyEvents = (e: KeyboardEvent) => {
+                // Handle Tab key
                 if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.altKey) {
                   e.preventDefault();
+                  e.stopPropagation();
                   const plusButton = document.querySelector('.ce-toolbar__plus') as HTMLElement;
                   if (plusButton) {
                     plusButton.click();
                   }
                 }
-              });
+                
+                // Handle slash command
+                if (e.key === '/' && e.type === 'keypress') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const plusButton = document.querySelector('.ce-toolbar__plus') as HTMLElement;
+                  if (plusButton) {
+                    plusButton.click();
+                  }
+                }
+              };
+
+              // Add both event listeners with the same handler
+              editorElement.addEventListener('keydown', handleKeyEvents, true);
+              editorElement.addEventListener('keypress', handleKeyEvents, true);
+
+              // Cleanup function
+              return () => {
+                editorElement.removeEventListener('keydown', handleKeyEvents, true);
+                editorElement.removeEventListener('keypress', handleKeyEvents, true);
+              };
             }
           }
         });
@@ -221,6 +214,12 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
     };
   }, [currentNote, error]);
 
+  // Update title handling
+  const handleTitleChange = (event: React.FormEvent<HTMLHeadingElement>) => {
+    setTitle(event.currentTarget.textContent || '');
+  };
+
+  // Update handleSave
   const handleSave = async () => {
     if (!editorRef.current || !auth.currentUser) return;
     
@@ -248,13 +247,10 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
   if (error) {
     return (
       <Card className="flex flex-col h-full">
-        <CardContent className="flex items-center justify-center h-full">
-          <div className="text-center p-6">
-            <div className="flex items-center justify-center mb-4">
-              <AlertCircle className="h-10 w-10 text-destructive" />
-            </div>
-            <h3 className="text-xl font-medium mb-2 text-destructive">Error</h3>
-            <p className="text-muted-foreground">{error}</p>
+        <CardContent className="flex items-center justify-center flex-1 p-6">
+          <div className="flex items-center gap-2 text-destructive">
+            <AlertCircle className="w-5 h-5" />
+            <p>{error}</p>
           </div>
         </CardContent>
       </Card>
@@ -263,24 +259,29 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
 
   return (
     <Card className="flex flex-col h-full">
-      <CardHeader className="px-4 py-3 space-y-2">
-        <Input
-          type="text"
-          placeholder="Note Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="text-lg font-medium"
-        />
-        <Button 
-          onClick={handleSave} 
-          disabled={isSaving || !isEditorReady} 
-          className="self-end"
-        >
-          {isSaving ? 'Saving...' : 'Save Note'}
-        </Button>
-      </CardHeader>
-      <CardContent className="flex-grow p-0">
-        <div id={editorContainerId} className={`min-h-[500px] p-4 pl-16 ${styles.editorContainer}`} />
+      <CardContent className="flex-1 p-0">
+        <div className={styles.titleContainer}>
+          <h1
+            ref={titleRef}
+            className={styles.noteTitle}
+            contentEditable
+            onInput={handleTitleChange}
+            suppressContentEditableWarning
+            data-placeholder="Untitled Note"
+          >
+            {currentNote?.title || ''}
+          </h1>
+          <Button
+            onClick={handleSave}
+            disabled={!isEditorReady || isSaving}
+            className={styles.saveButton}
+          >
+            {isSaving ? 'Saving...' : 'Save'}
+          </Button>
+        </div>
+        <div className={styles.editorContainer}>
+          <div id="editorjs" className="min-h-[calc(100vh-12rem)]" />
+        </div>
       </CardContent>
     </Card>
   );
