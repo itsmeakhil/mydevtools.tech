@@ -22,8 +22,8 @@ const NoteEditor = dynamic(() => import('./NoteEditor'), {
 export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
+  // const [loading, setLoading] = useState<boolean>(true);
+  // const [error, setError] = useState<Error | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const auth = getAuth();
   const user = auth.currentUser;
@@ -134,9 +134,9 @@ export default function NotesPage() {
     return () => unsubscribe();
   }, [user, authChecked]);
 
-  const handleSelectNote = (noteId: string) => {
-    router.push(`/app/notes?id=${noteId}`);
-  };
+  // const handleSelectNote = (noteId: string) => {
+  //   router.push(`/app/notes?id=${noteId}`);
+  // };
 
   const handleCreateNewNote = () => {
     if (!user) {
@@ -202,31 +202,31 @@ export default function NotesPage() {
     }
   };
 
-  const handleDeleteNote = async (noteId: string) => {
-    if (!user) {
-      throw new Error('You must be logged in to delete notes');
-    }
+  // const handleDeleteNote = async (noteId: string) => {
+  //   if (!user) {
+  //     throw new Error('You must be logged in to delete notes');
+  //   }
 
-    try {
-      const noteToDelete = notes.find(note => note.id === noteId);
+  //   try {
+  //     const noteToDelete = notes.find(note => note.id === noteId);
       
-      // Verify the note belongs to the current user before deleting
-      if (noteToDelete && noteToDelete.created_by !== user.uid) {
-        throw new Error('You can only delete your own notes');
-      }
+  //     // Verify the note belongs to the current user before deleting
+  //     if (noteToDelete && noteToDelete.created_by !== user.uid) {
+  //       throw new Error('You can only delete your own notes');
+  //     }
       
-      await deleteDoc(doc(db, 'notes', noteId));
+  //     await deleteDoc(doc(db, 'notes', noteId));
       
-      // If we deleted the currently selected note, clear the selection and URL
-      if (currentNote?.id === noteId) {
-        setCurrentNote(null);
-        router.push('/app/notes');
-      }
-    } catch (err) {
-      console.error("Error deleting note:", err);
-      throw err;
-    }
-  };
+  //     // If we deleted the currently selected note, clear the selection and URL
+  //     if (currentNote?.id === noteId) {
+  //       setCurrentNote(null);
+  //       router.push('/app/notes');
+  //     }
+  //   } catch (err) {
+  //     console.error("Error deleting note:", err);
+  //     throw err;
+  //   }
+  // };
 
   // Do not render content until auth is checked
   if (!authChecked) {
