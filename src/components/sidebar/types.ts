@@ -10,6 +10,7 @@ interface BaseNavItem {
   title: string
   badge?: string
   icon?: React.ElementType
+  description?: string // ✅ Added description here
 }
 
 type NavLink = BaseNavItem & {
@@ -18,7 +19,7 @@ type NavLink = BaseNavItem & {
 }
 
 type NavCollapsible = BaseNavItem & {
-  items: (BaseNavItem & { url: LinkProps['href'] })[]
+  items: (BaseNavItem & { url: LinkProps['href']; description?: string })[] // ✅ Added description in items
   url?: never
 }
 
