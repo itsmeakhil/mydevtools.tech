@@ -19,6 +19,101 @@ const NoteEditor = dynamic(() => import('./NoteEditor'), {
   )
 });
 
+// Helper function to make content Firebase-compatible by converting nested arrays
+const makeFirebaseCompatible = (content: OutputData): OutputData => {
+  const processedContent = { ...content };
+  
+  // Process blocks to handle arrays in table cells
+  if (processedContent.blocks && Array.isArray(processedContent.blocks)) {
+    processedContent.blocks = processedContent.blocks.map(block => {
+      // Handle table blocks specifically
+      if (block.type === 'table' && block.data && block.data.content) {
+        // Convert the nested array structure of tables to an object format
+        // that Firestore can handle
+        const tableContent = block.data.content;
+        if (Array.isArray(tableContent)) {
+          const tableRows: Record<string, Record<string, string>> = {};
+          
+          tableContent.forEach((row, rowIndex) => {
+            if (Array.isArray(row)) {
+              const cells: Record<string, string> = {};
+              row.forEach((cell, cellIndex) => {
+                cells[`cell${cellIndex}`] = cell;
+              });
+              tableRows[`row${rowIndex}`] = cells;
+            }
+          });
+          
+          // Replace the array with an object structure
+          return {
+            ...block,
+            data: {
+              ...block.data,
+              content: tableRows,
+              isFirebaseCompatible: true // Flag to identify converted tables
+            }
+          };
+        }
+      }
+      return block;
+    });
+  }
+  
+  return processedContent;
+};
+
+// Helper function to restore content from Firebase-compatible format
+const restoreFromFirebase = (content: OutputData): OutputData => {
+  const processedContent = { ...content };
+  
+  // Process blocks to restore arrays
+  if (processedContent.blocks && Array.isArray(processedContent.blocks)) {
+    processedContent.blocks = processedContent.blocks.map(block => {
+      // Handle table blocks specifically
+      if (block.type === 'table' && block.data && block.data.content && block.data.isFirebaseCompatible) {
+        // Convert the object format back to arrays
+        const tableContent = block.data.content;
+        if (typeof tableContent === 'object' && !Array.isArray(tableContent)) {
+          // Get the number of rows
+          const rowKeys = Object.keys(tableContent).sort((a, b) => {
+            // Sort row keys numerically (row0, row1, row2, etc.)
+            const numA = parseInt(a.replace('row', ''));
+            const numB = parseInt(b.replace('row', ''));
+            return numA - numB;
+          });
+          
+          const tableArray = rowKeys.map(rowKey => {
+            const row = tableContent[rowKey];
+            // Get the number of cells in this row
+            const cellKeys = Object.keys(row).sort((a, b) => {
+              // Sort cell keys numerically (cell0, cell1, cell2, etc.)
+              const numA = parseInt(a.replace('cell', ''));
+              const numB = parseInt(b.replace('cell', ''));
+              return numA - numB;
+            });
+            
+            // Convert cells object back to array
+            return cellKeys.map(cellKey => row[cellKey]);
+          });
+          
+          // Replace the object with the restored array structure
+          return {
+            ...block,
+            data: {
+              ...block.data,
+              content: tableArray,
+              isFirebaseCompatible: undefined // Remove the flag
+            }
+          };
+        }
+      }
+      return block;
+    });
+  }
+  
+  return processedContent;
+};
+
 export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
@@ -77,9 +172,13 @@ export default function NotesPage() {
             const noteData = noteDoc.data() as Omit<Note, 'id'>;
             // Verify the note belongs to the current user
             if (noteData.created_by === user.uid) {
+              // Restore nested arrays in content if needed
+              const processedContent = noteData.content ? restoreFromFirebase(noteData.content) : noteData.content;
+              
               setCurrentNote({
                 id: noteDoc.id,
-                ...noteData
+                ...noteData,
+                content: processedContent
               } as Note);
             } else {
               setError(new Error("You don't have permission to view this note"));
@@ -156,6 +255,9 @@ export default function NotesPage() {
     try {
       const timestamp = Date.now();
       
+      // Convert any nested arrays to Firebase-compatible format
+      const processedContent = makeFirebaseCompatible(noteData.content);
+      
       if (currentNote && currentNote.id) {
         // Verify the note belongs to the current user before updating
         if (currentNote.created_by !== user.uid) {
@@ -164,14 +266,14 @@ export default function NotesPage() {
         
         await updateDoc(doc(db, 'notes', currentNote.id), {
           title: noteData.title,
-          content: noteData.content,
+          content: processedContent, // Use the processed content
           updatedAt: timestamp
         });
         
         setCurrentNote({
           ...currentNote,
           title: noteData.title,
-          content: noteData.content,
+          content: noteData.content, // Keep the original format in state
           updatedAt: timestamp
         });
         
@@ -180,7 +282,7 @@ export default function NotesPage() {
         const newNoteData = {
           ...createBlankNote(),
           title: noteData.title,
-          content: noteData.content,
+          content: processedContent, // Use the processed content
           createdAt: timestamp,
           updatedAt: timestamp,
         };
@@ -189,7 +291,8 @@ export default function NotesPage() {
         
         const newNote = {
           id: newNoteRef.id,
-          ...newNoteData
+          ...newNoteData,
+          content: noteData.content // Keep the original format in state
         };
         
         setCurrentNote(newNote);

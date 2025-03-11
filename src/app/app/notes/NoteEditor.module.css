@@ -1,12 +1,21 @@
 .editorContainer {
   position: relative;
   padding: 1rem 2rem;
-  height: 100%;
+  flex-grow: 1;
+  min-height: 300px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
 
+.editorContent {
+  flex-grow: 1;
+  min-height: 300px !important;
+  height: auto !important;
+}
+
 .editorContainer > div {
+  min-height: 300px !important;
   height: 100%;
 }
 
@@ -15,6 +24,7 @@
   margin: 0;
   margin-left: 2.5rem; /* Create space for tools on the left */
   position: relative;
+  padding: 0.1em 0; /* Reduce padding between blocks */
 }
 
 .editorContainer :global(.ce-block__content) {
@@ -22,6 +32,7 @@
   position: relative;
   margin: 0;
   padding: 0;
+  min-height: 20px; /* Reduce minimum height */
 }
 
 .editorContainer :global(.ce-toolbar__content) {
@@ -67,8 +78,8 @@
 }
 
 .editorContainer :global(.ce-header) {
-  padding: 0.5em 0;
-  margin: 0;
+  padding: 0.3em 0; /* Reduce padding for headers */
+  margin: 0.2em 0; /* Consistent margin for all elements */
   line-height: 1.2em;
   outline: none;
 }
@@ -107,7 +118,7 @@
   font-size: 3em;
   font-weight: 700;
   line-height: 1.3;
-  padding: 1rem 7rem 1rem 2rem; /* Added right padding for save button */
+  padding: 1rem 2rem;
   margin: 0;
   outline: none;
   border: none;
@@ -121,16 +132,69 @@
   border-bottom: 1px solid hsl(var(--border)); /* Use theme border color */
 }
 
-.saveButton {
-  position: absolute;
-  right: 2rem;
-  top: 50%;
-  transform: translateY(-50%); /* Center vertically */
-  z-index: 1; /* Ensure button stays above other content */
-}
-
 .noteTitle:empty::before {
   content: attr(data-placeholder);
   color: #6b7280;
   opacity: 0.8;
+}
+
+/* Saving indicator styles */
+.savingIndicator {
+  position: absolute;
+  right: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.savingDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: hsl(var(--primary));
+  border-radius: 50%;
+  opacity: 0.8;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.4; }
+}
+
+/* Add these new styles to ensure editor maintains height */
+:global(.codex-editor) {
+  min-height: 300px !important;
+  height: auto !important;
+}
+
+:global(.codex-editor__redactor) {
+  padding-bottom: 100px !important;
+  min-height: 300px !important;
+}
+
+:global(.ce-block__content) {
+  min-height: 22px; /* Reduce from 100px to a reasonable line height */
+}
+
+/* Fix line spacing in the editor */
+:global(.ce-paragraph[data-placeholder]:empty::before) {
+  line-height: 1.5;
+}
+
+/* Reduce the gap between blocks */
+:global(.ce-block + .ce-block) {
+  margin-top: 0.2em; /* Much less space between consecutive blocks */
+}
+
+/* Adjust paragraph spacing specifically */
+.editorContainer :global(.ce-paragraph) {
+  line-height: 1.5;
+  margin: 0.2em 0; /* Reduce margin between paragraphs */
+  padding: 0;
 }

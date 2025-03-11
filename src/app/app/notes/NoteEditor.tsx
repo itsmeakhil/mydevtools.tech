@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { NoteEditorProps } from './types';
 import type EditorJS from '@editorjs/editorjs';
@@ -21,10 +20,16 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
     };
   }
   const editorInstanceRef = useRef<EditorInstance | null>(null); // Store the EditorJS class
-  const [title, setTitle] = useState<string>('');
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedContentRef = useRef<string>('');
+  const contentRef = useRef<OutputData | null>(null); // Store content in ref to avoid state updates
+  const titleValueRef = useRef<string>('');
+  const savingRef = useRef<boolean>(false);
+  const editorReadyRef = useRef<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isEditorReady, setIsEditorReady] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [editorInitialized, setEditorInitialized] = useState<boolean>(false);
   const auth = getAuth();
   const editorContainerId = 'editorjs';
   
@@ -41,14 +46,99 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
     }
   }, [currentNote, auth]);
   
-  // Initialize Editor.js
+  // Update the title ref without triggering state updates
   useEffect(() => {
-    let isMounted = true;
+    if (currentNote?.title) {
+      titleValueRef.current = currentNote.title;
+      // Update the actual DOM element if it exists
+      if (titleRef.current) {
+        titleRef.current.textContent = currentNote.title;
+      }
+    }
+  }, [currentNote?.title]);
+
+  // Debounced auto-save function
+  const debouncedSave = useCallback(async () => {
+    // Prevent saving if another save operation is in progress
+    if (savingRef.current || !editorRef.current || !auth.currentUser || !editorReadyRef.current) return;
     
+    try {
+      savingRef.current = true;
+      // Only update UI state after a short delay to prevent constant flickering
+      const saveIndicatorTimeout = setTimeout(() => setIsSaving(true), 500);
+      
+      const outputData = await editorRef.current.save();
+      contentRef.current = outputData; // Store in ref
+      const currentTitle = titleValueRef.current.trim() || 'Untitled Note';
+      
+      // Create a simple hash of the content to avoid unnecessary saves
+      const contentJSON = JSON.stringify(outputData);
+      if (contentJSON === lastSavedContentRef.current && currentTitle === currentNote?.title) {
+        clearTimeout(saveIndicatorTimeout);
+        savingRef.current = false;
+        setIsSaving(false);
+        return;
+      }
+      
+      await onSave({
+        title: currentTitle,
+        content: outputData
+      });
+      
+      lastSavedContentRef.current = contentJSON;
+      
+      // Clear the save indicator after a short delay to prevent UI jumping
+      setTimeout(() => {
+        setIsSaving(false);
+        savingRef.current = false;
+      }, 300);
+      
+      clearTimeout(saveIndicatorTimeout);
+    } catch (error) {
+      console.error('Failed to auto-save note:', error);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Failed to save note');
+      }
+      savingRef.current = false;
+      setIsSaving(false);
+    }
+  }, [currentNote, onSave, auth]);
+  
+  // Trigger auto-save when content changes with massive debounce
+  const triggerAutoSave = useCallback(() => {
+    // Clear existing timeout to prevent multiple saves
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    // Set a new timeout with a much longer delay (3.5 seconds)
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      debouncedSave();
+    }, 3500);
+  }, [debouncedSave]);
+  
+  // Initialize Editor.js - only once per note ID change
+  useEffect(() => {
+    // Reset editor state when note changes
+    if (currentNote?.id) {
+      setEditorInitialized(false);
+      editorReadyRef.current = false;
+      setIsEditorReady(false);
+    }
+  }, [currentNote?.id]);
+  
+  // Handle actual editor initialization in a separate effect to prevent re-runs
+  useEffect(() => {
+    // Only run initialization once per note ID change
+    if (editorInitialized || !currentNote || error) return;
+    
+    let isMounted = true;
     const initializeEditor = async () => {
       try {
         // Clean up existing editor instance if it exists
-        if (editorRef.current) {
+        if (editorRef.current && typeof editorRef.current.destroy === 'function') {
           editorRef.current.destroy();
           editorRef.current = null;
         }
@@ -99,8 +189,10 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
           ]
         };
         
-        // Set the title from current note
-        setTitle(currentNote?.title || '');
+        // Store in refs
+        contentRef.current = contentData;
+        titleValueRef.current = currentNote?.title || '';
+        lastSavedContentRef.current = JSON.stringify(contentData);
         
         // Create a new editor instance
         const { EditorJS, tools } = editorInstanceRef.current;
@@ -119,7 +211,11 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
             },
             paragraph: {
               class: tools.paragraph,
-              inlineToolbar: true
+              inlineToolbar: true,
+              config: {
+                preserveBlank: false, // Don't create empty paragraphs automatically
+                placeholder: 'Type text or press "/" for commands...'
+              }
             },
             list: {
               class: tools.list,
@@ -145,12 +241,23 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
           inlineToolbar: ['link', 'bold', 'italic'],
           data: contentData,
           autofocus: true,
+          // Configure to use smaller baseline blocks
+          minHeight: 100, // Set a smaller minimum height
+          onChange: () => {
+            // Trigger auto-save on editor content change - with massive debounce
+            triggerAutoSave();
+          },
           onReady: () => {
             if (isMounted) {
+              editorReadyRef.current = true;
               setIsEditorReady(true);
+              setEditorInitialized(true);
               
               const editorElement = document.getElementById(editorContainerId);
               if (!editorElement) return;
+              
+              // Ensure editor element maintains height
+              editorElement.style.minHeight = "300px";
 
               // Combined keyboard event handler
               const handleKeyEvents = (e: KeyboardEvent) => {
@@ -178,12 +285,6 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
               // Add both event listeners with the same handler
               editorElement.addEventListener('keydown', handleKeyEvents, true);
               editorElement.addEventListener('keypress', handleKeyEvents, true);
-
-              // Cleanup function
-              return () => {
-                editorElement.removeEventListener('keydown', handleKeyEvents, true);
-                editorElement.removeEventListener('keypress', handleKeyEvents, true);
-              };
             }
           }
         });
@@ -192,18 +293,26 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
         
       } catch (error) {
         console.error('Editor initialization error:', error);
+        setEditorInitialized(true); // Mark as initialized to prevent infinite retry
       }
     };
     
     // Initialize the editor
-    if (!error) {
-      initializeEditor();
-    }
+    initializeEditor();
     
     // Cleanup
     return () => {
       isMounted = false;
-      if (editorRef.current) {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [currentNote, error, triggerAutoSave, editorInitialized]);
+  
+  // Cleanup editor on component unmount
+  useEffect(() => {
+    return () => {
+      if (editorRef.current && typeof editorRef.current.destroy === 'function') {
         try {
           editorRef.current.destroy();
           editorRef.current = null;
@@ -212,36 +321,13 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
         }
       }
     };
-  }, [currentNote, error]);
+  }, []);
 
-  // Update title handling
+  // Update title handling with auto-save, using refs to avoid state updates
   const handleTitleChange = (event: React.FormEvent<HTMLHeadingElement>) => {
-    setTitle(event.currentTarget.textContent || '');
-  };
-
-  // Update handleSave
-  const handleSave = async () => {
-    if (!editorRef.current || !auth.currentUser) return;
-    
-    try {
-      setIsSaving(true);
-      const outputData = await editorRef.current.save();
-      
-      await onSave({
-        title: title.trim() || 'Untitled Note',
-        content: outputData
-      });
-      
-    } catch (error) {
-      console.error('Failed to save note:', error);
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError('Failed to save note');
-      }
-    } finally {
-      setIsSaving(false);
-    }
+    const newTitle = event.currentTarget.textContent || '';
+    titleValueRef.current = newTitle; // Store in ref instead of state
+    triggerAutoSave();
   };
 
   if (error) {
@@ -258,8 +344,8 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
   }
 
   return (
-    <Card className="flex flex-col">
-      <CardContent className="p-0">
+    <Card className="flex flex-col h-full">
+      <CardContent className="p-0 h-full flex flex-col">
         <div className={styles.titleContainer}>
           <h1
             ref={titleRef}
@@ -271,16 +357,15 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
           >
             {currentNote?.title || ''}
           </h1>
-          <Button
-            onClick={handleSave}
-            disabled={!isEditorReady || isSaving}
-            className={styles.saveButton}
-          >
-            {isSaving ? 'Saving...' : 'Save'}
-          </Button>
+          {isSaving && (
+            <div className={styles.savingIndicator}>
+              <span className={styles.savingDot}></span>
+              <span>Saving...</span>
+            </div>
+          )}
         </div>
         <div className={styles.editorContainer}>
-          <div id="editorjs" />
+          <div id="editorjs" className={styles.editorContent} />
         </div>
       </CardContent>
     </Card>
