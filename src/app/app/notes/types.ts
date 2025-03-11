@@ -7,6 +7,8 @@ export interface Note {
   createdAt: number;
   updatedAt: number;
   created_by: string;
+  isParent: boolean;
+  key?: string; // Add optional key for re-rendering
 }
 
 export interface NoteEditorProps {
