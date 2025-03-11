@@ -244,7 +244,7 @@ export function NavBar() {
       {/* Search Dialog */}
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
         <DialogContent className="sm:max-w-[600px] p-0 shadow-lg rounded-xl">
-          <DialogTitle className="p-4 text-xl font-bold border-b bg-background/90">
+          <DialogTitle className="p-4 text-xl font-bold border-b bg-background/90 rounded-xl">
             Search Tools & Pages
           </DialogTitle>
 
