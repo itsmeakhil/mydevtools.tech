@@ -19,6 +19,7 @@
     "@editorjs/quote": "^2.5.0",
     "@firebase/firestore": "^4.7.5",
     "@iarna/toml": "^2.2.5",
+    "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
     "@radix-ui/react-avatar": "^1.1.2",
     "@radix-ui/react-checkbox": "^1.1.4",
