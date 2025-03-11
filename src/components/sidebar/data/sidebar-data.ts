@@ -42,19 +42,19 @@ export const sidebarData: SidebarData = {
           icon: IconBook2,
           description: 'Write, save, and organize your notes.'
         },
-        {
-          title: 'Bookmarks Manager',
-          url: '#',
-          badge: '3',
-          icon: IconBookmarks,
-          description: 'Organize and manage your favorite links.'
-        },
-        {
-          title: 'Json Viewer',
-          url: '#',
-          icon: IconCodeDots,
-          description: 'View and format JSON data.'
-        },
+        // {
+        //   title: 'Bookmarks Manager',
+        //   url: '#',
+        //   badge: '3',
+        //   icon: IconBookmarks,
+        //   description: 'Organize and manage your favorite links.'
+        // },
+        // {
+        //   title: 'Json Viewer',
+        //   url: '#',
+        //   icon: IconCodeDots,
+        //   description: 'View and format JSON data.'
+        // },
       ],
     },
     {
