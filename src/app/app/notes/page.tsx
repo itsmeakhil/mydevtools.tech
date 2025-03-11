@@ -344,7 +344,8 @@ export default function NotesPage() {
     <div className="container py-6 max-w-7xl">
       <h1 className="text-3xl font-bold mb-6">Notes</h1>
       
-      <div className="h-[calc(100vh-180px)]">
+      {/* Remove fixed height to allow content to grow naturally */}
+      <div className="min-h-[calc(100vh-180px)]">
         {currentNote ? (
           <NoteEditor 
             currentNote={currentNote}

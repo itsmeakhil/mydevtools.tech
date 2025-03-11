@@ -3,7 +3,7 @@
   padding: 1rem 2rem;
   flex-grow: 1;
   min-height: 300px;
-  overflow-y: auto;
+  /* Remove the overflow-y: auto to allow container to grow */
   display: flex;
   flex-direction: column;
 }
@@ -12,11 +12,13 @@
   flex-grow: 1;
   min-height: 300px !important;
   height: auto !important;
+  /* Allow content to expand naturally */
+  overflow: visible;
 }
 
 .editorContainer > div {
   min-height: 300px !important;
-  height: 100%;
+  height: auto !important; /* Change from 100% to auto */
 }
 
 /* Position the block content with margin to make space for tools on the left */
@@ -171,11 +173,14 @@
 :global(.codex-editor) {
   min-height: 300px !important;
   height: auto !important;
+  overflow: visible !important;
 }
 
 :global(.codex-editor__redactor) {
   padding-bottom: 100px !important;
   min-height: 300px !important;
+  overflow: visible !important;
+  height: auto !important;
 }
 
 :global(.ce-block__content) {

@@ -345,7 +345,7 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
 
   return (
     <Card className="flex flex-col h-full">
-      <CardContent className="p-0 h-full flex flex-col">
+      <CardContent className="p-0 flex flex-col"> {/* Remove h-full to allow natural growth */}
         <div className={styles.titleContainer}>
           <h1
             ref={titleRef}
