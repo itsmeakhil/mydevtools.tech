@@ -22,8 +22,8 @@ const NoteEditor = dynamic(() => import('./NoteEditor'), {
 export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
-  // const [loading, setLoading] = useState<boolean>(true);
-  // const [error, setError] = useState<Error | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const auth = getAuth();
   const user = auth.currentUser;
