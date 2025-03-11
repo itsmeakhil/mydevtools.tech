@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { NoteEditorProps } from './types';
 import type EditorJS from '@editorjs/editorjs';
+import type { OutputData } from '@editorjs/editorjs';
 import { getAuth } from 'firebase/auth';
 import { AlertCircle } from 'lucide-react';
 import styles from './NoteEditor.module.css';
@@ -27,7 +28,6 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
   const savingRef = useRef<boolean>(false);
   const editorReadyRef = useRef<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [isEditorReady, setIsEditorReady] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [editorInitialized, setEditorInitialized] = useState<boolean>(false);
   const auth = getAuth();
@@ -39,7 +39,7 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
     if (currentNote?.id && currentNote?.created_by && user) {
       if (currentNote.created_by !== user.uid) {
         setError("You don't have permission to edit this note");
-        setIsEditorReady(false);
+        editorReadyRef.current = false;
       } else {
         setError(null);
       }
@@ -125,14 +125,63 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
     if (currentNote?.id) {
       setEditorInitialized(false);
       editorReadyRef.current = false;
-      setIsEditorReady(false);
+    }
+  }, [currentNote?.id]);
+
+  // Reset everything when a new note is created
+  useEffect(() => {
+    // For new notes (when there's no ID), completely reset the editor
+    if (!currentNote?.id) {
+      // Reset editor state
+      setEditorInitialized(false);
+      editorReadyRef.current = false;
+      
+      // Force destroy the editor if it exists
+      if (editorRef.current && typeof editorRef.current.destroy === 'function') {
+        try {
+          editorRef.current.destroy();
+          editorRef.current = null;
+        } catch (error) {
+          console.error('Error destroying editor:', error);
+        }
+      }
+      
+      // Clear the DOM element directly
+      const editorElement = document.getElementById(editorContainerId);
+      if (editorElement) {
+        editorElement.innerHTML = '';
+      }
+      
+      // Reset all refs
+      contentRef.current = null;
+      lastSavedContentRef.current = '';
+      titleValueRef.current = '';
+      
+      // Ensure title is cleared
+      if (titleRef.current) {
+        titleRef.current.textContent = '';
+      }
     }
   }, [currentNote?.id]);
   
+  // Initialize Editor.js - only when currentNote changes (especially its ID or content)
+  useEffect(() => {
+    // We use a more comprehensive check to determine when to reinitialize
+    const noteIdentifier = currentNote ? 
+      `${currentNote.id || 'new'}-${currentNote.updatedAt || Date.now()}` : null;
+    
+    if (noteIdentifier) {
+      setEditorInitialized(false);
+      editorReadyRef.current = false;
+    }
+  }, [currentNote?.id, currentNote?.updatedAt]);
+
   // Handle actual editor initialization in a separate effect to prevent re-runs
   useEffect(() => {
     // Only run initialization once per note ID change
     if (editorInitialized || !currentNote || error) return;
+    
+    console.log('Initializing editor with note:', currentNote.id || 'new note');
     
     let isMounted = true;
     const initializeEditor = async () => {
@@ -177,7 +226,7 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
         if (!isMounted) return;
         
         // Get current note content or use empty template
-        const contentData = currentNote?.content || {
+        const contentData = currentNote.id ? currentNote.content : {
           time: Date.now(),
           blocks: [
             {
@@ -250,10 +299,7 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
           onReady: () => {
             if (isMounted) {
               editorReadyRef.current = true;
-              setIsEditorReady(true);
               setEditorInitialized(true);
-              
-              const editorElement = document.getElementById(editorContainerId);
               if (!editorElement) return;
               
               // Ensure editor element maintains height

@@ -193,8 +193,24 @@ export default function NotesPage() {
           setCurrentNote(null);
         }
       } else {
-        // If there's no note ID in the URL, create a blank note
-        setCurrentNote({ ...createBlankNote(), id: '' });
+        // Create a fresh blank note, ensuring it has different timestamps
+        // This forces a full reinitialize of the editor
+        const freshNote = {
+          ...createBlankNote(),
+          id: '',
+          content: {
+            time: Date.now(),
+            blocks: [
+              {
+                type: 'paragraph',
+                data: {
+                  text: ''
+                }
+              }
+            ]
+          }
+        };
+        setCurrentNote(freshNote);
       }
     };
 
@@ -245,6 +261,35 @@ export default function NotesPage() {
 
     // Clear the note ID from URL when creating new note
     router.push('/app/notes');
+    
+    // Generate a unique key for the new note to force re-render
+    const uniqueKey = `new-note-${Date.now()}`;
+    
+    // Explicitly set a completely new note object to force re-render and reset
+    const blankNote = {
+      ...createBlankNote(),
+      id: '', // Ensure no ID exists for new notes
+      key: uniqueKey, // Add a unique key for forcing re-render
+      content: {
+        time: Date.now(),
+        blocks: [
+          {
+            type: 'paragraph',
+            data: {
+              text: ''
+            }
+          }
+        ]
+      }
+    };
+    
+    // Force currentNote state update with the new blank note
+    setCurrentNote(null); // First set to null to force cleanup
+    
+    // Use setTimeout to ensure the reset happens in a new render cycle
+    setTimeout(() => {
+      setCurrentNote(blankNote);
+    }, 10);
   };
 
   const handleSaveNote = async (noteData: { title: string; content: OutputData }) => {
@@ -348,6 +393,7 @@ export default function NotesPage() {
       <div className="min-h-[calc(100vh-180px)]">
         {currentNote ? (
           <NoteEditor 
+            key={currentNote.id || `new-note-${currentNote.createdAt}`} // Add key to force re-mount
             currentNote={currentNote}
             onSave={handleSaveNote}
           />
