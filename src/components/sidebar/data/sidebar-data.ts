@@ -1,8 +1,8 @@
 import {
   IconChecklist,
   IconUnlink,
-  IconBookmarks,
-  IconCodeDots,
+  // IconBookmarks,
+  // IconCodeDots,
   IconAppWindow,
   IconArrowsExchange,
   IconTool,
