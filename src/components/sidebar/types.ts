@@ -1,4 +1,3 @@
-import { LinkProps } from 'next/link'
 import { Icon } from '@tabler/icons-react'
 
 interface User {
@@ -7,11 +6,11 @@ interface User {
   avatar: string
 }
 
-interface BaseNavItem {
-  title: string
-  badge?: string
-  icon?: React.ElementType
-}
+// interface BaseNavItem {
+//   title: string
+//   badge?: string
+//   icon?: React.ElementType
+// }
 
 interface RightElement {
   icon: Icon

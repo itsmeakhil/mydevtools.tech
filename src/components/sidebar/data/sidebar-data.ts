@@ -11,7 +11,8 @@ import {
   IconNetwork,
   IconBook2,
   IconPlus,
-  IconTrash
+  IconAlignJustified,
+  IconTrash,
 } from '@tabler/icons-react'
 import { type LoadItemsFunction, type SidebarData } from '../types'
 import { collection, query, where, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore'
@@ -284,8 +285,71 @@ export const sidebarData: SidebarData = {
               title: 'IPv4 Address Converter',
               url: '/app/ipv4-address-converter',
             },
+
+            {
+              title: 'IPv4 Range Expander',
+              url: '/app/ipv4-range-expander',
+            },
+            
+            
           ],
         },
+        {
+          title: 'Text',
+          icon: IconAlignJustified,
+          items: [
+            {
+              title: 'Lorem Ipsum Generator',
+              url: '/app/lorem-ipsum-generator',
+            },
+            {
+              title: 'Text Statistics',
+              url: '/app/text-statistics',
+            },
+            {
+              title: 'Emoji Picker',
+              url: '/app/emoji-picker',
+            },
+            {
+              title: 'String obfuscator',
+              url: '/app/string-obfuscator',
+            },
+            
+          ]
+
+        },
+        
+        // {
+        //   title: 'Converters',
+        //   icon: IconBug,
+        //   items: [
+        //     {
+        //       title: 'converter 1',
+        //       url: '#',
+        //       icon: IconLock,
+        //     },
+        //     {
+        //       title: 'converter 2',
+        //       url: '#',
+        //       icon: IconUserOff,
+        //     },
+        //     {
+        //       title: 'converter 3',
+        //       url: '#',
+        //       icon: IconError404,
+        //     },
+        //     {
+        //       title: 'converter 4',
+        //       url: '#',
+        //       icon: IconServerOff,
+        //     },
+        //     {
+        //       title: 'converter 5',
+        //       url: '#',
+        //       icon: IconBarrierBlock,
+        //     },
+        //   ],
+        // },
       ],
     },
   ],
