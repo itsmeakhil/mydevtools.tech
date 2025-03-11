@@ -10,12 +10,13 @@ import {
   IconBlocks,
   IconNetwork,
   IconBook2,
-  IconPlus
+  IconPlus,
+  IconTrash
 } from '@tabler/icons-react'
 import { type LoadItemsFunction, type SidebarData } from '../types'
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../../../database/firebase';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { collection, query, where, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore'
+import { db } from '../../../database/firebase'
+import { getAuth, onAuthStateChanged } from 'firebase/auth'
 
 // Function to fetch parent notes
 const fetchParentNotes: LoadItemsFunction = async () => {
@@ -42,10 +43,21 @@ fetchParentNotes.subscribe = async (callback) => {
     );
     
     const unsubscribeNotes = onSnapshot(q, (snapshot) => {
-      const items = snapshot.docs.map(doc => ({
-        title: doc.data().title || 'Untitled Note',
-        url: `/app/notes?id=${doc.id}`,
-        icon: undefined
+      const items = snapshot.docs.map(docSnapshot => ({
+        title: docSnapshot.data().title || 'Untitled Note',
+        url: `/app/notes?id=${docSnapshot.id}`,
+        icon: undefined,
+        id: docSnapshot.id,
+        rightElement: {
+          icon: IconTrash,
+          onClick: async () => {
+            try {
+              await deleteDoc(doc(db, 'notes', docSnapshot.id));
+            } catch (error) {
+              console.error('Error deleting note:', error);
+            }
+          }
+        }
       }));
       callback(items);
     }, (error) => {

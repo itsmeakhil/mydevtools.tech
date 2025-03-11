@@ -13,12 +13,20 @@ interface BaseNavItem {
   icon?: React.ElementType
 }
 
+interface RightElement {
+  icon: Icon
+  onClick: (e: React.MouseEvent) => void
+  className?: string
+}
+
 interface NavLink {
   title: string
   url?: string
   icon?: Icon
   badge?: string
   items?: NavLink[]
+  id?: string
+  rightElement?: RightElement
 }
 
 type LoadItemsFunction = (() => Promise<NavLink[]>) & {
