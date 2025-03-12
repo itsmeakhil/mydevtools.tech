@@ -262,8 +262,8 @@ export default function NotesPage() {
     // Clear the note ID from URL when creating new note
     router.push('/app/notes');
     
-    // Generate a unique key for the new note to force re-render
-    const uniqueKey = `new-note-${Date.now()}`;
+    // Generate a unique key using timestamp AND a random string to ensure uniqueness
+    const uniqueKey = `new-note-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
     
     // Explicitly set a completely new note object to force re-render and reset
     const blankNote = {
@@ -393,7 +393,7 @@ export default function NotesPage() {
       <div className="min-h-[calc(100vh-180px)]">
         {currentNote ? (
           <NoteEditor 
-            key={currentNote.id || `new-note-${currentNote.createdAt}`} // Add key to force re-mount
+            key={currentNote.key || currentNote.id || `new-note-${currentNote.createdAt}-${Math.random().toString(36).substring(2, 10)}`}
             currentNote={currentNote}
             onSave={handleSaveNote}
           />

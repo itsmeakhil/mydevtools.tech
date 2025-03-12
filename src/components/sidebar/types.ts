@@ -32,16 +32,21 @@ type LoadItemsFunction = (() => Promise<NavLink[]>) & {
   subscribe?: (callback: (items: NavLink[]) => void) => Promise<() => void>
 }
 
-interface NavCollapsible {
-  title: string
-  url?: string
-  icon?: Icon
-  badge?: string
-  items: NavLink[]
-  loadItems?: LoadItemsFunction
+interface NavCollapsible extends NavItem {
+  items: NavLink[];  // Ensure this is defined as an array
+  loadItems?: LoadItemsFunction;
+  collapsed?: boolean;
 }
 
-type NavItem = NavLink | NavCollapsible
+interface NavItem {
+  title: string;
+  url?: string;
+  icon?: IconComponent;
+  badge?: string;
+  id?: string;
+  items?: NavLink[];  // Make this optional but defined as array
+  type?: string;
+}
 
 interface NavGroup {
   title: string

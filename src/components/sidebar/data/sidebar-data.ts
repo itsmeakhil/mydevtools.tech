@@ -13,9 +13,10 @@ import {
   IconPlus,
   IconAlignJustified,
   IconTrash,
+  IconFileText,
 } from '@tabler/icons-react'
 import { type LoadItemsFunction, type SidebarData } from '../types'
-import { collection, query, where, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore'
+import { collection, query, where, orderBy, onSnapshot, deleteDoc, doc, getDocs } from 'firebase/firestore'
 import { db } from '../../../database/firebase'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
 
@@ -76,6 +77,30 @@ fetchParentNotes.subscribe = async (callback) => {
   return () => {
     unsubscribeAuth();
   };
+};
+
+// Modify the function that creates note menu items to use IDs instead of titles as keys
+export const getNotes = async (userId: string) => {
+  try {
+    const q = query(
+      collection(db, 'notes'),
+      where('created_by', '==', userId),
+      orderBy('updatedAt', 'desc')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const notesItems: SidebarItem[] = querySnapshot.docs.map(docSnapshot => ({
+      id: docSnapshot.id, // Use document ID
+      title: docSnapshot.data().title || 'Untitled Note',
+      icon: IconFileText,
+      key: docSnapshot.id, // Explicitly set key to document ID
+    }));
+    
+    return notesItems;
+  } catch (error) {
+    console.error('Error fetching notes:', error);
+    return [];
+  }
 };
 
 export const sidebarData: SidebarData = {

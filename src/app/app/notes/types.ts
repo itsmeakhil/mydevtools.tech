@@ -8,6 +8,7 @@ export interface Note {
   updatedAt: number;
   created_by: string;
   isParent: boolean;
+  // Ensure key is always available and unique
   key?: string; // Add optional key for re-rendering
 }
 

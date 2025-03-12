@@ -53,17 +53,18 @@ export function NavGroup({ title, items }: NavGroup) {
       <SidebarGroupLabel>{title}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
-          const key = `${item.title}-${item.url || ''}`
-
-          if (!item.items)
+          // Use a combination of id and url for a unique key, or generate one if those aren't available
+          const key = item.id || `${item.title}-${item.url || ''}-${Math.random().toString(36).substring(2, 8)}`;
+          
+          if (item.type === 'link') {
             return <SidebarMenuLink key={key} item={item} href={pathname} />
-
-          if (state === 'collapsed')
+          } else if (item.collapsed) {
             return (
               <SidebarMenuCollapsedDropdown key={key} item={item} href={pathname} />
             )
-
-          return <SidebarMenuCollapsible key={key} item={item} href={pathname} />
+          } else {
+            return <SidebarMenuCollapsible key={key} item={item} href={pathname} />
+          }
         })}
       </SidebarMenu>
     </SidebarGroup>
@@ -100,7 +101,7 @@ const NoteItem = ({ subItem, href, onClose }: { subItem: NavLink; href: string; 
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <SidebarMenuSubItem key={subItem.title}>
+    <SidebarMenuSubItem key={subItem.id || `${subItem.title}-${subItem.url || ''}-${Math.random().toString(36).substring(2, 8)}`}>
       <SidebarMenuSubButton
         asChild
         isActive={checkIsActive(href, subItem)}
@@ -203,7 +204,8 @@ const SidebarMenuCollapsible = ({
     };
   }, [item.loadItems]);
 
-  const allItems = [...item.items, ...dynamicItems]
+  // Ensure item.items is an array before spreading it
+  const allItems = [...(Array.isArray(item.items) ? item.items : []), ...dynamicItems]
 
   return (
     <Collapsible
@@ -229,7 +231,7 @@ const SidebarMenuCollapsible = ({
             ) : (
               allItems.map((subItem) => (
                 <NoteItem 
-                  key={subItem.title} 
+                  key={subItem.id || `${subItem.title}-${subItem.url || ''}-${Math.random().toString(36).substring(2, 8)}`} 
                   subItem={subItem} 
                   href={href} 
                   onClose={() => setOpenMobile(false)}
@@ -283,7 +285,8 @@ const SidebarMenuCollapsedDropdown = ({
     };
   }, [item.loadItems]);
 
-  const allItems = [...item.items, ...dynamicItems]
+  // Ensure item.items is an array before spreading it
+  const allItems = [...(Array.isArray(item.items) ? item.items : []), ...dynamicItems]
 
   return (
     <SidebarMenuItem>
@@ -310,7 +313,7 @@ const SidebarMenuCollapsedDropdown = ({
             <div className="px-2 py-1 text-sm text-muted-foreground">Loading...</div>
           ) : (
             allItems.map((sub) => (
-              <DropdownMenuItem key={`${sub.title}-${sub.url}`} asChild>
+              <DropdownMenuItem key={`${sub.id || sub.url || Math.random().toString(36).substring(2, 10)}`} asChild>
                 <NoteItem subItem={sub} href={href} />
               </DropdownMenuItem>
             ))
@@ -327,7 +330,8 @@ function checkIsActive(href: string, item: NavItem, mainNav = false) {
   return (
     href === item.url || // /endpint?search=param
     href.split('?')[0] === item.url || // endpoint
-    !!item?.items?.filter((i) => i.url === href).length || // if child nav is active
+    // Add null check for items property before filtering
+    !!(item.items && Array.isArray(item.items) && item.items.filter((i) => i.url === href).length) || 
     (mainNav &&
       href.split('/')[1] !== '' &&
       href.split('/')[1] === item.url.split('/')[1])
