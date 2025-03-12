@@ -8,6 +8,7 @@ import type { OutputData } from '@editorjs/editorjs';
 import { getAuth } from 'firebase/auth';
 import { AlertCircle } from 'lucide-react';
 import styles from './NoteEditor.module.css';
+import debounce from 'lodash/debounce';
 
 function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
   const editorRef = useRef<EditorJS | null>(null);
@@ -20,13 +21,14 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
       /* eslint-enable @typescript-eslint/no-explicit-any */
     };
   }
-  const editorInstanceRef = useRef<EditorInstance | null>(null); // Store the EditorJS class
-  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const editorInstanceRef = useRef<EditorInstance | null>(null);
   const lastSavedContentRef = useRef<string>('');
-  const contentRef = useRef<OutputData | null>(null); // Store content in ref to avoid state updates
+  const contentRef = useRef<OutputData | null>(null);
   const titleValueRef = useRef<string>('');
   const savingRef = useRef<boolean>(false);
   const editorReadyRef = useRef<boolean>(false);
+  const isTypingRef = useRef<boolean>(false);
+  const lastActivityRef = useRef<number>(Date.now());
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [editorInitialized, setEditorInitialized] = useState<boolean>(false);
@@ -50,52 +52,83 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
   useEffect(() => {
     if (currentNote?.title) {
       titleValueRef.current = currentNote.title;
-      // Update the actual DOM element if it exists
       if (titleRef.current) {
         titleRef.current.textContent = currentNote.title;
       }
     }
   }, [currentNote?.title]);
 
-  // Debounced auto-save function
-  const debouncedSave = useCallback(async () => {
-    // Prevent saving if another save operation is in progress
-    if (savingRef.current || !editorRef.current || !auth.currentUser || !editorReadyRef.current) return;
+  // Track user activity to detect when typing has stopped
+  const updateUserActivity = useCallback(() => {
+    lastActivityRef.current = Date.now();
+    isTypingRef.current = true;
+    
+    // Cancel any visible saving indicators immediately
+    setIsSaving(false);
+  }, []);
+  
+  // Save function that doesn't interfere with typing
+  const saveContent = useCallback(async () => {
+    // Only save if:
+    // 1. Not currently in a save operation
+    // 2. Editor is ready
+    // 3. User is authenticated
+    // 4. Enough time has passed since last typing activity (1500ms)
+    const currentTime = Date.now();
+    const timeSinceLastActivity = currentTime - lastActivityRef.current;
+    
+    if (
+      savingRef.current || 
+      !editorRef.current || 
+      !editorReadyRef.current || 
+      !auth.currentUser ||
+      timeSinceLastActivity < 1500 ||
+      isTypingRef.current
+    ) {
+      return;
+    }
     
     try {
+      // Mark as saving to prevent concurrent saves
       savingRef.current = true;
-      // Only update UI state after a short delay to prevent constant flickering
-      const saveIndicatorTimeout = setTimeout(() => setIsSaving(true), 500);
       
+      // Only show saving indicator if user hasn't typed for a while
+      if (timeSinceLastActivity > 2000) {
+        setIsSaving(true);
+      }
+      
+      // Get editor content without affecting cursor
       const outputData = await editorRef.current.save();
-      contentRef.current = outputData; // Store in ref
       const currentTitle = titleValueRef.current.trim() || 'Untitled Note';
       
-      // Create a simple hash of the content to avoid unnecessary saves
+      // Check if content has actually changed
       const contentJSON = JSON.stringify(outputData);
       if (contentJSON === lastSavedContentRef.current && currentTitle === currentNote?.title) {
-        clearTimeout(saveIndicatorTimeout);
         savingRef.current = false;
         setIsSaving(false);
         return;
       }
       
+      // Perform the save
       await onSave({
         title: currentTitle,
         content: outputData
       });
       
+      // Update last saved content reference
       lastSavedContentRef.current = contentJSON;
       
-      // Clear the save indicator after a short delay to prevent UI jumping
-      setTimeout(() => {
-        setIsSaving(false);
-        savingRef.current = false;
-      }, 300);
+      // Clear saving state
+      savingRef.current = false;
       
-      clearTimeout(saveIndicatorTimeout);
+      // Only update UI if we're not currently typing
+      if (Date.now() - lastActivityRef.current > 1000) {
+        setTimeout(() => setIsSaving(false), 300);
+      } else {
+        setIsSaving(false);
+      }
     } catch (error) {
-      console.error('Failed to auto-save note:', error);
+      console.error('Failed to save note:', error);
       if (error instanceof Error) {
         setError(error.message);
       } else {
@@ -106,22 +139,45 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
     }
   }, [currentNote, onSave, auth]);
   
-  // Trigger auto-save when content changes with massive debounce
-  const triggerAutoSave = useCallback(() => {
-    // Clear existing timeout to prevent multiple saves
-    if (autoSaveTimeoutRef.current) {
-      clearTimeout(autoSaveTimeoutRef.current);
-    }
+  // Highly optimized debounced save that waits for typing to finish
+  const debouncedSaveRef = useRef(
+    debounce(() => {
+      // Reset typing flag after debounce period
+      isTypingRef.current = false;
+      saveContent();
+    }, 2000, { 
+      leading: false,
+      trailing: true,
+      maxWait: 5000 
+    })
+  );
+  
+  // Setup background autosave interval
+  useEffect(() => {
+    // Check every 3 seconds if we should save
+    const intervalId = setInterval(() => {
+      // Only attempt saving if not currently typing
+      if (!isTypingRef.current && Date.now() - lastActivityRef.current > 2000) {
+        saveContent();
+      }
+    }, 3000);
     
-    // Set a new timeout with a much longer delay (3.5 seconds)
-    autoSaveTimeoutRef.current = setTimeout(() => {
-      debouncedSave();
-    }, 3500);
-  }, [debouncedSave]);
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [saveContent]);
+  
+  // Handler for editor changes - triggers autosave
+  const handleEditorChange = useCallback(() => {
+    // Update activity timestamp
+    updateUserActivity();
+    
+    // Queue up a debounced save
+    debouncedSaveRef.current();
+  }, [updateUserActivity]);
   
   // Initialize Editor.js - only once per note ID change
   useEffect(() => {
-    // Reset editor state when note changes
     if (currentNote?.id) {
       setEditorInitialized(false);
       editorReadyRef.current = false;
@@ -130,11 +186,11 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
 
   // Reset everything when a new note is created
   useEffect(() => {
-    // For new notes (when there's no ID), completely reset the editor
     if (!currentNote?.id) {
       // Reset editor state
       setEditorInitialized(false);
       editorReadyRef.current = false;
+      isTypingRef.current = false;
       
       // Force destroy the editor if it exists
       if (editorRef.current && typeof editorRef.current.destroy === 'function') {
@@ -164,9 +220,8 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
     }
   }, [currentNote?.id]);
   
-  // Initialize Editor.js - only when currentNote changes (especially its ID or content)
+  // Initialize Editor.js - only when currentNote changes
   useEffect(() => {
-    // We use a more comprehensive check to determine when to reinitialize
     const noteIdentifier = currentNote ? 
       `${currentNote.id || 'new'}-${currentNote.updatedAt || Date.now()}` : null;
     
@@ -176,9 +231,8 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
     }
   }, [currentNote?.id, currentNote?.updatedAt]);
 
-  // Handle actual editor initialization in a separate effect to prevent re-runs
+  // Handle editor initialization
   useEffect(() => {
-    // Only run initialization once per note ID change
     if (editorInitialized || !currentNote || error) return;
     
     console.log('Initializing editor with note:', currentNote.id || 'new note');
@@ -262,7 +316,7 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
               class: tools.paragraph,
               inlineToolbar: true,
               config: {
-                preserveBlank: false, // Don't create empty paragraphs automatically
+                preserveBlank: false,
                 placeholder: 'Type text or press "/" for commands...'
               }
             },
@@ -290,23 +344,24 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
           inlineToolbar: ['link', 'bold', 'italic'],
           data: contentData,
           autofocus: true,
-          // Configure to use smaller baseline blocks
-          minHeight: 100, // Set a smaller minimum height
-          onChange: () => {
-            // Trigger auto-save on editor content change - with massive debounce
-            triggerAutoSave();
-          },
+          minHeight: 100,
+          
+          // Optimized onChange handler to prevent cursor issues
+          onChange: handleEditorChange,
+          
           onReady: () => {
             if (isMounted) {
               editorReadyRef.current = true;
               setEditorInitialized(true);
-              if (!editorElement) return;
               
-              // Ensure editor element maintains height
+              if (!editorElement) return;
               editorElement.style.minHeight = "300px";
 
               // Combined keyboard event handler
               const handleKeyEvents = (e: KeyboardEvent) => {
+                // Update activity tracking on any key event
+                updateUserActivity();
+                
                 // Handle Tab key
                 if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.altKey) {
                   e.preventDefault();
@@ -328,9 +383,12 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
                 }
               };
 
-              // Add both event listeners with the same handler
+              // Event listeners with activity tracking
               editorElement.addEventListener('keydown', handleKeyEvents, true);
               editorElement.addEventListener('keypress', handleKeyEvents, true);
+              editorElement.addEventListener('mousedown', updateUserActivity);
+              editorElement.addEventListener('click', updateUserActivity);
+              editorElement.addEventListener('focus', updateUserActivity);
             }
           }
         });
@@ -343,21 +401,24 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
       }
     };
     
-    // Initialize the editor
     initializeEditor();
     
-    // Cleanup
     return () => {
       isMounted = false;
-      if (autoSaveTimeoutRef.current) {
-        clearTimeout(autoSaveTimeoutRef.current);
+      if (debouncedSaveRef.current && typeof debouncedSaveRef.current.cancel === 'function') {
+        debouncedSaveRef.current.cancel();
       }
     };
-  }, [currentNote, error, triggerAutoSave, editorInitialized]);
+  }, [currentNote, error, handleEditorChange, updateUserActivity]);
   
-  // Cleanup editor on component unmount
+  // Cleanup editor and timers on component unmount
   useEffect(() => {
     return () => {
+      // Cancel any pending debounced functions
+      if (debouncedSaveRef.current && typeof debouncedSaveRef.current.cancel === 'function') {
+        debouncedSaveRef.current.cancel();
+      }
+      
       if (editorRef.current && typeof editorRef.current.destroy === 'function') {
         try {
           editorRef.current.destroy();
@@ -366,14 +427,27 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
           console.error('Error destroying editor:', error);
         }
       }
+      
+      // Remove any global event listeners
+      const editorElement = document.getElementById(editorContainerId);
+      if (editorElement) {
+        editorElement.removeEventListener('mousedown', updateUserActivity);
+        editorElement.removeEventListener('click', updateUserActivity);
+        editorElement.removeEventListener('focus', updateUserActivity);
+      }
     };
-  }, []);
+  }, [updateUserActivity]);
 
-  // Update title handling with auto-save, using refs to avoid state updates
+  // Track title changes
   const handleTitleChange = (event: React.FormEvent<HTMLHeadingElement>) => {
     const newTitle = event.currentTarget.textContent || '';
-    titleValueRef.current = newTitle; // Store in ref instead of state
-    triggerAutoSave();
+    titleValueRef.current = newTitle;
+    
+    // Update activity timestamp to indicate typing
+    updateUserActivity();
+    
+    // Queue up a debounced save
+    debouncedSaveRef.current();
   };
 
   if (error) {
@@ -391,7 +465,7 @@ function NoteEditor({ currentNote, onSave }: NoteEditorProps) {
 
   return (
     <Card className="flex flex-col h-full">
-      <CardContent className="p-0 flex flex-col"> {/* Remove h-full to allow natural growth */}
+      <CardContent className="p-0 flex flex-col">
         <div className={styles.titleContainer}>
           <h1
             ref={titleRef}

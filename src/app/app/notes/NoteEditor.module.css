@@ -140,7 +140,7 @@
   opacity: 0.8;
 }
 
-/* Saving indicator styles */
+/* Make saving indicator even more subtle to prevent distractions */
 .savingIndicator {
   position: absolute;
   right: 2rem;
@@ -149,24 +149,27 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 0.75rem; /* Smaller font */
   color: hsl(var(--muted-foreground));
+  opacity: 0.5; /* Even more subtle */
+  transition: opacity 0.5s ease-in-out; /* Slower transition */
+  pointer-events: none; /* Prevent it from interfering with user interaction */
 }
 
 .savingDot {
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 5px; /* Smaller dot */
+  height: 5px;
   background-color: hsl(var(--primary));
   border-radius: 50%;
-  opacity: 0.8;
-  animation: pulse 1.5s infinite ease-in-out;
+  opacity: 0.5;
+  animation: pulse 3s infinite ease-in-out; /* Slower animation */
 }
 
 @keyframes pulse {
-  0% { opacity: 0.4; }
-  50% { opacity: 0.8; }
-  100% { opacity: 0.4; }
+  0% { opacity: 0.3; }
+  50% { opacity: 0.5; }
+  100% { opacity: 0.3; }
 }
 
 /* Add these new styles to ensure editor maintains height */
