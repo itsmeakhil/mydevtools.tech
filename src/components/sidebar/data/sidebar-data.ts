@@ -285,6 +285,11 @@ export const sidebarData: SidebarData = {
               url: '/app/numeronym-generator',
               description: 'Generate abbreviations with numbers.'
             },
+            {
+              title: 'ASCII Art Text Generator',
+              url: '/app/ASCII-art-text-generator',
+              description: 'Simple text-to-ASCII converter.'
+            },
           ],
         },
       ],
