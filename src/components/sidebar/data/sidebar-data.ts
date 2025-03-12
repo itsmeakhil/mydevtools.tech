@@ -30,17 +30,18 @@ export const sidebarData: SidebarData = {
           icon: IconChecklist,
           description: 'Manage your to-do lists efficiently.'
         },
-        {
-          title: 'Url Shortener',
-          url: '/app/url-shortener',
-          icon: IconUnlink,
-          description: 'Shorten long URLs for easy sharing.'
-        },
+       
         {
           title: 'Notes',
           url: '/app/notes',
           icon: IconBook2,
           description: 'Write, save, and organize your notes.'
+        },
+        {
+          title: 'Url Shortener',
+          url: '/app/url-shortener',
+          icon: IconUnlink,
+          description: 'Shorten long URLs for easy sharing.'
         },
         // {
         //   title: 'Bookmarks Manager',
