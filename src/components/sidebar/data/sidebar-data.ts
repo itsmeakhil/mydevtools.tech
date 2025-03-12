@@ -290,6 +290,11 @@ export const sidebarData: SidebarData = {
               url: '/app/ASCII-art-text-generator',
               description: 'Simple text-to-ASCII converter.'
             },
+            {
+              title: 'Text diff',
+              url: '/app/text-diff',
+              description: 'Compare two texts and see the differences between them.'
+            },
           ],
         },
       ],
