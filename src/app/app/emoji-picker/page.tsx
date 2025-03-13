@@ -3,11 +3,9 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "next-themes";
+import localEmojis from "./emojis.json"; // Import the local emoji data
 
-
-const API_KEY = "ee810622d3eb68b295a255866d8c6e3ece634a8f";
-const API_URL = `https://emoji-api.com/emojis?access_key=${API_KEY}`;
-
+// Emoji interface definition
 interface Emoji {
   slug: string;
   character: string;
@@ -17,30 +15,14 @@ interface Emoji {
 
 export default function EmojiPicker() {
   const [search, setSearch] = useState<string>("");
-  const [emojis, setEmojis] = useState<Emoji[]>([]);
+  const [emojis, setEmojis] = useState<Emoji[]>(localEmojis as Emoji[]);
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const { theme } = useTheme();
 
-
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-    if (mounted) {
-      fetch(API_URL)
-        .then((response) => response.json())
-        .then((data: Emoji[]) => {
-          if (!Array.isArray(data)) {
-            console.error("API did not return an array:", data);
-            return;
-          }
-          setEmojis(data);
-        })
-        .catch((error) => console.error("Error fetching emojis:", error));
-    }
-  }, [mounted]);
 
   const getSimilarityScore = (str1: string, str2: string): number => {
     const cleanStr1 = str1.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -59,7 +41,7 @@ export default function EmojiPicker() {
   const filteredEmojis =
     search.trim() === ""
       ? emojis
-      : (emojis
+      : emojis
           .map((emoji) => {
             if (!emoji) return null;
 
@@ -92,7 +74,7 @@ export default function EmojiPicker() {
             if (!a!.isExact && b!.isExact) return 1;
             return b!.score - a!.score;
           })
-          .map((result) => result!.emoji) as Emoji[]);
+          .map((result) => result!.emoji);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard
@@ -171,20 +153,23 @@ export default function EmojiPicker() {
           />
         </div>
 
-        <h2 className="text-xl font-bold mb-4">Search result</h2>
+        <h2 className="text-xl font-bold mb-4">
+          {search.trim() !== "" ? "Search results" : "All emojis"}
+        </h2>
 
-        <div className="grid grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {filteredEmojis.map((emoji, index) => (
             <div
-              key={emoji.codePoint || `emoji-${index}`}
+              key={`${emoji.codePoint}-${index}`} // Unique key
               className={`p-2 rounded-lg flex flex-col items-center text-center ${
                 theme === "dark" ? "bg-gray-700" : "bg-gray-100"
-              }`} // Changed to bg-gray-700 in dark theme
+              }`}
             >
               <div className="flex flex-col items-center gap-1">
                 <span
                   className="text-3xl cursor-pointer mb-1"
                   onClick={() => copyToClipboard(emoji.character)}
+                  title="Click to copy emoji"
                 >
                   {emoji.character}
                 </span>
@@ -213,6 +198,7 @@ export default function EmojiPicker() {
                     onClick={() =>
                       copyToClipboard(formatCodeDisplay(emoji.codePoint))
                     }
+                    title="Click to copy code point"
                   >
                     {formatCodeDisplay(emoji.codePoint)}
                   </span>
@@ -225,6 +211,7 @@ export default function EmojiPicker() {
                     onClick={() =>
                       copyToClipboard(formatUnicodeDisplay(emoji.codePoint))
                     }
+                    title="Click to copy unicode"
                   >
                     {formatUnicodeDisplay(emoji.codePoint)}
                   </span>
@@ -240,12 +227,12 @@ export default function EmojiPicker() {
               theme === "dark" ? "text-gray-400" : "text-gray-600"
             }`}
           >
-            No emojis found matching {`"${search}"`}
+            No emojis found matching &quot;{search}&quot;
           </div>
         )}
 
         {copiedText && (
-          <div className="fixed bottom-4 text-center transform -translate-x-1/2 bg-white-500 text-black dark: bg-black text-white px-4 py-2 rounded-md shadow-lg">
+          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-md shadow-lg z-50">
             Copied: {copiedText}
           </div>
         )}
