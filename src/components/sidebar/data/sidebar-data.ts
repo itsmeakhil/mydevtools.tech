@@ -22,7 +22,7 @@ import {
   IconMoodSmile,
   IconStrikethrough,
   IconNumber123,
-  IconFileDescriptionFilled,
+  IconFileDescription,
   IconLayersDifference,
   IconFileCode,
   IconFileTypeHtml,
@@ -360,7 +360,7 @@ export const sidebarData: SidebarData = {
               title: 'ASCII Art Text Generator',
               url: '/app/ASCII-art-text-generator',
               description: 'Simple text-to-ASCII converter.',
-              icon:IconFileDescriptionFilled
+              icon:IconFileDescription
             },
             {
               title: 'Text diff',

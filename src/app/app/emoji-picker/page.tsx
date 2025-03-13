@@ -15,10 +15,12 @@ interface Emoji {
 
 export default function EmojiPicker() {
   const [search, setSearch] = useState<string>("");
-  const [emojis, setEmojis] = useState<Emoji[]>(localEmojis as Emoji[]);
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const { theme } = useTheme();
+
+  // Use localEmojis directly (no need for useState)
+  const emojis = localEmojis as Emoji[];
 
   useEffect(() => {
     setMounted(true);
