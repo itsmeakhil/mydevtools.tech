@@ -40,6 +40,7 @@ import {
   IconJson,
   IconToml,
   IconSquareRoundedLetterY,
+  IconBookmark,
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
@@ -72,13 +73,13 @@ export const sidebarData: SidebarData = {
           icon: IconUnlink,
           description: 'Shorten long URLs for easy sharing.'
         },
-        // {
-        //   title: 'Bookmarks Manager',
-        //   url: '#',
-        //   badge: '3',
-        //   icon: IconBookmarks,
-        //   description: 'Organize and manage your favorite links.'
-        // },
+        {
+          title: 'Bookmark',
+          url: '/app/bookmark',
+          icon: IconBookmark,
+          description: 'Quickly save a single bookmark.',
+          customUI: true // Flag to indicate a custom UI
+        },
         // {
         //   title: 'Json Viewer',
         //   url: '#',
