@@ -24,7 +24,7 @@ import {
 import { db } from "../../../../database/firebase";
 import { Task, NewTask } from "@/app/app/to-do/types/Task";
 import { format } from "date-fns";
-import useAuth from "@/utils/useAuth";
+import useAuth, { AuthState } from "@/utils/useAuth";
 
 interface TaskContextType {
   tasks: Task[];
@@ -48,19 +48,15 @@ interface StatusOrderMap {
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export function TaskProvider({ children }: { children: React.ReactNode }) {
+  const { user }: AuthState = useAuth(); // Single declaration of user
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [lastDoc, setLastDoc] =
-    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [firstDoc, setFirstDoc] =
-    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [firstDoc, setFirstDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [totalPages, setTotalPages] = useState(0);
-  const [pageCache, setPageCache] = useState<
-    Map<number, QueryDocumentSnapshot<DocumentData>>
-  >(new Map());
+  const [pageCache, setPageCache] = useState<Map<number, QueryDocumentSnapshot<DocumentData>>>(new Map());
   const tasksPerPage = 7;
-  const user = useAuth();
   const unsubscribers = useRef<(() => void)[]>([]);
 
   // Modify the cleanup function to be less aggressive
@@ -73,11 +69,11 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
   // Modified error handler
   const handleFirestoreError = useCallback((error: { code: string }) => {
-    if (error.code === 'permission-denied') {
-      console.warn('Permission denied, cleaning up listeners');
+    if (error.code === "permission-denied") {
+      console.warn("Permission denied, cleaning up listeners");
       cleanupListeners();
     } else {
-      console.error('Firestore error:', error);
+      console.error("Firestore error:", error);
     }
   }, [cleanupListeners]);
 
@@ -95,21 +91,13 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         orderBy("createdAt", "desc")
       ),
       async (snapshot) => {
-        // Get actual count of documents
         const actualCount = snapshot.size;
-        const calculatedPages = Math.max(
-          1,
-          Math.ceil(actualCount / tasksPerPage)
-        );
+        const calculatedPages = Math.max(1, Math.ceil(actualCount / tasksPerPage));
 
-        // Only update if the calculated pages is different
         if (calculatedPages !== totalPages) {
           setTotalPages(calculatedPages);
-
-          // If current page is beyond the new total, reset to last valid page
           if (currentPage > calculatedPages) {
             setCurrentPage(calculatedPages);
-            // Fetch the last page
             const lastPageQuery = query(
               collection(db, "tasks"),
               where("created_by", "==", user.uid),
@@ -131,9 +119,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   }, [currentPage, totalPages, user, cleanupListeners, handleFirestoreError]);
 
   // Helper function to update tasks from snapshot
-  const updateTasksFromSnapshot = (
-    querySnapshot: QuerySnapshot<DocumentData>
-  ) => {
+  const updateTasksFromSnapshot = (querySnapshot: QuerySnapshot<DocumentData>) => {
     const tasksArray: Task[] = [];
     querySnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
       const data = doc.data();
@@ -156,25 +142,28 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Modified query creation helper function with proper typing
-  const createTaskQuery = useCallback((baseQuery: boolean) => {
-    if (!user?.uid) return null;
+  const createTaskQuery = useCallback(
+    (baseQuery: boolean) => {
+      if (!user?.uid) return null;
 
-    if (baseQuery) {
+      if (baseQuery) {
+        return query(
+          collection(db, "tasks"),
+          where("created_by", "==", user.uid),
+          orderBy("statusOrder"),
+          orderBy("createdAt", "desc"),
+          limit(tasksPerPage)
+        );
+      }
       return query(
         collection(db, "tasks"),
         where("created_by", "==", user.uid),
         orderBy("statusOrder"),
-        orderBy("createdAt", "desc"),
-        limit(tasksPerPage)
+        orderBy("createdAt", "desc")
       );
-    }
-    return query(
-      collection(db, "tasks"),
-      where("created_by", "==", user.uid),
-      orderBy("statusOrder"),
-      orderBy("createdAt", "desc")
-    );
-  }, [user?.uid, tasksPerPage]);
+    },
+    [user?.uid, tasksPerPage]
+  );
 
   // Add this new function to refresh current page
   const refreshCurrentPage = useCallback(async () => {
@@ -192,21 +181,16 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
       const querySnapshot = await getDocs(q);
       const docs = querySnapshot.docs;
-      
-      // If we have no documents and we're not on the first page, go back one page
+
       if (docs.length === 0 && currentPage > 1) {
-        setCurrentPage(prev => Math.max(1, prev - 1));
+        setCurrentPage((prev) => Math.max(1, prev - 1));
         return await refreshCurrentPage();
       }
 
       const startIndex = (currentPage - 1) * tasksPerPage;
-      const pageDocs = docs.slice(
-        startIndex,
-        Math.min(startIndex + tasksPerPage, docs.length)
-      );
+      const pageDocs = docs.slice(startIndex, Math.min(startIndex + tasksPerPage, docs.length));
 
-      // Update tasks immediately
-      const tasksArray = pageDocs.map(doc => {
+      const tasksArray = pageDocs.map((doc) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -221,22 +205,17 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       });
 
       setTasks(tasksArray);
-      
+
       if (pageDocs.length > 0) {
         setFirstDoc(pageDocs[0]);
         setLastDoc(pageDocs[pageDocs.length - 1]);
       }
 
-      // Update totalPages
       const totalDocs = await getDocs(
-        query(
-          collection(db, "tasks"),
-          where("created_by", "==", user.uid)
-        )
+        query(collection(db, "tasks"), where("created_by", "==", user.uid))
       );
       setTotalPages(Math.max(1, Math.ceil(totalDocs.size / tasksPerPage)));
 
-      // Update cache
       const newCache = new Map<number, QueryDocumentSnapshot<DocumentData>>();
       docs.forEach((doc, index) => {
         const pageNumber = Math.floor(index / tasksPerPage) + 1;
@@ -262,7 +241,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     if (!q) return;
 
     const unsubscribe = onSnapshot(
-      q, 
+      q,
       async (querySnapshot) => {
         updateTasksFromSnapshot(querySnapshot);
         await refreshCurrentPage();
@@ -287,10 +266,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       startAfter(lastDoc),
       limit(tasksPerPage)
     );
-    const unsubscribe = onSnapshot(q, 
+    const unsubscribe = onSnapshot(
+      q,
       (querySnapshot) => {
         if (querySnapshot.empty) {
-          // If no more documents, don't update anything
           return;
         }
         updateTasksFromSnapshot(querySnapshot);
@@ -317,10 +296,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       endBefore(firstDoc),
       limitToLast(tasksPerPage)
     );
-    const unsubscribe = onSnapshot(q, 
+    const unsubscribe = onSnapshot(
+      q,
       (querySnapshot) => {
         if (querySnapshot.empty) {
-          // If no more documents, don't update anything
           return;
         }
         updateTasksFromSnapshot(querySnapshot);
@@ -367,7 +346,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // If not cached, fetch from beginning
     const q = query(
       collection(db, "tasks"),
       where("created_by", "==", user.uid),
@@ -380,10 +358,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     if (docs.length === 0) return;
 
     const startIndex = (page - 1) * tasksPerPage;
-    const pageDocs = docs.slice(
-      startIndex,
-      Math.min(startIndex + tasksPerPage, docs.length)
-    );
+    const pageDocs = docs.slice(startIndex, Math.min(startIndex + tasksPerPage, docs.length));
 
     const tasksArray: Task[] = [];
     pageDocs.forEach((doc) => {
@@ -418,14 +393,13 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     const newTask: NewTask = {
       text: newTaskText,
       status: "not-started",
-      statusOrder: 2, // Add statusOrder field
+      statusOrder: 2,
       createdAt: serverTimestamp(),
       created_by: user.uid,
     };
     await addDoc(collection(db, "tasks"), newTask);
   };
 
-  // Simplified updateTaskStatus that updates the UI optimistically
   const updateTaskStatus = async (
     taskId: string,
     newStatus: "not-started" | "ongoing" | "completed"
@@ -435,56 +409,48 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       "not-started": 2,
       completed: 3,
     };
-    
+
     if (newStatus in statusOrder) {
-      // Update local state immediately
-      setTasks(currentTasks => 
-        currentTasks.map(task => 
-          task.id === taskId 
-            ? { 
-                ...task, 
-                status: newStatus, 
-                statusOrder: statusOrder[newStatus] 
-              } 
+      setTasks((currentTasks) =>
+        currentTasks.map((task) =>
+          task.id === taskId
+            ? {
+                ...task,
+                status: newStatus,
+                statusOrder: statusOrder[newStatus],
+              }
             : task
         )
       );
 
-      // Update database in background
       try {
         await updateDoc(doc(db, "tasks", taskId), {
           status: newStatus,
           statusOrder: statusOrder[newStatus as keyof StatusOrderMap],
         });
       } catch (error) {
-        console.error('Failed to update task:', error);
-        // Revert local state if update fails
+        console.error("Failed to update task:", error);
         await refreshCurrentPage();
       }
     }
   };
 
-  // Simplified deleteTask with optimistic updates
   const deleteTask = async (taskId: string): Promise<void> => {
     if (!user?.uid) return;
-    
-    // Remove from local state immediately
-    setTasks(currentTasks => currentTasks.filter(task => task.id !== taskId));
+
+    setTasks((currentTasks) => currentTasks.filter((task) => task.id !== taskId));
 
     try {
       await deleteDoc(doc(db, "tasks", taskId));
-      // Only refresh if we need to update pagination
       if (tasks.length === 1 && currentPage > 1) {
         await refreshCurrentPage();
       }
     } catch (error) {
-      console.error('Failed to delete task:', error);
-      // Revert local state if delete fails
+      console.error("Failed to delete task:", error);
       await refreshCurrentPage();
     }
   };
 
-  // Simplified real-time listener
   useEffect(() => {
     if (!user?.uid) return;
 
@@ -496,16 +462,19 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       limit(tasksPerPage)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (!snapshot.metadata.hasPendingWrites) {
-        updateTasksFromSnapshot(snapshot);
-      }
-    }, handleFirestoreError);
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        if (!snapshot.metadata.hasPendingWrites) {
+          updateTasksFromSnapshot(snapshot);
+        }
+      },
+      handleFirestoreError
+    );
 
     return () => unsubscribe();
   }, [user?.uid, currentPage, handleFirestoreError]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       cleanupListeners();
@@ -516,7 +485,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     <TaskContext.Provider
       value={{
         tasks,
-        isLoading,  // Simplified loading state
+        isLoading,
         currentPage,
         totalPages,
         fetchNextPage,
@@ -539,4 +508,3 @@ export const useTaskContext = () => {
   }
   return context;
 };
-

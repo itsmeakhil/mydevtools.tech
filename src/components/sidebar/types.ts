@@ -11,6 +11,7 @@ interface BaseNavItem {
   badge?: string
   icon?: React.ElementType
   description?: string // ✅ Added description here
+  customUI?: boolean;
 }
 
 type NavLink = BaseNavItem & {
