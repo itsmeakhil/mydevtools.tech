@@ -7,6 +7,7 @@ import {
   CreditCard,
   LogOut,
   Sparkles,
+  User as UserIcon, // Adding a User icon for guest mode
 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import {
@@ -24,8 +25,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
-
-
+import { link } from 'fs'
 
 interface NavUserProps {
   user: {
@@ -38,6 +38,27 @@ interface NavUserProps {
 
 export function NavUser({ user, onSignout }: NavUserProps) {
   const { isMobile } = useSidebar()
+
+  // Check if user is logged in (based on presence of name or email)
+  const isLoggedIn = user.name || user.email
+
+  if (!isLoggedIn) {
+    return (
+      <Link href={"/login"}>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton size='lg' className='text-muted-foreground'>
+            <UserIcon className='h-8 w-8' /> {/* Guest icon */}
+            <div className='grid flex-1 text-left text-sm leading-tight'>
+              <span className='truncate font-semibold'>Guest User</span>
+              <span className='truncate text-xs'>Not logged in</span>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+      </Link>
+    )
+  }
 
   return (
     <SidebarMenu>
@@ -78,7 +99,7 @@ export function NavUser({ user, onSignout }: NavUserProps) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
+            {/* <DropdownMenuGroup>
               <DropdownMenuItem>
                 <Sparkles />
                 Upgrade to Pro
@@ -104,8 +125,8 @@ export function NavUser({ user, onSignout }: NavUserProps) {
                   Notifications
                 </Link>
               </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+            </DropdownMenuGroup> */}
+            {/* <DropdownMenuSeparator /> */}
             <DropdownMenuItem onClick={onSignout}>
               <LogOut />
               Log out
