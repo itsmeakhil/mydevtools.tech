@@ -29,31 +29,55 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { NavCollapsible, NavItem, NavLink, type NavGroup } from './types';
+import useAuth from '@/utils/useAuth';
+
+// List of URLs that require authentication (General Tools)
+const authRequiredUrls = [
+  '/app/to-do',
+  '/app/notes',
+  '/app/url-shortener',
+  '/app/bookmark',
+  '/app/bookmark/dashboard',
+  '/app/bookmark/all',
+  '/app/bookmark/collections',
+  '/app/bookmark/tags',
+  '/app/bookmark/settings',
+  '/app/bookmark/add',
+  '/app/bookmark/development',
+  '/app/bookmark/design-resources',
+  '/app/bookmark/reading-list',
+];
 
 // CustomBookmarkLink Component
-// CustomBookmarkLink Component in Nav-group.tsx
 const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => {
-  // const { setOpenMobile } = useSidebar();
-  const pathname = usePathname(); // Get the current pathname
+  const { user } = useAuth(false); // Check auth state
+  const pathname = usePathname();
   
-  // Convert item.url to string if it's not already
   const itemUrl = typeof item.url === 'string' ? item.url : item.url.toString();
-  
-  // Check if we're currently on any bookmark page
   const isBookmarkPage = pathname.startsWith(itemUrl);
-  
-  // Check if we're on the dashboard specifically
   const isDashboardPage = pathname === `${itemUrl}/dashboard` || pathname === itemUrl;
   
-  // Use isBookmarkPage to determine the initial state
   const [isOpen, setIsOpen] = useState(isBookmarkPage);
 
-  // Ensure dropdown opens when navigating to a bookmark page
   useEffect(() => {
     if (isBookmarkPage) {
       setIsOpen(true);
     }
   }, [pathname, isBookmarkPage]);
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (!user && authRequiredUrls.includes(itemUrl)) {
+      e.preventDefault();
+      window.location.href = '/login';
+    }
+  };
+
+  const handleSubLinkClick = (e: React.MouseEvent, subUrl: string) => {
+    if (!user && authRequiredUrls.includes(subUrl)) {
+      e.preventDefault();
+      window.location.href = '/login';
+    }
+  };
 
   return (
     <Collapsible
@@ -70,10 +94,12 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
             tooltip={item.title}
             className="hover:bg-accent/50 text-primary"
           >
-            {/* Change the link to default to /dashboard */}
-            <Link 
-              href={`${item.url}/dashboard`} 
-              onClick={() => setIsOpen(true)}
+            <Link
+              href={`${item.url}/dashboard`}
+              onClick={(e) => {
+                setIsOpen(true);
+                handleClick(e);
+              }}
             >
               {item.icon && <item.icon />}
               <span>{item.title}</span>
@@ -83,18 +109,20 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
         </CollapsibleTrigger>
         <CollapsibleContent className="CollapsibleContent">
           <SidebarMenuSub className="p-3">
-            {/* Header */}
             <div className="text-lg font-medium mb-2">{item.title}</div>
             <hr className="mb-3" />
 
-            {/* Main navigation items */}
             <div className="space-y-1">
               <SidebarMenuSubItem>
-                <SidebarMenuSubButton 
-                  asChild 
+                <SidebarMenuSubButton
+                  asChild
                   className={`py-2 px-3 hover:bg-accent rounded-md ${isDashboardPage ? 'bg-accent font-medium' : ''}`}
                 >
-                  <Link href={`${item.url}/dashboard`} className="flex items-center gap-2 w-full">
+                  <Link
+                    href={`${item.url}/dashboard`}
+                    className="flex items-center gap-2 w-full"
+                    onClick={(e) => handleSubLinkClick(e, `${item.url}/dashboard`)}
+                  >
                     <div className="w-5 h-5 flex items-center justify-center">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -118,13 +146,16 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
 
-              {/* Other menu items remain the same */}
               <SidebarMenuSubItem>
-                <SidebarMenuSubButton 
-                  asChild 
+                <SidebarMenuSubButton
+                  asChild
                   className={`py-2 px-3 hover:bg-accent rounded-md ${pathname === `${item.url}/all` ? 'bg-accent font-medium' : ''}`}
                 >
-                  <Link href={`${item.url}/all`} className="flex items-center gap-2 w-full">
+                  <Link
+                    href={`${item.url}/all`}
+                    className="flex items-center gap-2 w-full"
+                    onClick={(e) => handleSubLinkClick(e, `${item.url}/all`)}
+                  >
                     <div className="w-5 h-5 flex items-center justify-center">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -146,11 +177,15 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
               </SidebarMenuSubItem>
 
               <SidebarMenuSubItem>
-                <SidebarMenuSubButton 
-                  asChild 
+                <SidebarMenuSubButton
+                  asChild
                   className={`py-2 px-3 hover:bg-accent rounded-md ${pathname === `${item.url}/collections` ? 'bg-accent font-medium' : ''}`}
                 >
-                  <Link href={`${item.url}/collections`} className="flex items-center gap-2 w-full">
+                  <Link
+                    href={`${item.url}/collections`}
+                    className="flex items-center gap-2 w-full"
+                    onClick={(e) => handleSubLinkClick(e, `${item.url}/collections`)}
+                  >
                     <div className="w-5 h-5 flex items-center justify-center">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -173,11 +208,15 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
               </SidebarMenuSubItem>
 
               <SidebarMenuSubItem>
-                <SidebarMenuSubButton 
-                  asChild 
+                <SidebarMenuSubButton
+                  asChild
                   className={`py-2 px-3 hover:bg-accent rounded-md ${pathname === `${item.url}/tags` ? 'bg-accent font-medium' : ''}`}
                 >
-                  <Link href={`${item.url}/tags`} className="flex items-center gap-2 w-full">
+                  <Link
+                    href={`${item.url}/tags`}
+                    className="flex items-center gap-2 w-full"
+                    onClick={(e) => handleSubLinkClick(e, `${item.url}/tags`)}
+                  >
                     <div className="w-5 h-5 flex items-center justify-center">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -200,11 +239,15 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
               </SidebarMenuSubItem>
 
               <SidebarMenuSubItem>
-                <SidebarMenuSubButton 
-                  asChild 
+                <SidebarMenuSubButton
+                  asChild
                   className={`py-2 px-3 hover:bg-accent rounded-md ${pathname === `${item.url}/settings` ? 'bg-accent font-medium' : ''}`}
                 >
-                  <Link href={`${item.url}/settings`} className="flex items-center gap-2 w-full">
+                  <Link
+                    href={`${item.url}/settings`}
+                    className="flex items-center gap-2 w-full"
+                    onClick={(e) => handleSubLinkClick(e, `${item.url}/settings`)}
+                  >
                     <div className="w-5 h-5 flex items-center justify-center">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -227,44 +270,58 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
               </SidebarMenuSubItem>
             </div>
 
-            {/* Quick Access section */}
             <div className="mt-4 mb-2">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium">Quick Access</h3>
-                <Link href={`${item.url}/add`} className="p-1 hover:bg-accent rounded-md">
+                <Link
+                  href={`${item.url}/add`}
+                  className="p-1 hover:bg-accent rounded-md"
+                  onClick={(e) => handleSubLinkClick(e, `${item.url}/add`)}
+                >
                   <Plus className="h-4 w-4" />
                 </Link>
               </div>
             </div>
 
-            {/* Quick Access items */}
             <div className="space-y-1">
               <SidebarMenuSubItem>
-                <SidebarMenuSubButton 
-                  asChild 
+                <SidebarMenuSubButton
+                  asChild
                   className={`py-1 px-3 hover:bg-accent rounded-md ${pathname === `${item.url}/development` ? 'bg-accent font-medium' : ''}`}
                 >
-                  <Link href={`${item.url}/development`} className="w-full text-sm">
+                  <Link
+                    href={`${item.url}/development`}
+                    className="w-full text-sm"
+                    onClick={(e) => handleSubLinkClick(e, `${item.url}/development`)}
+                  >
                     Development
                   </Link>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
               <SidebarMenuSubItem>
-                <SidebarMenuSubButton 
-                  asChild 
+                <SidebarMenuSubButton
+                  asChild
                   className={`py-1 px-3 hover:bg-accent rounded-md ${pathname === `${item.url}/design-resources` ? 'bg-accent font-medium' : ''}`}
                 >
-                  <Link href={`${item.url}/design-resources`} className="w-full text-sm">
+                  <Link
+                    href={`${item.url}/design-resources`}
+                    className="w-full text-sm"
+                    onClick={(e) => handleSubLinkClick(e, `${item.url}/design-resources`)}
+                  >
                     Design Resources
                   </Link>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
               <SidebarMenuSubItem>
-                <SidebarMenuSubButton 
-                  asChild 
+                <SidebarMenuSubButton
+                  asChild
                   className={`py-1 px-3 hover:bg-accent rounded-md ${pathname === `${item.url}/reading-list` ? 'bg-accent font-medium' : ''}`}
                 >
-                  <Link href={`${item.url}/reading-list`} className="w-full text-sm">
+                  <Link
+                    href={`${item.url}/reading-list`}
+                    className="w-full text-sm"
+                    onClick={(e) => handleSubLinkClick(e, `${item.url}/reading-list`)}
+                  >
                     Reading List
                   </Link>
                 </SidebarMenuSubButton>
@@ -276,10 +333,19 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
     </Collapsible>
   );
 };
-// Rest of the nav-group.tsx remains unchanged
+
+// Main NavGroup Component
 export function NavGroup({ title, items }: NavGroup) {
   const { state } = useSidebar();
   const pathname = usePathname();
+  const { user } = useAuth(false); // Check auth state
+
+  const handleClick = (e: React.MouseEvent, url: string) => {
+    if (!user && authRequiredUrls.includes(url)) {
+      e.preventDefault();
+      window.location.href = '/login';
+    }
+  };
 
   return (
     <SidebarGroup>
@@ -293,7 +359,15 @@ export function NavGroup({ title, items }: NavGroup) {
           }
 
           if (!item.items) {
-            return <SidebarMenuLink key={key} item={item as NavLink} href={pathname} />;
+            const itemUrl = typeof item.url === 'string' ? item.url : item.url.toString();
+            return (
+              <SidebarMenuLink
+                key={key}
+                item={item as NavLink}
+                href={pathname}
+                onClick={(e) => handleClick(e, itemUrl)}
+              />
+            );
           }
 
           if (state === 'collapsed') {
@@ -309,11 +383,16 @@ export function NavGroup({ title, items }: NavGroup) {
   );
 }
 
-const NavBadge = ({ children }: { children: ReactNode }) => (
-  <Badge className="text-xs rounded-full px-1 py-0">{children}</Badge>
-);
-
-const SidebarMenuLink = ({ item, href }: { item: NavLink; href: string }) => {
+// SidebarMenuLink Component
+const SidebarMenuLink = ({
+  item,
+  href,
+  onClick,
+}: {
+  item: NavLink;
+  href: string;
+  onClick: (e: React.MouseEvent) => void;
+}) => {
   const { setOpenMobile } = useSidebar();
   return (
     <SidebarMenuItem>
@@ -322,7 +401,13 @@ const SidebarMenuLink = ({ item, href }: { item: NavLink; href: string }) => {
         isActive={checkIsActive(href, item)}
         tooltip={item.title}
       >
-        <Link href={item.url} onClick={() => setOpenMobile(false)}>
+        <Link
+          href={item.url}
+          onClick={(e) => {
+            onClick(e);
+            setOpenMobile(false);
+          }}
+        >
           {item.icon && <item.icon />}
           <span>{item.title}</span>
           {item.badge && <NavBadge>{item.badge}</NavBadge>}
@@ -332,6 +417,7 @@ const SidebarMenuLink = ({ item, href }: { item: NavLink; href: string }) => {
   );
 };
 
+// SidebarMenuCollapsible Component
 const SidebarMenuCollapsible = ({
   item,
   href,
@@ -340,6 +426,15 @@ const SidebarMenuCollapsible = ({
   href: string;
 }) => {
   const { setOpenMobile } = useSidebar();
+  const { user } = useAuth(false);
+
+  const handleSubLinkClick = (e: React.MouseEvent, subUrl: string) => {
+    if (!user && authRequiredUrls.includes(subUrl)) {
+      e.preventDefault();
+      window.location.href = '/login';
+    }
+  };
+
   return (
     <Collapsible
       asChild
@@ -357,20 +452,29 @@ const SidebarMenuCollapsible = ({
         </CollapsibleTrigger>
         <CollapsibleContent className="CollapsibleContent">
           <SidebarMenuSub>
-            {item.items.map((subItem) => (
-              <SidebarMenuSubItem key={subItem.title}>
-                <SidebarMenuSubButton
-                  asChild
-                  isActive={checkIsActive(href, subItem)}
-                >
-                  <Link href={subItem.url} onClick={() => setOpenMobile(false)}>
-                    {subItem.icon && <subItem.icon />}
-                    <span>{subItem.title}</span>
-                    {subItem.badge && <NavBadge>{subItem.badge}</NavBadge>}
-                  </Link>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-            ))}
+            {item.items.map((subItem) => {
+              const subItemUrl = typeof subItem.url === 'string' ? subItem.url : subItem.url.toString();
+              return (
+                <SidebarMenuSubItem key={subItem.title}>
+                  <SidebarMenuSubButton
+                    asChild
+                    isActive={checkIsActive(href, subItem)}
+                  >
+                    <Link
+                      href={subItem.url}
+                      onClick={(e) => {
+                        handleSubLinkClick(e, subItemUrl);
+                        setOpenMobile(false);
+                      }}
+                    >
+                      {subItem.icon && <subItem.icon />}
+                      <span>{subItem.title}</span>
+                      {subItem.badge && <NavBadge>{subItem.badge}</NavBadge>}
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              );
+            })}
           </SidebarMenuSub>
         </CollapsibleContent>
       </SidebarMenuItem>
@@ -378,6 +482,7 @@ const SidebarMenuCollapsible = ({
   );
 };
 
+// SidebarMenuCollapsedDropdown Component
 const SidebarMenuCollapsedDropdown = ({
   item,
   href,
@@ -385,6 +490,15 @@ const SidebarMenuCollapsedDropdown = ({
   item: NavCollapsible;
   href: string;
 }) => {
+  const { user } = useAuth(false);
+
+  const handleSubLinkClick = (e: React.MouseEvent, subUrl: string) => {
+    if (!user && authRequiredUrls.includes(subUrl)) {
+      e.preventDefault();
+      window.location.href = '/login';
+    }
+  };
+
   return (
     <SidebarMenuItem>
       <DropdownMenu>
@@ -404,25 +518,34 @@ const SidebarMenuCollapsedDropdown = ({
             {item.title} {item.badge ? `(${item.badge})` : ""}
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {item.items.map((sub) => (
-            <DropdownMenuItem key={`${sub.title}-${sub.url}`} asChild>
-              <Link
-                href={sub.url}
-                className={`${checkIsActive(href, sub) ? "bg-secondary" : ""}`}
-              >
-                {sub.icon && <sub.icon />}
-                <span className="max-w-52 text-wrap">{sub.title}</span>
-                {sub.badge && (
-                  <span className="ml-auto text-xs">{sub.badge}</span>
-                )}
-              </Link>
-            </DropdownMenuItem>
-          ))}
+          {item.items.map((sub) => {
+            const subUrl = typeof sub.url === 'string' ? sub.url : sub.url.toString();
+            return (
+              <DropdownMenuItem key={`${sub.title}-${sub.url}`} asChild>
+                <Link
+                  href={sub.url}
+                  className={`${checkIsActive(href, sub) ? "bg-secondary" : ""}`}
+                  onClick={(e) => handleSubLinkClick(e, subUrl)}
+                >
+                  {sub.icon && <sub.icon />}
+                  <span className="max-w-52 text-wrap">{sub.title}</span>
+                  {sub.badge && (
+                    <span className="ml-auto text-xs">{sub.badge}</span>
+                  )}
+                </Link>
+              </DropdownMenuItem>
+            );
+          })}
         </DropdownMenuContent>
       </DropdownMenu>
     </SidebarMenuItem>
   );
 };
+
+// Helper Components and Functions
+const NavBadge = ({ children }: { children: ReactNode }) => (
+  <Badge className="text-xs rounded-full px-1 py-0">{children}</Badge>
+);
 
 function checkIsActive(href: string, item: NavItem, mainNav = false) {
   return (

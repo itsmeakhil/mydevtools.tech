@@ -1,44 +1,39 @@
-// hooks/useAuth.js
-'use client';
-
-
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { auth } from "../database/firebase";
-import { User } from 'firebase/auth';
-// import { setPersistence, browserSessionPersistence } from 'firebase/auth';
+import { User } from "firebase/auth";
 
-const useAuth = () => {
+// Export the return type
+export interface AuthState {
+  user: User | null;
+  loading: boolean;
+}
+
+const useAuth = (requireAuth: boolean = false): AuthState => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    // const setAuthPersistence = async () => {
-    //   try {
-    //     await setPersistence(auth, browserSessionPersistence);
-    //   } catch (error) {
-    //     console.error('Error setting persistence:', error);
-    //   }
-    // };
-
-    if (typeof window !== 'undefined') {
-      // setAuthPersistence();
-
+    if (typeof window !== "undefined") {
       const unsubscribe = auth.onAuthStateChanged((user) => {
         if (user) {
           setUser(user);
         } else {
           setUser(null);
-          router.push('/login'); // Redirect to the login page
+          if (requireAuth) {
+            router.push("/login");
+          }
         }
+        setLoading(false);
       });
 
       return () => unsubscribe();
     }
-  }, [router]);
+  }, [router, requireAuth]);
 
-  return user;
+  return { user, loading };
 };
 
 export default useAuth;
-
