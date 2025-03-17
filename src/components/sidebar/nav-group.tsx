@@ -1,13 +1,13 @@
 "use client";
-import { ReactNode, useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ChevronRight, Plus } from 'lucide-react';
+import { ReactNode, useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ChevronRight, Plus } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '../ui/collapsible';
+} from "../ui/collapsible";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -18,8 +18,8 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   useSidebar,
-} from '@/components/ui/sidebar';
-import { Badge } from '../ui/badge';
+} from "@/components/ui/sidebar";
+import { Badge } from "../ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,36 +27,43 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
-import { NavCollapsible, NavItem, NavLink, type NavGroup } from './types';
-import useAuth from '@/utils/useAuth';
+} from "../ui/dropdown-menu";
+import { NavCollapsible, NavItem, NavLink, type NavGroup } from "./types";
+import useAuth from "@/utils/useAuth";
 
 // List of URLs that require authentication (General Tools)
 const authRequiredUrls = [
-  '/app/to-do',
-  '/app/notes',
-  '/app/url-shortener',
-  '/app/bookmark',
-  '/app/bookmark/dashboard',
-  '/app/bookmark/all',
-  '/app/bookmark/collections',
-  '/app/bookmark/tags',
-  '/app/bookmark/settings',
-  '/app/bookmark/add',
-  '/app/bookmark/development',
-  '/app/bookmark/design-resources',
-  '/app/bookmark/reading-list',
+  "/app/to-do",
+  "/app/notes",
+  "/app/url-shortener",
+  "/app/bookmark",
+  "/app/bookmark/dashboard",
+  "/app/bookmark/all",
+  "/app/bookmark/collections",
+  "/app/bookmark/tags",
+  "/app/bookmark/settings",
+  "/app/bookmark/add",
+  "/app/bookmark/development",
+  "/app/bookmark/design-resources",
+  "/app/bookmark/reading-list",
 ];
 
 // CustomBookmarkLink Component
-const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => {
+const CustomBookmarkLink = ({
+  item,
+  href,
+}: {
+  item: NavLink;
+  href: string;
+}) => {
   const { user } = useAuth(false); // Check auth state
   const pathname = usePathname();
-  
-  const itemUrl = typeof item.url === 'string' ? item.url : item.url.toString();
+
+  const itemUrl = typeof item.url === "string" ? item.url : item.url.toString();
   const isBookmarkPage = pathname.startsWith(itemUrl);
-  const isDashboardPage = pathname === `${itemUrl}/dashboard` || pathname === itemUrl;
-  
+  const isDashboardPage =
+    pathname === `${itemUrl}/dashboard` || pathname === itemUrl;
+
   const [isOpen, setIsOpen] = useState(isBookmarkPage);
 
   useEffect(() => {
@@ -68,14 +75,16 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
   const handleClick = (e: React.MouseEvent) => {
     if (!user && authRequiredUrls.includes(itemUrl)) {
       e.preventDefault();
-      window.location.href = '/login';
+      window.location.href = "/login";
+      return; // Add this to prevent the setIsOpen call
     }
+    setIsOpen(true); // Move this here so it only executes for authenticated users
   };
 
   const handleSubLinkClick = (e: React.MouseEvent, subUrl: string) => {
     if (!user && authRequiredUrls.includes(subUrl)) {
       e.preventDefault();
-      window.location.href = '/login';
+      window.location.href = "/login";
     }
   };
 
@@ -97,7 +106,6 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
             <Link
               href={`${item.url}/dashboard`}
               onClick={(e) => {
-                setIsOpen(true);
                 handleClick(e);
               }}
             >
@@ -116,12 +124,16 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   asChild
-                  className={`py-2 px-3 hover:bg-accent rounded-md ${isDashboardPage ? 'bg-accent font-medium' : ''}`}
+                  className={`py-2 px-3 hover:bg-accent rounded-md ${
+                    isDashboardPage ? "bg-accent font-medium" : ""
+                  }`}
                 >
                   <Link
                     href={`${item.url}/dashboard`}
                     className="flex items-center gap-2 w-full"
-                    onClick={(e) => handleSubLinkClick(e, `${item.url}/dashboard`)}
+                    onClick={(e) =>
+                      handleSubLinkClick(e, `${item.url}/dashboard`)
+                    }
                   >
                     <div className="w-5 h-5 flex items-center justify-center">
                       <svg
@@ -149,7 +161,11 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   asChild
-                  className={`py-2 px-3 hover:bg-accent rounded-md ${pathname === `${item.url}/all` ? 'bg-accent font-medium' : ''}`}
+                  className={`py-2 px-3 hover:bg-accent rounded-md ${
+                    pathname === `${item.url}/all`
+                      ? "bg-accent font-medium"
+                      : ""
+                  }`}
                 >
                   <Link
                     href={`${item.url}/all`}
@@ -179,12 +195,18 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   asChild
-                  className={`py-2 px-3 hover:bg-accent rounded-md ${pathname === `${item.url}/collections` ? 'bg-accent font-medium' : ''}`}
+                  className={`py-2 px-3 hover:bg-accent rounded-md ${
+                    pathname === `${item.url}/collections`
+                      ? "bg-accent font-medium"
+                      : ""
+                  }`}
                 >
                   <Link
                     href={`${item.url}/collections`}
                     className="flex items-center gap-2 w-full"
-                    onClick={(e) => handleSubLinkClick(e, `${item.url}/collections`)}
+                    onClick={(e) =>
+                      handleSubLinkClick(e, `${item.url}/collections`)
+                    }
                   >
                     <div className="w-5 h-5 flex items-center justify-center">
                       <svg
@@ -210,7 +232,11 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   asChild
-                  className={`py-2 px-3 hover:bg-accent rounded-md ${pathname === `${item.url}/tags` ? 'bg-accent font-medium' : ''}`}
+                  className={`py-2 px-3 hover:bg-accent rounded-md ${
+                    pathname === `${item.url}/tags`
+                      ? "bg-accent font-medium"
+                      : ""
+                  }`}
                 >
                   <Link
                     href={`${item.url}/tags`}
@@ -241,12 +267,18 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   asChild
-                  className={`py-2 px-3 hover:bg-accent rounded-md ${pathname === `${item.url}/settings` ? 'bg-accent font-medium' : ''}`}
+                  className={`py-2 px-3 hover:bg-accent rounded-md ${
+                    pathname === `${item.url}/settings`
+                      ? "bg-accent font-medium"
+                      : ""
+                  }`}
                 >
                   <Link
                     href={`${item.url}/settings`}
                     className="flex items-center gap-2 w-full"
-                    onClick={(e) => handleSubLinkClick(e, `${item.url}/settings`)}
+                    onClick={(e) =>
+                      handleSubLinkClick(e, `${item.url}/settings`)
+                    }
                   >
                     <div className="w-5 h-5 flex items-center justify-center">
                       <svg
@@ -287,12 +319,18 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   asChild
-                  className={`py-1 px-3 hover:bg-accent rounded-md ${pathname === `${item.url}/development` ? 'bg-accent font-medium' : ''}`}
+                  className={`py-1 px-3 hover:bg-accent rounded-md ${
+                    pathname === `${item.url}/development`
+                      ? "bg-accent font-medium"
+                      : ""
+                  }`}
                 >
                   <Link
                     href={`${item.url}/development`}
                     className="w-full text-sm"
-                    onClick={(e) => handleSubLinkClick(e, `${item.url}/development`)}
+                    onClick={(e) =>
+                      handleSubLinkClick(e, `${item.url}/development`)
+                    }
                   >
                     Development
                   </Link>
@@ -301,12 +339,18 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   asChild
-                  className={`py-1 px-3 hover:bg-accent rounded-md ${pathname === `${item.url}/design-resources` ? 'bg-accent font-medium' : ''}`}
+                  className={`py-1 px-3 hover:bg-accent rounded-md ${
+                    pathname === `${item.url}/design-resources`
+                      ? "bg-accent font-medium"
+                      : ""
+                  }`}
                 >
                   <Link
                     href={`${item.url}/design-resources`}
                     className="w-full text-sm"
-                    onClick={(e) => handleSubLinkClick(e, `${item.url}/design-resources`)}
+                    onClick={(e) =>
+                      handleSubLinkClick(e, `${item.url}/design-resources`)
+                    }
                   >
                     Design Resources
                   </Link>
@@ -315,12 +359,18 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   asChild
-                  className={`py-1 px-3 hover:bg-accent rounded-md ${pathname === `${item.url}/reading-list` ? 'bg-accent font-medium' : ''}`}
+                  className={`py-1 px-3 hover:bg-accent rounded-md ${
+                    pathname === `${item.url}/reading-list`
+                      ? "bg-accent font-medium"
+                      : ""
+                  }`}
                 >
                   <Link
                     href={`${item.url}/reading-list`}
                     className="w-full text-sm"
-                    onClick={(e) => handleSubLinkClick(e, `${item.url}/reading-list`)}
+                    onClick={(e) =>
+                      handleSubLinkClick(e, `${item.url}/reading-list`)
+                    }
                   >
                     Reading List
                   </Link>
@@ -343,7 +393,7 @@ export function NavGroup({ title, items }: NavGroup) {
   const handleClick = (e: React.MouseEvent, url: string) => {
     if (!user && authRequiredUrls.includes(url)) {
       e.preventDefault();
-      window.location.href = '/login';
+      window.location.href = "/login";
     }
   };
 
@@ -354,12 +404,19 @@ export function NavGroup({ title, items }: NavGroup) {
         {items.map((item) => {
           const key = `${item.title}-${item.url}`;
 
-          if (item.customUI && 'url' in item) {
-            return <CustomBookmarkLink key={key} item={item as NavLink} href={pathname} />;
+          if (item.customUI && "url" in item) {
+            return (
+              <CustomBookmarkLink
+                key={key}
+                item={item as NavLink}
+                href={pathname}
+              />
+            );
           }
 
           if (!item.items) {
-            const itemUrl = typeof item.url === 'string' ? item.url : item.url.toString();
+            const itemUrl =
+              typeof item.url === "string" ? item.url : item.url.toString();
             return (
               <SidebarMenuLink
                 key={key}
@@ -370,13 +427,23 @@ export function NavGroup({ title, items }: NavGroup) {
             );
           }
 
-          if (state === 'collapsed') {
+          if (state === "collapsed") {
             return (
-              <SidebarMenuCollapsedDropdown key={key} item={item as NavCollapsible} href={pathname} />
+              <SidebarMenuCollapsedDropdown
+                key={key}
+                item={item as NavCollapsible}
+                href={pathname}
+              />
             );
           }
 
-          return <SidebarMenuCollapsible key={key} item={item as NavCollapsible} href={pathname} />;
+          return (
+            <SidebarMenuCollapsible
+              key={key}
+              item={item as NavCollapsible}
+              href={pathname}
+            />
+          );
         })}
       </SidebarMenu>
     </SidebarGroup>
@@ -431,7 +498,7 @@ const SidebarMenuCollapsible = ({
   const handleSubLinkClick = (e: React.MouseEvent, subUrl: string) => {
     if (!user && authRequiredUrls.includes(subUrl)) {
       e.preventDefault();
-      window.location.href = '/login';
+      window.location.href = "/login";
     }
   };
 
@@ -453,7 +520,10 @@ const SidebarMenuCollapsible = ({
         <CollapsibleContent className="CollapsibleContent">
           <SidebarMenuSub>
             {item.items.map((subItem) => {
-              const subItemUrl = typeof subItem.url === 'string' ? subItem.url : subItem.url.toString();
+              const subItemUrl =
+                typeof subItem.url === "string"
+                  ? subItem.url
+                  : subItem.url.toString();
               return (
                 <SidebarMenuSubItem key={subItem.title}>
                   <SidebarMenuSubButton
@@ -495,7 +565,7 @@ const SidebarMenuCollapsedDropdown = ({
   const handleSubLinkClick = (e: React.MouseEvent, subUrl: string) => {
     if (!user && authRequiredUrls.includes(subUrl)) {
       e.preventDefault();
-      window.location.href = '/login';
+      window.location.href = "/login";
     }
   };
 
@@ -519,12 +589,15 @@ const SidebarMenuCollapsedDropdown = ({
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           {item.items.map((sub) => {
-            const subUrl = typeof sub.url === 'string' ? sub.url : sub.url.toString();
+            const subUrl =
+              typeof sub.url === "string" ? sub.url : sub.url.toString();
             return (
               <DropdownMenuItem key={`${sub.title}-${sub.url}`} asChild>
                 <Link
                   href={sub.url}
-                  className={`${checkIsActive(href, sub) ? "bg-secondary" : ""}`}
+                  className={`${
+                    checkIsActive(href, sub) ? "bg-secondary" : ""
+                  }`}
                   onClick={(e) => handleSubLinkClick(e, subUrl)}
                 >
                   {sub.icon && <sub.icon />}
@@ -554,6 +627,7 @@ function checkIsActive(href: string, item: NavItem, mainNav = false) {
     !!item?.items?.filter((i) => i.url === href).length ||
     (mainNav &&
       href.split("/")[1] !== "" &&
-      href.split("/")[1] === (typeof item.url === "string" ? item.url.split("/")[1] : ""))
+      href.split("/")[1] ===
+        (typeof item.url === "string" ? item.url.split("/")[1] : ""))
   );
 }
