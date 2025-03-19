@@ -59,7 +59,7 @@ const findItemById = (id: string): ToolItem | undefined => {
 // List of General Tools that require authentication
 const authRequiredUrls = [
   '/app/bookmark', // Bookmark
-    '/app/notes',    // Notes
+  '/app/notes',    // Notes
   '/app/to-do',    // Tasks
   '/app/url-shortener', // URL Shortener
   
