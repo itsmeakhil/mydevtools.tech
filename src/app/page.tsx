@@ -3,11 +3,6 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import {
-  Target,
-  Zap,
-  LineChart,
-} from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import Image from "next/image";
