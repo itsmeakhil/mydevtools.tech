@@ -55,19 +55,19 @@ export const sidebarData: SidebarData = {
       title: 'General Tools',
       items: [
         
-        {
-          title: 'Bookmark',
-          url: '/app/bookmark',
-          icon: IconBookmark,
-          description: 'Quickly save a single bookmark.',
-          customUI: true // Flag to indicate a custom UI
-        },
-        {
-          title: 'Notes',
-          url: '/app/notes',
-          icon: IconBook2,
-          description: 'Write, save, and organize your notes.'
-        },
+        // {
+        //   title: 'Bookmark',
+        //   url: '/app/bookmark',
+        //   icon: IconBookmark,
+        //   description: 'Quickly save a single bookmark.',
+        //   customUI: true // Flag to indicate a custom UI
+        // },
+        // {
+        //   title: 'Notes',
+        //   url: '/app/notes',
+        //   icon: IconBook2,
+        //   description: 'Write, save, and organize your notes.'
+        // },
         {
           title: 'Tasks',
           url: '/app/to-do',
