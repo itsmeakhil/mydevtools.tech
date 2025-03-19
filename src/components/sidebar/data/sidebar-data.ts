@@ -7,7 +7,7 @@ import {
   IconPhotoVideo,
   IconBlocks,
   IconNetwork,
-  IconBook2,
+  // IconBook2,
   IconAlignJustified,
   IconShieldCode,
   IconHash,
@@ -40,7 +40,7 @@ import {
   IconJson,
   IconToml,
   IconSquareRoundedLetterY,
-  IconBookmark,
+  // IconBookmark,
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
@@ -54,18 +54,25 @@ export const sidebarData: SidebarData = {
     {
       title: 'General Tools',
       items: [
+        
+        // {
+        //   title: 'Bookmark',
+        //   url: '/app/bookmark',
+        //   icon: IconBookmark,
+        //   description: 'Quickly save a single bookmark.',
+        //   customUI: true // Flag to indicate a custom UI
+        // },
+        // {
+        //   title: 'Notes',
+        //   url: '/app/notes',
+        //   icon: IconBook2,
+        //   description: 'Write, save, and organize your notes.'
+        // },
         {
           title: 'Tasks',
           url: '/app/to-do',
           icon: IconChecklist,
           description: 'Manage your to-do lists efficiently.'
-        },
-       
-        {
-          title: 'Notes',
-          url: '/app/notes',
-          icon: IconBook2,
-          description: 'Write, save, and organize your notes.'
         },
         {
           title: 'Url Shortener',
@@ -73,13 +80,7 @@ export const sidebarData: SidebarData = {
           icon: IconUnlink,
           description: 'Shorten long URLs for easy sharing.'
         },
-        {
-          title: 'Bookmark',
-          url: '/app/bookmark',
-          icon: IconBookmark,
-          description: 'Quickly save a single bookmark.',
-          customUI: true // Flag to indicate a custom UI
-        },
+       
         // {
         //   title: 'Json Viewer',
         //   url: '#',
