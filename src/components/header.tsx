@@ -25,9 +25,9 @@ export function Header() {
               <Link href="#features" className="transition hover:text-foreground/80">
               Features
               </Link>
-              <Link href="#docs" className="transition hover:text-foreground/80">
+              {/* <Link href="#docs" className="transition hover:text-foreground/80">
                 Docs
-              </Link>
+              </Link> */}
             </nav>
           </div>
           

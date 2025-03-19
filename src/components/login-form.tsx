@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../database/firebase";
-import Link from "next/link";
 import { useState } from "react";
 
 export function LoginForm() {
@@ -78,7 +77,7 @@ export function LoginForm() {
         <span>{isLoading ? "Signing in..." : "Continue with Google"}</span>
       </Button>
 
-      <div className="mt-6 text-center">
+      {/* <div className="mt-6 text-center">
         <p className="text-sm text-gray-600 dark:text-gray-400">
           Don&apos;t have an account?{" "}
           <Link
@@ -88,7 +87,7 @@ export function LoginForm() {
             Sign up
           </Link>
         </p>
-      </div>
+      </div> */}
     </div>
   );
 }
