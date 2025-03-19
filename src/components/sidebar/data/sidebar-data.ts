@@ -7,7 +7,7 @@ import {
   IconPhotoVideo,
   IconBlocks,
   IconNetwork,
-  IconBook2,
+  // IconBook2,
   IconAlignJustified,
   IconShieldCode,
   IconHash,
@@ -40,7 +40,7 @@ import {
   IconJson,
   IconToml,
   IconSquareRoundedLetterY,
-  IconBookmark,
+  // IconBookmark,
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
