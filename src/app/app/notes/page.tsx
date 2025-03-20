@@ -3,8 +3,7 @@ import TailwindAdvancedEditor from "./components/tailwind/advanced-editor";
 
 const Notes = () => {
   return (
-    <div className="container p-6">
-      <h2>This is where the editor will be</h2>
+    <div className="flex min-h-screen flex-col items-center gap-4 py-4 sm:px-5">
       <TailwindAdvancedEditor/>
     </div>
   );

@@ -1,5 +1,10 @@
 "use client";
-// import { defaultEditorContent } from "@/lib/content";
+
+import "../../styles/globals.css";
+import "../../styles/prosemirror.css";
+import 'katex/dist/katex.min.css';
+
+import { defaultEditorContent } from "../../lib/content";
 import {
   EditorCommand,
   EditorCommandEmpty,
@@ -64,7 +69,7 @@ const TailwindAdvancedEditor = () => {
   useEffect(() => {
     const content = window.localStorage.getItem("novel-content");
     if (content) setInitialContent(JSON.parse(content));
-    // else setInitialContent(defaultEditorContent);
+    else setInitialContent(defaultEditorContent);
   }, []);
 
   if (!initialContent) return null;
