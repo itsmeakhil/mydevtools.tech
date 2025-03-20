@@ -59,6 +59,7 @@
     "highlight.js": "^11.11.1",
     "lodash": "^4.17.21",
     "lodash.debounce": "^4.0.8",
+    "lowlight": "^3.3.0",
     "lucide-react": "^0.469.0",
     "netmask": "^2.0.2",
     "next": "15.1.4",
