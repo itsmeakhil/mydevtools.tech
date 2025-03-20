@@ -40,6 +40,7 @@ import {
   IconJson,
   IconToml,
   IconSquareRoundedLetterY,
+  IconNotes,
   // IconBookmark,
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
@@ -79,6 +80,12 @@ export const sidebarData: SidebarData = {
           url: '/app/url-shortener',
           icon: IconUnlink,
           description: 'Shorten long URLs for easy sharing.'
+        },
+        {
+          title: 'Notes',
+          url: '/app/notes',
+          icon: IconNotes,
+          description: 'Minimal note application.'
         },
        
         // {
