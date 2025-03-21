@@ -162,15 +162,15 @@ const CustomBookmarkLink = ({
                 <SidebarMenuSubButton
                   asChild
                   className={`py-2 px-3 hover:bg-accent rounded-md ${
-                    pathname === `${item.url}/all`
+                    pathname === `${item.url}/bookmarks`
                       ? "bg-accent font-medium"
                       : ""
                   }`}
                 >
                   <Link
-                    href={`${item.url}/all`}
+                    href={`${item.url}/bookmarks`}
                     className="flex items-center gap-2 w-full"
-                    onClick={(e) => handleSubLinkClick(e, `${item.url}/all`)}
+                    onClick={(e) => handleSubLinkClick(e, `${item.url}/bookmarks`)}
                   >
                     <div className="w-5 h-5 flex items-center justify-center">
                       <svg
@@ -264,42 +264,7 @@ const CustomBookmarkLink = ({
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
 
-              <SidebarMenuSubItem>
-                <SidebarMenuSubButton
-                  asChild
-                  className={`py-2 px-3 hover:bg-accent rounded-md ${
-                    pathname === `${item.url}/settings`
-                      ? "bg-accent font-medium"
-                      : ""
-                  }`}
-                >
-                  <Link
-                    href={`${item.url}/settings`}
-                    className="flex items-center gap-2 w-full"
-                    onClick={(e) =>
-                      handleSubLinkClick(e, `${item.url}/settings`)
-                    }
-                  >
-                    <div className="w-5 h-5 flex items-center justify-center">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l-.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                      </svg>
-                    </div>
-                    <span>Settings</span>
-                  </Link>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
+             
             </div>
 
             <div className="mt-4 mb-2">
@@ -320,16 +285,16 @@ const CustomBookmarkLink = ({
                 <SidebarMenuSubButton
                   asChild
                   className={`py-1 px-3 hover:bg-accent rounded-md ${
-                    pathname === `${item.url}/development`
+                    pathname === `${item.url}/collections/development`
                       ? "bg-accent font-medium"
                       : ""
                   }`}
                 >
                   <Link
-                    href={`${item.url}/development`}
+                    href={`${item.url}/collections/development`}
                     className="w-full text-sm"
                     onClick={(e) =>
-                      handleSubLinkClick(e, `${item.url}/development`)
+                      handleSubLinkClick(e, `${item.url}/collections/development`)
                     }
                   >
                     Development
@@ -340,16 +305,16 @@ const CustomBookmarkLink = ({
                 <SidebarMenuSubButton
                   asChild
                   className={`py-1 px-3 hover:bg-accent rounded-md ${
-                    pathname === `${item.url}/design-resources`
+                    pathname === `${item.url}/collections/design`
                       ? "bg-accent font-medium"
                       : ""
                   }`}
                 >
                   <Link
-                    href={`${item.url}/design-resources`}
+                    href={`${item.url}/collections/design`}
                     className="w-full text-sm"
                     onClick={(e) =>
-                      handleSubLinkClick(e, `${item.url}/design-resources`)
+                      handleSubLinkClick(e, `${item.url}/collections/design`)
                     }
                   >
                     Design Resources
@@ -360,16 +325,16 @@ const CustomBookmarkLink = ({
                 <SidebarMenuSubButton
                   asChild
                   className={`py-1 px-3 hover:bg-accent rounded-md ${
-                    pathname === `${item.url}/reading-list`
+                    pathname === `${item.url}/collections/reading`
                       ? "bg-accent font-medium"
                       : ""
                   }`}
                 >
                   <Link
-                    href={`${item.url}/reading-list`}
+                    href={`${item.url}/collections/reading`}
                     className="w-full text-sm"
                     onClick={(e) =>
-                      handleSubLinkClick(e, `${item.url}/reading-list`)
+                      handleSubLinkClick(e, `${item.url}/collections/reading`)
                     }
                   >
                     Reading List

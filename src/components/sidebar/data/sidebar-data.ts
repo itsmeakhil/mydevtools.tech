@@ -55,13 +55,13 @@ export const sidebarData: SidebarData = {
       title: 'General Tools',
       items: [
         {
-          title: 'Tasks',
-          url: '/app/to-do',
-          icon: IconChecklist,
-          description: 'Manage your to-do lists efficiently.'
+          title: 'Bookmark',
+          url: '/app/bookmark',
+          icon: IconBookmark,
+          description: 'Quickly save a single bookmark.',
+          customUI: true // Flag to indicate a custom UI
         },
-       
-        {
+         {
           title: 'Notes',
           url: '/app/notes',
           icon: IconBook2,
@@ -73,12 +73,12 @@ export const sidebarData: SidebarData = {
           icon: IconUnlink,
           description: 'Shorten long URLs for easy sharing.'
         },
+        
         {
-          title: 'Bookmark',
-          url: '/app/bookmark',
-          icon: IconBookmark,
-          description: 'Quickly save a single bookmark.',
-          customUI: true // Flag to indicate a custom UI
+          title: 'Tasks',
+          url: '/app/to-do',
+          icon: IconChecklist,
+          description: 'Manage your to-do lists efficiently.'
         },
         // {
         //   title: 'Json Viewer',
