@@ -7,7 +7,7 @@ import {
   IconPhotoVideo,
   IconBlocks,
   IconNetwork,
-  IconBook2,
+  // IconBook2,
   IconAlignJustified,
   IconShieldCode,
   IconHash,
@@ -40,7 +40,8 @@ import {
   IconJson,
   IconToml,
   IconSquareRoundedLetterY,
-  IconBookmark,
+  IconNotes,
+  // IconBookmark,
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
@@ -73,19 +74,12 @@ export const sidebarData: SidebarData = {
           icon: IconUnlink,
           description: 'Shorten long URLs for easy sharing.'
         },
-        
         {
           title: 'Tasks',
           url: '/app/to-do',
           icon: IconChecklist,
           description: 'Manage your to-do lists efficiently.'
         },
-        // {
-        //   title: 'Json Viewer',
-        //   url: '#',
-        //   icon: IconCodeDots,
-        //   description: 'View and format JSON data.'
-        // },
       ],
     },
     {

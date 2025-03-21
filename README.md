@@ -108,5 +108,5 @@ We value your ideas! [Suggest a feature](https://docs.google.com/forms/d/e/1FAIp
 </a>
 
 ## 📄 License
-Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
+Distributed under the GPL 3.0 License. See [LICENSE](LICENSE) for more information.
 
