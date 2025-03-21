@@ -40,7 +40,7 @@ import {
   IconJson,
   IconToml,
   IconSquareRoundedLetterY,
-  IconNotes,
+  // IconNotes,
   // IconBookmark,
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
