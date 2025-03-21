@@ -28,7 +28,7 @@ import { MathSelector } from "./selectors/math-selector";
 import { NodeSelector } from "./selectors/node-selector";
 import { Separator } from "../../../../../components/ui/separator";
 
-// import GenerativeMenuSwitch from "./generative/generative-menu-switch";
+import GenerativeMenuSwitch from "./generative/generative-menu-switch";
 import { uploadFn } from "./image-upload";
 import { TextButtons } from "./selectors/text-buttons";
 import { slashCommand, suggestionItems } from "./slash-command";
@@ -44,7 +44,7 @@ const TailwindAdvancedEditor = () => {
   const [openNode, setOpenNode] = useState(false);
   const [openColor, setOpenColor] = useState(false);
   const [openLink, setOpenLink] = useState(false);
-  // const [openAI, setOpenAI] = useState(false);
+  const [openAI, setOpenAI] = useState(false);
 
   //Apply Codeblock Highlighting on the HTML from editor.getHTML()
   const highlightCodeblocks = (content: string) => {
@@ -126,7 +126,7 @@ const TailwindAdvancedEditor = () => {
             </EditorCommandList>
           </EditorCommand>
 
-          {/* <GenerativeMenuSwitch open={openAI} onOpenChange={setOpenAI}> */}
+          <GenerativeMenuSwitch open={openAI} onOpenChange={setOpenAI}>
             <Separator orientation="vertical" />
             <NodeSelector open={openNode} onOpenChange={setOpenNode} />
             <Separator orientation="vertical" />
@@ -138,7 +138,7 @@ const TailwindAdvancedEditor = () => {
             <TextButtons />
             <Separator orientation="vertical" />
             <ColorSelector open={openColor} onOpenChange={setOpenColor} />
-          {/* </GenerativeMenuSwitch> */}
+          </GenerativeMenuSwitch>
         </EditorContent>
       </EditorRoot>
     </div>
