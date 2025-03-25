@@ -36,7 +36,20 @@ import hljs from "highlight.js";
 
 const extensions = [...defaultExtensions, slashCommand];
 
-const TailwindAdvancedEditor = () => {
+interface TailwindAdvancedEditorProps {
+  initialTitle?: string;
+  initialContent?: JSONContent;
+  onTitleChange?: (title: string) => void;
+  onContentChange?: (content: JSONContent) => void;
+}
+
+const TailwindAdvancedEditor = ({
+  initialTitle = "Untitled Note",
+  initialContent: propInitialContent,
+  onTitleChange,
+  onContentChange
+}: TailwindAdvancedEditorProps) => {
+  const [title, setTitle] = useState(initialTitle);
   const [initialContent, setInitialContent] = useState<null | JSONContent>(null);
   const [saveStatus, setSaveStatus] = useState("Saved");
   const [charsCount, setCharsCount] = useState();
@@ -62,14 +75,35 @@ const TailwindAdvancedEditor = () => {
     setCharsCount(editor.storage.characterCount.words());
     window.localStorage.setItem("html-content", highlightCodeblocks(editor.getHTML()));
     window.localStorage.setItem("novel-content", JSON.stringify(json));
+    window.localStorage.setItem("note-title", title);
     setSaveStatus("Saved");
+    
+    if (onContentChange) {
+      onContentChange(json);
+    }
   }, 500);
+  
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+    if (onTitleChange) {
+      onTitleChange(newTitle);
+    }
+    setSaveStatus("Unsaved");
+  };
 
   useEffect(() => {
-    const content = window.localStorage.getItem("novel-content");
-    if (content) setInitialContent(JSON.parse(content));
-    else setInitialContent(defaultEditorContent);
-  }, []);
+    if (propInitialContent) {
+      setInitialContent(propInitialContent);
+    } else {
+      const content = window.localStorage.getItem("novel-content");
+      if (content) setInitialContent(JSON.parse(content));
+      else setInitialContent(defaultEditorContent);
+      
+      const savedTitle = window.localStorage.getItem("note-title");
+      if (savedTitle) setTitle(savedTitle);
+    }
+  }, [propInitialContent]);
 
   if (!initialContent) return null;
 
@@ -82,10 +116,21 @@ const TailwindAdvancedEditor = () => {
         </div>
       </div>
       <EditorRoot>
+        {/* Move the title outside EditorContent but inside EditorRoot */}
+        <div className="relative w-full max-w-screen-lg sm:rounded-t-lg sm:border-t sm:border-l sm:border-r sm:shadow-lg border-muted bg-background pt-8 px-8 pb-2">
+          <input
+            value={title}
+            onChange={handleTitleChange}
+            placeholder="Untitled Note"
+            className="w-full border-none bg-transparent text-4xl font-bold focus:outline-none"
+            aria-label="Note Title"
+          />
+          <div className="w-full border-b border-gray-200 dark:border-gray-700 mt-2"></div>
+        </div>
         <EditorContent
           initialContent={initialContent}
           extensions={extensions}
-          className="relative min-h-[500px] w-full max-w-screen-lg border-muted bg-background sm:mb-[calc(20vh)] sm:rounded-lg sm:border sm:shadow-lg"
+          className="relative min-h-[500px] w-full max-w-screen-lg sm:mb-[calc(20vh)] sm:rounded-b-lg sm:border-b sm:border-l sm:border-r sm:shadow-lg border-muted bg-background pt-4"
           editorProps={{
             handleDOMEvents: {
               keydown: (_view, event) => handleCommandNavigation(event),

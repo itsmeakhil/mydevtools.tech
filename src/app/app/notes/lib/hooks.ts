@@ -129,6 +129,46 @@ export function useSingleNote(noteId: string | null) {
   const [note, setNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [localTitle, setLocalTitle] = useState<string>('');
+  const [localContent, setLocalContent] = useState<unknown>(null);
+  const [isDirty, setIsDirty] = useState(false);
+
+  const updateLocalTitle = (title: string) => {
+    setLocalTitle(title);
+    setIsDirty(true);
+  };
+
+  const updateLocalContent = (content: unknown) => {
+    setLocalContent(content);
+    setIsDirty(true);
+  };
+
+  const saveChanges = async () => {
+    if (!noteId || !isDirty) return;
+    
+    const updates: { title?: string; content?: unknown } = {};
+    
+    if (localTitle !== note?.title) {
+      updates.title = localTitle;
+    }
+    
+    if (localContent !== null) {
+      updates.content = localContent;
+    }
+    
+    if (Object.keys(updates).length > 0) {
+      try {
+        await updateNote(noteId, updates);
+        setNote(prev => prev ? { ...prev, ...updates } : null);
+        setIsDirty(false);
+        return true;
+      } catch (err) {
+        throw err instanceof Error ? err : new Error('Failed to save changes');
+      }
+    }
+    
+    return false;
+  };
 
   useEffect(() => {
     const fetchNote = async () => {
@@ -148,6 +188,8 @@ export function useSingleNote(noteId: string | null) {
         }
         
         setNote(fetchedNote);
+        setLocalTitle(fetchedNote.title);
+        setLocalContent(fetchedNote.content);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to fetch note'));
       } finally {
@@ -158,5 +200,24 @@ export function useSingleNote(noteId: string | null) {
     fetchNote();
   }, [noteId, user]);
 
-  return { note, loading, error };
+  // Auto-save changes when component unmounts
+  useEffect(() => {
+    return () => {
+      if (isDirty && noteId) {
+        saveChanges().catch(console.error);
+      }
+    };
+  }, [isDirty, noteId]);
+
+  return { 
+    note, 
+    loading, 
+    error, 
+    localTitle, 
+    localContent, 
+    isDirty,
+    updateLocalTitle, 
+    updateLocalContent,
+    saveChanges
+  };
 }
