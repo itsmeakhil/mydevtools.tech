@@ -1,45 +1,35 @@
 import { createImageUpload } from "novel";
 import { toast } from "sonner";
+import { storage } from "@/database/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { v4 as uuidv4 } from "uuid";
 
 const onUpload = (file: File) => {
-  const promise = fetch("/api/upload", {
-    method: "POST",
-    headers: {
-      "content-type": file?.type || "application/octet-stream",
-      "x-vercel-filename": file?.name || "image.png",
-    },
-    body: file,
-  });
-
   return new Promise((resolve, reject) => {
+    // Create a storage reference
+    const storageRef = ref(storage, `note-images/${uuidv4()}-${file.name}`);
+    
     toast.promise(
-      promise.then(async (res) => {
-        // Successfully uploaded image
-        if (res.status === 200) {
-          const { url } = (await res.json()) as { url: string };
-          // preload the image
+      // Upload to Firebase Storage
+      uploadBytes(storageRef, file)
+        .then((snapshot) => getDownloadURL(snapshot.ref))
+        .then((url) => {
+          // Preload the image
           const image = new Image();
           image.src = url;
           image.onload = () => {
             resolve(url);
           };
-          // No blob store configured
-        } else if (res.status === 401) {
-          resolve(file);
-          throw new Error("`BLOB_READ_WRITE_TOKEN` environment variable not found, reading image locally instead.");
-          // Unknown error
-        } else {
-          throw new Error("Error uploading image. Please try again.");
-        }
-      }),
+          return url;
+        }),
       {
         loading: "Uploading image...",
         success: "Image uploaded successfully.",
         error: (e) => {
           reject(e);
-          return e.message;
+          return e.message || "Error uploading image";
         },
-      },
+      }
     );
   });
 };
