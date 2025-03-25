@@ -32,7 +32,7 @@ import GenerativeMenuSwitch from "./generative/generative-menu-switch";
 import { uploadFn } from "./image-upload";
 import { TextButtons } from "./selectors/text-buttons";
 import { slashCommand, suggestionItems } from "./slash-command";
-import hljs from "highlight.js";
+// import hljs from "highlight.js";
 
 const extensions = [...defaultExtensions, slashCommand];
 
@@ -41,17 +41,19 @@ interface TailwindAdvancedEditorProps {
   initialContent?: JSONContent;
   onTitleChange?: (title: string) => void;
   onContentChange?: (content: JSONContent) => void;
+  saveStatus?: string;
 }
 
 const TailwindAdvancedEditor = ({
   initialTitle = "Untitled Note",
   initialContent: propInitialContent,
   onTitleChange,
-  onContentChange
+  onContentChange,
+  saveStatus: externalSaveStatus
 }: TailwindAdvancedEditorProps) => {
   const [title, setTitle] = useState(initialTitle);
   const [initialContent, setInitialContent] = useState<null | JSONContent>(null);
-  const [saveStatus, setSaveStatus] = useState("Saved");
+  const [saveStatus, setSaveStatus] = useState(externalSaveStatus || "Saved");
   const [charsCount, setCharsCount] = useState();
 
   const [openNode, setOpenNode] = useState(false);
@@ -59,6 +61,9 @@ const TailwindAdvancedEditor = ({
   const [openLink, setOpenLink] = useState(false);
   const [openAI, setOpenAI] = useState(false);
 
+  // Either remove the function entirely if not needed, or use it in the component.
+  // Commenting it out for now since it seems to be intended for future use
+  /*
   //Apply Codeblock Highlighting on the HTML from editor.getHTML()
   const highlightCodeblocks = (content: string) => {
     const doc = new DOMParser().parseFromString(content, "text/html");
@@ -69,17 +74,18 @@ const TailwindAdvancedEditor = ({
     });
     return new XMLSerializer().serializeToString(doc);
   };
+  */
 
   const debouncedUpdates = useDebouncedCallback(async (editor: EditorInstance) => {
     const json = editor.getJSON();
     setCharsCount(editor.storage.characterCount.words());
-    window.localStorage.setItem("html-content", highlightCodeblocks(editor.getHTML()));
-    window.localStorage.setItem("novel-content", JSON.stringify(json));
-    window.localStorage.setItem("note-title", title);
-    setSaveStatus("Saved");
     
+    // Call onContentChange if provided and set save status
     if (onContentChange) {
       onContentChange(json);
+      // Don't set saveStatus here, as parent component controls it through externalSaveStatus
+    } else {
+      setSaveStatus("Unsaved");
     }
   }, 500);
   
@@ -88,22 +94,27 @@ const TailwindAdvancedEditor = ({
     setTitle(newTitle);
     if (onTitleChange) {
       onTitleChange(newTitle);
+      // Don't set saveStatus here, as parent component controls it through externalSaveStatus
+    } else {
+      setSaveStatus("Unsaved");
     }
-    setSaveStatus("Unsaved");
   };
 
   useEffect(() => {
+    // Set initial content from props, not from localStorage
     if (propInitialContent) {
       setInitialContent(propInitialContent);
     } else {
-      const content = window.localStorage.getItem("novel-content");
-      if (content) setInitialContent(JSON.parse(content));
-      else setInitialContent(defaultEditorContent);
-      
-      const savedTitle = window.localStorage.getItem("note-title");
-      if (savedTitle) setTitle(savedTitle);
+      setInitialContent(defaultEditorContent);
     }
   }, [propInitialContent]);
+
+  // Update save status when it changes externally
+  useEffect(() => {
+    if (externalSaveStatus) {
+      setSaveStatus(externalSaveStatus);
+    }
+  }, [externalSaveStatus]);
 
   if (!initialContent) return null;
 

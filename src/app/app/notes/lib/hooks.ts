@@ -132,15 +132,18 @@ export function useSingleNote(noteId: string | null) {
   const [localTitle, setLocalTitle] = useState<string>('');
   const [localContent, setLocalContent] = useState<unknown>(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<string>('Saved');
 
   const updateLocalTitle = (title: string) => {
     setLocalTitle(title);
     setIsDirty(true);
+    setSaveStatus('Unsaved');
   };
 
   const updateLocalContent = (content: unknown) => {
     setLocalContent(content);
     setIsDirty(true);
+    setSaveStatus('Unsaved');
   };
 
   const saveChanges = async () => {
@@ -158,17 +161,31 @@ export function useSingleNote(noteId: string | null) {
     
     if (Object.keys(updates).length > 0) {
       try {
+        setSaveStatus('Saving...');
         await updateNote(noteId, updates);
         setNote(prev => prev ? { ...prev, ...updates } : null);
         setIsDirty(false);
+        setSaveStatus('Saved');
         return true;
       } catch (err) {
+        setSaveStatus('Failed to save');
         throw err instanceof Error ? err : new Error('Failed to save changes');
       }
     }
     
     return false;
   };
+
+  // Debounced auto-save
+  useEffect(() => {
+    const saveTimer = setTimeout(() => {
+      if (isDirty && noteId) {
+        saveChanges().catch(console.error);
+      }
+    }, 2000); // Auto-save after 2 seconds of inactivity
+
+    return () => clearTimeout(saveTimer);
+  }, [isDirty, localTitle, localContent]);
 
   useEffect(() => {
     const fetchNote = async () => {
@@ -190,6 +207,8 @@ export function useSingleNote(noteId: string | null) {
         setNote(fetchedNote);
         setLocalTitle(fetchedNote.title);
         setLocalContent(fetchedNote.content);
+        setIsDirty(false);
+        setSaveStatus('Saved');
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to fetch note'));
       } finally {
@@ -200,7 +219,7 @@ export function useSingleNote(noteId: string | null) {
     fetchNote();
   }, [noteId, user]);
 
-  // Auto-save changes when component unmounts
+  // Ensure changes are saved when component unmounts
   useEffect(() => {
     return () => {
       if (isDirty && noteId) {
@@ -216,6 +235,7 @@ export function useSingleNote(noteId: string | null) {
     localTitle, 
     localContent, 
     isDirty,
+    saveStatus,
     updateLocalTitle, 
     updateLocalContent,
     saveChanges
