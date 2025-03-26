@@ -1,16 +1,28 @@
-import { DialogTrigger } from "@/components/ui/dialog"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { db, auth } from "../../../../database/firebase";
+import { onAuthStateChanged , User } from "firebase/auth";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   BookmarkIcon,
   PlusIcon,
   SearchIcon,
   PencilIcon,
   TrashIcon,
-} from "lucide-react"
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,143 +30,256 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
-// Sample tags data
-const tags = [
-  {
-    id: "1",
-    name: "development",
-    bookmarkCount: 45,
-    createdAt: "2023-10-15T10:30:00Z",
-  },
-  {
-    id: "2",
-    name: "design",
-    bookmarkCount: 32,
-    createdAt: "2023-10-20T14:20:00Z",
-  },
-  {
-    id: "3",
-    name: "resources",
-    bookmarkCount: 28,
-    createdAt: "2023-10-25T09:15:00Z",
-  },
-  {
-    id: "4",
-    name: "tools",
-    bookmarkCount: 24,
-    createdAt: "2023-11-01T16:45:00Z",
-  },
-  {
-    id: "5",
-    name: "tutorials",
-    bookmarkCount: 19,
-    createdAt: "2023-11-05T11:30:00Z",
-  },
-  {
-    id: "6",
-    name: "javascript",
-    bookmarkCount: 17,
-    createdAt: "2023-11-10T13:20:00Z",
-  },
-  {
-    id: "7",
-    name: "css",
-    bookmarkCount: 15,
-    createdAt: "2023-11-15T15:10:00Z",
-  },
-  {
-    id: "8",
-    name: "react",
-    bookmarkCount: 14,
-    createdAt: "2023-11-20T10:05:00Z",
-  },
-  {
-    id: "9",
-    name: "nextjs",
-    bookmarkCount: 12,
-    createdAt: "2023-11-25T09:30:00Z",
-  },
-  {
-    id: "10",
-    name: "productivity",
-    bookmarkCount: 10,
-    createdAt: "2023-11-30T14:45:00Z",
-  },
-]
+// Define Tag type
+interface Tag {
+  name: string;
+  bookmarkCount: number;
+  createdAt: string;
+}
 
 export default function TagsPage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [newTag, setNewTag] = useState("");
+  const [editTag, setEditTag] = useState<{ oldName: string; newName: string }>({
+    oldName: "",
+    newName: "",
+  });
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Monitor authentication state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch tags from bookmarks
+  useEffect(() => {
+    const fetchTags = async () => {
+      if (!user) {
+        setTags([]);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const bookmarksRef = collection(db, `users/${user.uid}/bookmarks`);
+        const snapshot = await getDocs(bookmarksRef);
+
+        // Aggregate tags
+        const tagMap: { [key: string]: { count: number; earliestDate: string } } = {};
+        snapshot.docs.forEach((doc) => {
+          const bookmark = doc.data();
+          const tags = bookmark.tags || [];
+          const dateAdded = bookmark.dateAdded || new Date().toISOString();
+
+          tags.forEach((tag: string) => {
+            if (tagMap[tag]) {
+              tagMap[tag].count += 1;
+              if (new Date(dateAdded) < new Date(tagMap[tag].earliestDate)) {
+                tagMap[tag].earliestDate = dateAdded;
+              }
+            } else {
+              tagMap[tag] = {
+                count: 1,
+                earliestDate: dateAdded,
+              };
+            }
+          });
+        });
+
+        // Convert tagMap to array and sort by bookmark count
+        const tagsArray: Tag[] = Object.entries(tagMap)
+          .map(([name, data]) => ({
+            name,
+            bookmarkCount: data.count,
+            createdAt: data.earliestDate,
+          }))
+          .sort((a, b) => b.bookmarkCount - a.bookmarkCount);
+
+        setTags(tagsArray);
+      } catch (err) {
+        console.error("Error fetching tags:", err);
+        setError("Failed to load tags. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTags();
+  }, [user]);
+
+  // Handle creating a new tag (this tag will be available to add to bookmarks)
+  const handleCreateTag = async () => {
+    if (!user) {
+      alert("You must be logged in to create a tag.");
+      return;
+    }
+
+    const trimmedTag = newTag.trim().toLowerCase();
+    if (!trimmedTag) {
+      alert("Tag name cannot be empty.");
+      return;
+    }
+
+    if (tags.some((tag) => tag.name === trimmedTag)) {
+      alert("This tag already exists.");
+      return;
+    }
+
+    // Since tags are stored within bookmarks, we don't need to create a new tag in Firestore.
+    // Instead, we can add the tag to the list and let the user apply it to bookmarks.
+    setTags([
+      ...tags,
+      {
+        name: trimmedTag,
+        bookmarkCount: 0,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+    setNewTag("");
+  };
+
+  // Handle editing a tag (update all bookmarks with the old tag)
+  const handleEditTag = async (oldName: string) => {
+    if (!user) {
+      alert("You must be logged in to edit a tag.");
+      return;
+    }
+
+    const newName = editTag.newName.trim().toLowerCase();
+    if (!newName) {
+      alert("New tag name cannot be empty.");
+      return;
+    }
+
+    if (tags.some((tag) => tag.name === newName && tag.name !== oldName)) {
+      alert("This tag name already exists.");
+      return;
+    }
+
+    try {
+      // Fetch all bookmarks with the old tag
+      const bookmarksRef = collection(db, `users/${user.uid}/bookmarks`);
+      const q = query(bookmarksRef, where("tags", "array-contains", oldName));
+      const snapshot = await getDocs(q);
+
+      // Update each bookmark
+      const updatePromises = snapshot.docs.map(async (bookmarkDoc) => {
+        const bookmark = bookmarkDoc.data();
+        const updatedTags = bookmark.tags.map((tag: string) =>
+          tag === oldName ? newName : tag
+        );
+        await updateDoc(doc(db, `users/${user.uid}/bookmarks`, bookmarkDoc.id), {
+          tags: updatedTags,
+        });
+      });
+
+      await Promise.all(updatePromises);
+
+      // Update local state
+      setTags(
+        tags.map((tag) =>
+          tag.name === oldName
+            ? { ...tag, name: newName }
+            : tag
+        )
+      );
+      setEditTag({ oldName: "", newName: "" });
+    } catch (err) {
+      console.error("Error editing tag:", err);
+      alert("Failed to edit tag. Please try again.");
+    }
+  };
+
+  // Handle deleting a tag (remove the tag from all bookmarks)
+  const handleDeleteTag = async (tagName: string) => {
+    if (!user) {
+      alert("You must be logged in to delete a tag.");
+      return;
+    }
+
+    try {
+      // Fetch all bookmarks with the tag
+      const bookmarksRef = collection(db, `users/${user.uid}/bookmarks`);
+      const q = query(bookmarksRef, where("tags", "array-contains", tagName));
+      const snapshot = await getDocs(q);
+
+      // Update each bookmark by removing the tag
+      const updatePromises = snapshot.docs.map(async (bookmarkDoc) => {
+        const bookmark = bookmarkDoc.data();
+        const updatedTags = bookmark.tags.filter((tag: string) => tag !== tagName);
+        await updateDoc(doc(db, `users/${user.uid}/bookmarks`, bookmarkDoc.id), {
+          tags: updatedTags,
+        });
+      });
+
+      await Promise.all(updatePromises);
+
+      // Update local state
+      setTags(tags.filter((tag) => tag.name !== tagName));
+    } catch (err) {
+      console.error("Error deleting tag:", err);
+      alert("Failed to delete tag. Please try again.");
+    }
+  };
+
+  // Filter tags based on search query
+  const filteredTags = tags.filter((tag) =>
+    tag.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-2"></div>
+          <p>Loading tags...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Authentication check
+  if (!user) {
+    window.location.href = "/login";
+    return null;
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-red-500">{error}</p>
+          <Button variant="outline" className="mt-4" asChild>
+            <Link href="/app/bookmark/dashboard">Back to Dashboard</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
-      {/* <aside className="w-64 border-r p-6 flex flex-col gap-6">
-        <div className="flex items-center gap-2 font-semibold text-xl">
-          <BookmarkIcon className="h-6 w-6" />
-          <span>Bookmarks</span>
-        </div>
-
-        <nav className="space-y-1">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-          >
-            <LayoutDashboardIcon className="h-5 w-5" />
-            <span>Dashboard</span>
-          </Link>
-          <Link
-            href="/bookmarks"
-            className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-          >
-            <BookmarkIcon className="h-5 w-5" />
-            <span>All Bookmarks</span>
-          </Link>
-          <Link
-            href="/collections"
-            className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-          >
-            <FolderIcon className="h-5 w-5" />
-            <span>Collections</span>
-          </Link>
-          <Link href="/tags" className="flex items-center gap-3 px-3 py-2 rounded-md bg-accent text-accent-foreground">
-            <TagIcon className="h-5 w-5" />
-            <span>Tags</span>
-          </Link>
-        </nav>
-
-        <div className="mt-6">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-medium">Quick Access</h3>
-            <Button variant="ghost" size="icon" className="h-6 w-6">
-              <PlusIcon className="h-4 w-4" />
-            </Button>
-          </div>
-          <nav className="space-y-1">
-            <Link
-              href="/collections/development"
-              className="block px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              Development
-            </Link>
-            <Link
-              href="/collections/design"
-              className="block px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              Design Resources
-            </Link>
-            <Link
-              href="/collections/reading"
-              className="block px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              Reading List
-            </Link>
-          </nav>
-        </div>
-      </aside> */}
-
-      {/* Main content */}
       <main className="flex-1 p-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Tags</h1>
@@ -168,16 +293,25 @@ export default function TagsPage() {
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>Create Tag</DialogTitle>
-                <DialogDescription>Create a new tag to categorize your bookmarks.</DialogDescription>
+                <DialogDescription>
+                  Create a new tag to categorize your bookmarks. You can apply this tag to bookmarks later.
+                </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="name">Name</Label>
-                  <Input id="name" placeholder="Tag name" />
+                  <Input
+                    id="name"
+                    placeholder="Tag name"
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                  />
                 </div>
               </div>
               <DialogFooter>
-                <Button type="submit">Create Tag</Button>
+                <Button type="submit" onClick={handleCreateTag}>
+                  Create Tag
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -186,7 +320,12 @@ export default function TagsPage() {
         {/* Search */}
         <div className="relative max-w-md mb-6">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search tags..." className="pl-9" />
+          <Input
+            placeholder="Search tags..."
+            className="pl-9"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
 
         {/* Popular Tags */}
@@ -195,7 +334,7 @@ export default function TagsPage() {
             <h3 className="text-lg font-semibold mb-4">Popular Tags</h3>
             <div className="flex flex-wrap gap-2">
               {tags.slice(0, 5).map((tag) => (
-                <Badge key={tag.id} variant="outline" className="px-3 py-1">
+                <Badge key={tag.name} variant="outline" className="px-3 py-1">
                   {tag.name} ({tag.bookmarkCount})
                 </Badge>
               ))}
@@ -215,17 +354,24 @@ export default function TagsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tags.map((tag) => (
-                <TableRow key={tag.id}>
+              {filteredTags.map((tag) => (
+                <TableRow key={tag.name}>
                   <TableCell>
                     <Badge variant="secondary">{tag.name}</Badge>
                   </TableCell>
                   <TableCell>{tag.bookmarkCount}</TableCell>
-                  <TableCell>{new Date(tag.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    {new Date(tag.createdAt).toLocaleDateString()}
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                        <Link href={`/bookmarks?tag=${tag.name}`}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        asChild
+                      >
+                        <Link href={`/app/bookmark/bookmarks?tag=${tag.name}`}>
                           <BookmarkIcon className="h-4 w-4" />
                         </Link>
                       </Button>
@@ -245,11 +391,25 @@ export default function TagsPage() {
                           <div className="grid gap-4 py-4">
                             <div className="grid gap-2">
                               <Label htmlFor="edit-name">Name</Label>
-                              <Input id="edit-name" defaultValue={tag.name} />
+                              <Input
+                                id="edit-name"
+                                defaultValue={tag.name}
+                                onChange={(e) =>
+                                  setEditTag({
+                                    oldName: tag.name,
+                                    newName: e.target.value,
+                                  })
+                                }
+                              />
                             </div>
                           </div>
                           <DialogFooter>
-                            <Button type="submit">Save Changes</Button>
+                            <Button
+                              type="submit"
+                              onClick={() => handleEditTag(tag.name)}
+                            >
+                              Save Changes
+                            </Button>
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
@@ -268,7 +428,12 @@ export default function TagsPage() {
                           </DialogHeader>
                           <DialogFooter>
                             <Button variant="outline">Cancel</Button>
-                            <Button variant="destructive">Delete</Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() => handleDeleteTag(tag.name)}
+                            >
+                              Delete
+                            </Button>
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
@@ -281,6 +446,5 @@ export default function TagsPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }
-

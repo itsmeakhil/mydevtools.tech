@@ -1,4 +1,5 @@
 "use client";
+
 import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -28,8 +29,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { NavCollapsible, NavItem, NavLink, type NavGroup } from "./types";
-import useAuth from "@/utils/useAuth";
+import { NavCollapsible, NavItem, NavLink } from "./types"; // Import types
+import useAuth from "@/utils/useAuth"; // Import useAuth
+import { db } from "../../database/firebase"; // Adjust the path to your Firebase config
+import { collection, onSnapshot } from "firebase/firestore";
 
 // List of URLs that require authentication (General Tools)
 const authRequiredUrls = [
@@ -43,20 +46,41 @@ const authRequiredUrls = [
   "/app/bookmark/tags",
   "/app/bookmark/settings",
   "/app/bookmark/add",
-  "/app/bookmark/development",
-  "/app/bookmark/design-resources",
-  "/app/bookmark/reading-list",
 ];
 
+// Define the Collection type (aligned with CollectionPage)
+interface Collection {
+  id: string;
+  title: string;
+  titleLower: string;
+  description: string;
+  bookmarkCount: number;
+  usageCount: number;
+  isQuickAccess: boolean;
+  createdAt: string;
+  color: string;
+  previewLinks: Array<{
+    title: string;
+    url: string;
+    domain: string;
+    favicon: string;
+  }>;
+  bookmarks: Array<{
+    id: string;
+    title: string;
+    description: string;
+    url: string;
+    domain: string;
+    favicon: string;
+    tags: string[];
+    dateAdded: string;
+    isFavorite: boolean;
+  }>;
+}
+
 // CustomBookmarkLink Component
-const CustomBookmarkLink = ({
-  item,
-  href,
-}: {
-  item: NavLink;
-  href: string;
-}) => {
-  const { user } = useAuth(false); // Check auth state
+const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => {
+  const { user, loading } = useAuth(false); // Check auth state with loading
   const pathname = usePathname();
 
   const itemUrl = typeof item.url === "string" ? item.url : item.url.toString();
@@ -64,25 +88,88 @@ const CustomBookmarkLink = ({
   const isDashboardPage =
     pathname === `${itemUrl}/dashboard` || pathname === itemUrl;
 
-  const [isOpen, setIsOpen] = useState(isBookmarkPage);
+  // Initialize isOpen to false on the server to match SSR
+  const [isOpen, setIsOpen] = useState(false);
+  const [quickAccessCollections, setQuickAccessCollections] = useState<Collection[]>([]);
 
+  // Set isOpen only on the client after mount
   useEffect(() => {
     if (isBookmarkPage) {
       setIsOpen(true);
     }
-  }, [pathname, isBookmarkPage]);
+  }, [isBookmarkPage]);
+
+  // Fetch collections and filter by isQuickAccess
+  useEffect(() => {
+    if (!user) {
+      setQuickAccessCollections([]);
+      return;
+    }
+
+    const collectionsRef = collection(db, `users/${user.uid}/collections`);
+    const unsubscribe = onSnapshot(
+      collectionsRef,
+      (snapshot) => {
+        const fetchedCollections: Collection[] = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          title: doc.data().title,
+          titleLower: doc.data().titleLower || doc.data().title.toLowerCase().replace(/\s+/g, "-"),
+          description: doc.data().description,
+          bookmarkCount: doc.data().bookmarkCount || 0,
+          usageCount: doc.data().usageCount || 0,
+          isQuickAccess: doc.data().isQuickAccess || false,
+          createdAt: doc.data().createdAt || new Date().toISOString(),
+          color: doc.data().color || "bg-blue-500",
+          previewLinks: doc.data().previewLinks || [],
+          bookmarks: doc.data().bookmarks || [],
+        }));
+
+        // Filter collections where isQuickAccess is true
+        const filteredCollections = fetchedCollections.filter(
+          (collection) => collection.isQuickAccess
+        );
+
+        setQuickAccessCollections(filteredCollections);
+      },
+      (error) => {
+        console.error("Error fetching collections for Quick Access:", error);
+        setQuickAccessCollections([]); // Ensure state is cleared on error
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // Check if a URL requires authentication
+  const requiresAuth = (url: string) => {
+    if (authRequiredUrls.includes(url)) {
+      return true;
+    }
+    if (url.startsWith("/app/bookmark/collections/")) {
+      return true;
+    }
+    return false;
+  };
 
   const handleClick = (e: React.MouseEvent) => {
-    if (!user && authRequiredUrls.includes(itemUrl)) {
+    if (loading) {
+      e.preventDefault();
+      return;
+    }
+    if (!user && requiresAuth(itemUrl)) {
       e.preventDefault();
       window.location.href = "/login";
-      return; // Add this to prevent the setIsOpen call
+      return;
     }
-    setIsOpen(true); // Move this here so it only executes for authenticated users
+    setIsOpen(true);
   };
 
   const handleSubLinkClick = (e: React.MouseEvent, subUrl: string) => {
-    if (!user && authRequiredUrls.includes(subUrl)) {
+    if (loading) {
+      e.preventDefault();
+      return;
+    }
+    if (!user && requiresAuth(subUrl)) {
       e.preventDefault();
       window.location.href = "/login";
     }
@@ -117,9 +204,6 @@ const CustomBookmarkLink = ({
         </CollapsibleTrigger>
         <CollapsibleContent className="CollapsibleContent">
           <SidebarMenuSub className="p-3">
-            <div className="text-lg font-medium mb-2">{item.title}</div>
-            <hr className="mb-3" />
-
             <div className="space-y-1">
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
@@ -170,7 +254,9 @@ const CustomBookmarkLink = ({
                   <Link
                     href={`${item.url}/bookmarks`}
                     className="flex items-center gap-2 w-full"
-                    onClick={(e) => handleSubLinkClick(e, `${item.url}/bookmarks`)}
+                    onClick={(e) =>
+                      handleSubLinkClick(e, `${item.url}/bookmarks`)
+                    }
                   >
                     <div className="w-5 h-5 flex items-center justify-center">
                       <svg
@@ -263,8 +349,6 @@ const CustomBookmarkLink = ({
                   </Link>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
-
-             
             </div>
 
             <div className="mt-4 mb-2">
@@ -281,66 +365,39 @@ const CustomBookmarkLink = ({
             </div>
 
             <div className="space-y-1">
-              <SidebarMenuSubItem>
-                <SidebarMenuSubButton
-                  asChild
-                  className={`py-1 px-3 hover:bg-accent rounded-md ${
-                    pathname === `${item.url}/collections/development`
-                      ? "bg-accent font-medium"
-                      : ""
-                  }`}
-                >
-                  <Link
-                    href={`${item.url}/collections/development`}
-                    className="w-full text-sm"
-                    onClick={(e) =>
-                      handleSubLinkClick(e, `${item.url}/collections/development`)
-                    }
-                  >
-                    Development
-                  </Link>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-              <SidebarMenuSubItem>
-                <SidebarMenuSubButton
-                  asChild
-                  className={`py-1 px-3 hover:bg-accent rounded-md ${
-                    pathname === `${item.url}/collections/design`
-                      ? "bg-accent font-medium"
-                      : ""
-                  }`}
-                >
-                  <Link
-                    href={`${item.url}/collections/design`}
-                    className="w-full text-sm"
-                    onClick={(e) =>
-                      handleSubLinkClick(e, `${item.url}/collections/design`)
-                    }
-                  >
-                    Design Resources
-                  </Link>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-              <SidebarMenuSubItem>
-                <SidebarMenuSubButton
-                  asChild
-                  className={`py-1 px-3 hover:bg-accent rounded-md ${
-                    pathname === `${item.url}/collections/reading`
-                      ? "bg-accent font-medium"
-                      : ""
-                  }`}
-                >
-                  <Link
-                    href={`${item.url}/collections/reading`}
-                    className="w-full text-sm"
-                    onClick={(e) =>
-                      handleSubLinkClick(e, `${item.url}/collections/reading`)
-                    }
-                  >
-                    Reading List
-                  </Link>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
+              {quickAccessCollections.length > 0 ? (
+                quickAccessCollections.map((collection) => (
+                  <SidebarMenuSubItem key={collection.id}>
+                    <SidebarMenuSubButton
+                      asChild
+                      className={`py-1 px-3 hover:bg-accent rounded-md ${
+                        pathname === `${item.url}/collections/${collection.titleLower}`
+                          ? "bg-accent font-medium"
+                          : ""
+                      }`}
+                    >
+                      <Link
+                        href={`${item.url}/collections/${collection.titleLower}`}
+                        className="w-full text-sm"
+                        onClick={(e) =>
+                          handleSubLinkClick(
+                            e,
+                            `${item.url}/collections/${collection.titleLower}`
+                          )
+                        }
+                      >
+                        {collection.title}
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                ))
+              ) : (
+                <SidebarMenuSubItem>
+                  <span className="text-sm text-muted-foreground px-3">
+                    No Quick Access collections
+                  </span>
+                </SidebarMenuSubItem>
+              )}
             </div>
           </SidebarMenuSub>
         </CollapsibleContent>
@@ -349,14 +406,34 @@ const CustomBookmarkLink = ({
   );
 };
 
+// Define the props interface for NavGroup
+interface NavGroupProps {
+  title: string;
+  items: (NavLink | NavCollapsible)[];
+}
+
 // Main NavGroup Component
-export function NavGroup({ title, items }: NavGroup) {
+export function NavGroup({ title, items }: NavGroupProps) {
   const { state } = useSidebar();
   const pathname = usePathname();
-  const { user } = useAuth(false); // Check auth state
+  const { user, loading } = useAuth(false); // Check auth state with loading
+
+  const requiresAuth = (url: string) => {
+    if (authRequiredUrls.includes(url)) {
+      return true;
+    }
+    if (url.startsWith("/app/bookmark/collections/")) {
+      return true;
+    }
+    return false;
+  };
 
   const handleClick = (e: React.MouseEvent, url: string) => {
-    if (!user && authRequiredUrls.includes(url)) {
+    if (loading) {
+      e.preventDefault();
+      return;
+    }
+    if (!user && requiresAuth(url)) {
       e.preventDefault();
       window.location.href = "/login";
     }
@@ -369,7 +446,7 @@ export function NavGroup({ title, items }: NavGroup) {
         {items.map((item) => {
           const key = `${item.title}-${item.url}`;
 
-          if (item.customUI && "url" in item) {
+          if ("customUI" in item && item.customUI && "url" in item) {
             return (
               <CustomBookmarkLink
                 key={key}
@@ -379,7 +456,7 @@ export function NavGroup({ title, items }: NavGroup) {
             );
           }
 
-          if (!item.items) {
+          if (!("items" in item)) {
             const itemUrl =
               typeof item.url === "string" ? item.url : item.url.toString();
             return (
@@ -458,10 +535,24 @@ const SidebarMenuCollapsible = ({
   href: string;
 }) => {
   const { setOpenMobile } = useSidebar();
-  const { user } = useAuth(false);
+  const { user, loading } = useAuth(false);
+
+  const requiresAuth = (url: string) => {
+    if (authRequiredUrls.includes(url)) {
+      return true;
+    }
+    if (url.startsWith("/app/bookmark/collections/")) {
+      return true;
+    }
+    return false;
+  };
 
   const handleSubLinkClick = (e: React.MouseEvent, subUrl: string) => {
-    if (!user && authRequiredUrls.includes(subUrl)) {
+    if (loading) {
+      e.preventDefault();
+      return;
+    }
+    if (!user && requiresAuth(subUrl)) {
       e.preventDefault();
       window.location.href = "/login";
     }
@@ -525,10 +616,24 @@ const SidebarMenuCollapsedDropdown = ({
   item: NavCollapsible;
   href: string;
 }) => {
-  const { user } = useAuth(false);
+  const { user, loading } = useAuth(false);
+
+  const requiresAuth = (url: string) => {
+    if (authRequiredUrls.includes(url)) {
+      return true;
+    }
+    if (url.startsWith("/app/bookmark/collections/")) {
+      return true;
+    }
+    return false;
+  };
 
   const handleSubLinkClick = (e: React.MouseEvent, subUrl: string) => {
-    if (!user && authRequiredUrls.includes(subUrl)) {
+    if (loading) {
+      e.preventDefault();
+      return;
+    }
+    if (!user && requiresAuth(subUrl)) {
       e.preventDefault();
       window.location.href = "/login";
     }
@@ -560,9 +665,7 @@ const SidebarMenuCollapsedDropdown = ({
               <DropdownMenuItem key={`${sub.title}-${sub.url}`} asChild>
                 <Link
                   href={sub.url}
-                  className={`${
-                    checkIsActive(href, sub) ? "bg-secondary" : ""
-                  }`}
+                  className={`${checkIsActive(href, sub) ? "bg-secondary" : ""}`}
                   onClick={(e) => handleSubLinkClick(e, subUrl)}
                 >
                   {sub.icon && <sub.icon />}

@@ -1,12 +1,13 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { format } from 'date-fns';
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../../components/ui/tab"
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../../components/ui/tab";
 import {
   BookmarkIcon,
   FolderIcon,
@@ -24,7 +25,7 @@ import {
   ClockIcon,
   TrendingUpIcon,
   PencilIcon,
-} from "lucide-react"
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,8 +34,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
-} from "@/components/ui/dropdown-menu"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+} from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -43,233 +44,163 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { db, auth } from "../../../../database/firebase";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs } from "firebase/firestore";
+import { Timestamp } from "firebase/firestore";
 
-// Sample bookmark data
-const bookmarks = [
-  {
-    id: "1",
-    title: "GitHub",
-    description: "Where the world builds software",
-    url: "https://github.com",
-    favicon: "https://github.githubassets.com/favicons/favicon.svg",
-    tags: ["development", "git", "code"],
-    collection: "Development",
-    dateAdded: "2023-12-15T10:30:00Z",
-    isFavorite: true,
-    visitCount: 42,
-  },
-  {
-    id: "2",
-    title: "MDN Web Docs",
-    description: "Resources for developers, by developers",
-    url: "https://developer.mozilla.org",
-    favicon: "/placeholder.svg?height=16&width=16",
-    tags: ["documentation", "web", "reference"],
-    collection: "Development",
-    dateAdded: "2023-12-10T14:20:00Z",
-    isFavorite: false,
-    visitCount: 28,
-  },
-  {
-    id: "3",
-    title: "Stack Overflow",
-    description: "Where developers learn, share, & build careers",
-    url: "https://stackoverflow.com",
-    favicon: "/placeholder.svg?height=16&width=16",
-    tags: ["qa", "community", "programming"],
-    collection: "Development",
-    dateAdded: "2023-12-05T09:15:00Z",
-    isFavorite: true,
-    visitCount: 35,
-  },
-  {
-    id: "4",
-    title: "Next.js Documentation",
-    description: "The React Framework for the Web",
-    url: "https://nextjs.org/docs",
-    favicon: "/placeholder.svg?height=16&width=16",
-    tags: ["nextjs", "react", "docs"],
-    collection: "Development",
-    dateAdded: "2023-12-01T16:45:00Z",
-    isFavorite: false,
-    visitCount: 29,
-  },
-  {
-    id: "5",
-    title: "Dribbble",
-    description: "Discover the world's top designers & creatives",
-    url: "https://dribbble.com",
-    favicon: "/placeholder.svg?height=16&width=16",
-    tags: ["inspiration", "ui", "design"],
-    collection: "Design",
-    dateAdded: "2023-11-28T11:30:00Z",
-    isFavorite: false,
-    visitCount: 18,
-  },
-  {
-    id: "6",
-    title: "Figma",
-    description: "The collaborative interface design tool",
-    url: "https://figma.com",
-    favicon: "/placeholder.svg?height=16&width=16",
-    tags: ["tool", "design", "collaboration"],
-    collection: "Design",
-    dateAdded: "2023-11-25T13:20:00Z",
-    isFavorite: true,
-    visitCount: 38,
-  },
-  {
-    id: "7",
-    title: "Behance",
-    description: "Showcase and discover creative work",
-    url: "https://behance.net",
-    favicon: "/placeholder.svg?height=16&width=16",
-    tags: ["portfolio", "showcase", "creative"],
-    collection: "Design",
-    dateAdded: "2023-11-20T15:10:00Z",
-    isFavorite: false,
-    visitCount: 15,
-  },
-  {
-    id: "8",
-    title: "The Future of Web Development",
-    description: "Exploring upcoming trends in web development",
-    url: "https://medium.com",
-    favicon: "/placeholder.svg?height=16&width=16",
-    tags: ["article", "web", "future"],
-    collection: "Reading List",
-    dateAdded: "2023-11-15T10:05:00Z",
-    isFavorite: false,
-    visitCount: 12,
-  },
-  {
-    id: "9",
-    title: "CSS Architecture Best Practices",
-    description: "How to structure your CSS for maintainability",
-    url: "https://css-tricks.com",
-    favicon: "/placeholder.svg?height=16&width=16",
-    tags: ["css", "architecture", "best-practices"],
-    collection: "Reading List",
-    dateAdded: "2023-11-10T09:30:00Z",
-    isFavorite: false,
-    visitCount: 10,
-  },
-  {
-    id: "10",
-    title: "JavaScript Performance Tips",
-    description: "Optimize your JavaScript code for better performance",
-    url: "https://dev.to",
-    favicon: "/placeholder.svg?height=16&width=16",
-    tags: ["javascript", "performance", "optimization"],
-    collection: "Reading List",
-    dateAdded: "2023-11-05T14:45:00Z",
-    isFavorite: true,
-    visitCount: 22,
-  },
-  {
-    id: "11",
-    title: "Vercel",
-    description: "Develop. Preview. Ship.",
-    url: "https://vercel.com",
-    favicon: "/placeholder.svg?height=16&width=16",
-    tags: ["hosting", "deployment", "platform"],
-    collection: "Development",
-    dateAdded: "2023-11-01T11:20:00Z",
-    isFavorite: true,
-    visitCount: 24,
-  },
-  {
-    id: "12",
-    title: "Tailwind CSS",
-    description: "A utility-first CSS framework for rapid UI development",
-    url: "https://tailwindcss.com",
-    favicon: "/placeholder.svg?height=16&width=16",
-    tags: ["css", "framework", "utility"],
-    collection: "Development",
-    dateAdded: "2023-10-28T16:15:00Z",
-    isFavorite: false,
-    visitCount: 31,
-  },
-]
+// Define TypeScript interfaces
+interface Bookmark {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  favicon: string;
+  tags: string[];
+  collection: string;
+  dateAdded: string | Timestamp; // Allow for both string and Timestamp
+  isFavorite: boolean;
+  visitCount: number;
+}
 
-// Sample collections and tags for filters
-const collections = [
-  { id: "1", name: "Development", color: "bg-blue-500" },
-  { id: "2", name: "Design", color: "bg-purple-500" },
-  { id: "3", name: "Reading List", color: "bg-green-500" },
-  { id: "4", name: "Productivity", color: "bg-amber-500" },
-  { id: "5", name: "Learning", color: "bg-red-500" },
-]
+interface Collection {
+  id: string;
+  name: string;
+  color: string;
+}
 
-const tags = [
-  { id: "1", name: "development" },
-  { id: "2", name: "design" },
-  { id: "3", name: "react" },
-  { id: "4", name: "nextjs" },
-  { id: "5", name: "css" },
-  { id: "6", name: "javascript" },
-  { id: "7", name: "web" },
-  { id: "8", name: "tool" },
-  { id: "9", name: "article" },
-  { id: "10", name: "documentation" },
-]
+// Utility function to convert dateAdded to a Date object
+const parseDate = (dateAdded: string | Timestamp): Date => {
+  if (dateAdded instanceof Timestamp) {
+    return dateAdded.toDate();
+  }
+  const parsedDate = new Date(dateAdded);
+  if (isNaN(parsedDate.getTime())) {
+    // Fallback to current date if invalid
+    return new Date();
+  }
+  return parsedDate;
+};
 
 // Bookmark Edit Form Component
-function BookmarkEditForm({ bookmark }: { bookmark: (typeof bookmarks)[0] }) {
+function BookmarkEditForm({
+  bookmark,
+  onSave,
+  collections,
+}: {
+  bookmark: Bookmark;
+  onSave: (updatedBookmark: Bookmark) => void;
+  collections: Collection[];
+}) {
+  const [editBookmark, setEditBookmark] = useState<Bookmark>({ ...bookmark });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setEditBookmark((prev) => ({ ...prev, [id.replace("edit-", "")]: value }));
+  };
+
+  const handleSelectChange = (value: string) => {
+    setEditBookmark((prev) => ({ ...prev, collection: value }));
+  };
+
+  const handleSwitchChange = (checked: boolean) => {
+    setEditBookmark((prev) => ({ ...prev, isFavorite: checked }));
+  };
+
+  const handleSubmit = () => {
+    const updatedBookmark = {
+      ...editBookmark,
+      tags: editBookmark.tags.join(", ").split(",").map((tag) => tag.trim()).filter((tag) => tag.length > 0),
+    };
+    onSave(updatedBookmark);
+  };
+
   return (
     <div className="grid gap-4 py-4">
       <div className="grid gap-2">
         <Label htmlFor="edit-url">URL</Label>
-        <Input id="edit-url" defaultValue={bookmark.url} />
+        <Input id="edit-url" value={editBookmark.url} onChange={handleInputChange} />
       </div>
       <div className="grid gap-2">
         <Label htmlFor="edit-title">Title</Label>
-        <Input id="edit-title" defaultValue={bookmark.title} />
+        <Input id="edit-title" value={editBookmark.title} onChange={handleInputChange} />
       </div>
       <div className="grid gap-2">
         <Label htmlFor="edit-description">Description</Label>
-        <Textarea id="edit-description" defaultValue={bookmark.description} />
+        <Textarea id="edit-description" value={editBookmark.description} onChange={handleInputChange} />
       </div>
       <div className="grid gap-2">
         <Label htmlFor="edit-collection">Collection</Label>
-        <Select defaultValue={bookmark.collection.toLowerCase()}>
+        <Select onValueChange={handleSelectChange} defaultValue={editBookmark.collection}>
           <SelectTrigger id="edit-collection">
             <SelectValue placeholder="Select a collection" />
           </SelectTrigger>
           <SelectContent>
             {collections.map((collection) => (
-              <SelectItem key={collection.id} value={collection.name.toLowerCase()}>
+              <SelectItem key={collection.id} value={collection.name}>
                 {collection.name}
               </SelectItem>
             ))}
+            <SelectItem value="Uncategorized">Uncategorized</SelectItem>
           </SelectContent>
         </Select>
       </div>
       <div className="grid gap-2">
         <Label htmlFor="edit-tags">Tags</Label>
-        <Input id="edit-tags" defaultValue={bookmark.tags.join(", ")} />
+        <Input
+          id="edit-tags"
+          value={editBookmark.tags.join(", ")}
+          onChange={(e) =>
+            setEditBookmark((prev) => ({
+              ...prev,
+              tags: e.target.value.split(",").map((tag) => tag.trim()),
+            }))
+          }
+        />
       </div>
       <div className="flex items-center space-x-2 pt-2">
-        <Switch id="edit-favorite" defaultChecked={bookmark.isFavorite} />
+        <Switch id="edit-favorite" checked={editBookmark.isFavorite} onCheckedChange={handleSwitchChange} />
         <Label htmlFor="edit-favorite">Mark as favorite</Label>
       </div>
+      <DialogFooter>
+        <Button onClick={handleSubmit}>Save changes</Button>
+      </DialogFooter>
     </div>
-  )
+  );
 }
 
 // Bookmark Card Component
-function BookmarkCard({ bookmark }: { bookmark: (typeof bookmarks)[0] }) {
+function BookmarkCard({
+  bookmark,
+  onEdit,
+  onDelete,
+  onToggleFavorite,
+  onVisit,
+  collections,
+}: {
+  bookmark: Bookmark;
+  onEdit: (updatedBookmark: Bookmark) => void;
+  onDelete: (id: string) => void;
+  onToggleFavorite: (id: string) => void;
+  onVisit: (id: string) => void;
+  collections: Collection[];
+}) {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // Parse the dateAdded field safely
+  const formattedDate = format(parseDate(bookmark.dateAdded), "MM/dd/yyyy");
+
   return (
     <div
       key={bookmark.id}
       className="group relative flex flex-col rounded-lg border p-4 hover:border-primary transition-colors h-full"
     >
       <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button variant="ghost" size="icon" className="h-7 w-7">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onToggleFavorite(bookmark.id)}>
           {bookmark.isFavorite ? (
             <HeartIcon className="h-4 w-4 fill-red-500 text-red-500" />
           ) : (
@@ -277,7 +208,7 @@ function BookmarkCard({ bookmark }: { bookmark: (typeof bookmarks)[0] }) {
           )}
         </Button>
         <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-          <Link href={bookmark.url} target="_blank">
+          <Link href={bookmark.url} target="_blank" onClick={() => onVisit(bookmark.id)}>
             <ExternalLinkIcon className="h-4 w-4" />
           </Link>
         </Button>
@@ -290,12 +221,17 @@ function BookmarkCard({ bookmark }: { bookmark: (typeof bookmarks)[0] }) {
             alt=""
             className="w-5 h-5"
             onError={(e) => {
-              ;(e.target as HTMLImageElement).src = "/placeholder.svg?height=16&width=16"
+              (e.target as HTMLImageElement).src = "/placeholder.svg?height=16&width=16";
             }}
           />
         </div>
         <div className="flex-1 min-w-0 pr-8">
-          <Link href={bookmark.url} target="_blank" className="font-medium hover:underline line-clamp-1 block">
+          <Link
+            href={bookmark.url}
+            target="_blank"
+            className="font-medium hover:underline line-clamp-1 block"
+            onClick={() => onVisit(bookmark.id)}
+          >
             {bookmark.title}
           </Link>
           <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{bookmark.description}</p>
@@ -315,7 +251,7 @@ function BookmarkCard({ bookmark }: { bookmark: (typeof bookmarks)[0] }) {
           <Badge variant="outline" className="text-xs font-normal">
             {bookmark.collection}
           </Badge>
-          <span>{format(new Date(bookmark.dateAdded), 'MM/dd/yyyy')}</span>
+          <span>{formattedDate}</span>
         </div>
         <div className="flex items-center gap-1">
           <DropdownMenu>
@@ -325,7 +261,7 @@ function BookmarkCard({ bookmark }: { bookmark: (typeof bookmarks)[0] }) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <Dialog>
+              <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogTrigger asChild>
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                     <PencilIcon className="h-4 w-4 mr-2" />
@@ -337,137 +273,292 @@ function BookmarkCard({ bookmark }: { bookmark: (typeof bookmarks)[0] }) {
                     <DialogTitle>Edit Bookmark</DialogTitle>
                     <DialogDescription>Make changes to your bookmark.</DialogDescription>
                   </DialogHeader>
-                  <BookmarkEditForm bookmark={bookmark} />
-                  <DialogFooter>
-                    <Button type="submit">Save changes</Button>
-                  </DialogFooter>
+                  <BookmarkEditForm
+                    bookmark={bookmark}
+                    onSave={(updatedBookmark) => {
+                      onEdit(updatedBookmark);
+                      setIsEditDialogOpen(false);
+                    }}
+                    collections={collections}
+                  />
                 </DialogContent>
               </Dialog>
               <DropdownMenuItem>Add to Collection</DropdownMenuItem>
               <DropdownMenuItem>Add Tags</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={() => onDelete(bookmark.id)}>
+                Delete
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export default function BookmarksPage() {
-  // For demo purposes, let's assume we have active filters
-  const activeFilters = {
-    collections: ["Development"],
-    tags: ["react", "nextjs"],
-  }
+  const [user, setUser] = useState<User | null>(null);
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [activeFilters, setActiveFilters] = useState({
+    collections: [] as string[],
+    tags: [] as string[],
+  });
+  const [sortOption, setSortOption] = useState("date-desc");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [newBookmark, setNewBookmark] = useState({
+    url: "",
+    title: "",
+    description: "",
+    collection: "",
+    tags: "",
+    isFavorite: false,
+  });
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
+  // Monitor authentication state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch collections from Firestore
+  useEffect(() => {
+    if (!user) {
+      setCollections([]);
+      return;
+    }
+
+    const fetchCollections = async () => {
+      try {
+        const collectionsRef = collection(db, `users/${user.uid}/collections`);
+        const snapshot = await getDocs(collectionsRef);
+        const fetchedCollections: Collection[] = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().title,
+          color: doc.data().color || "bg-blue-500",
+        }));
+        setCollections(fetchedCollections);
+      } catch (error) {
+        console.error("Error fetching collections:", error);
+      }
+    };
+
+    fetchCollections();
+  }, [user]);
+
+  // Fetch bookmarks from Firestore with real-time updates
+  useEffect(() => {
+    if (!user) {
+      setBookmarks([]);
+      return;
+    }
+
+    const q = collection(db, `users/${user.uid}/bookmarks`);
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const updatedBookmarks = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            tags: data.tags || [],
+            dateAdded: data.dateAdded instanceof Timestamp ? data.dateAdded : data.dateAdded || new Date().toISOString(),
+          };
+        }) as Bookmark[];
+        setBookmarks(updatedBookmarks);
+      },
+      (error) => {
+        console.error("Error listening to bookmarks: ", error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user]);
 
   // Get all unique tags from bookmarks
-  const allTags = Array.from(new Set(bookmarks.flatMap((bookmark) => bookmark.tags))).sort()
+  const allTags = Array.from(new Set(bookmarks.flatMap((bookmark) => bookmark.tags))).sort();
+
+  // Filter and sort bookmarks
+  const filteredBookmarks = bookmarks
+    .filter((bookmark) => {
+      const matchesSearch =
+        bookmark.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        bookmark.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCollection =
+        activeFilters.collections.length === 0 || activeFilters.collections.includes(bookmark.collection);
+      const matchesTags =
+        activeFilters.tags.length === 0 || bookmark.tags.some((tag) => activeFilters.tags.includes(tag));
+      return matchesSearch && matchesCollection && matchesTags;
+    })
+    .sort((a, b) => {
+      const dateA = parseDate(a.dateAdded);
+      const dateB = parseDate(b.dateAdded);
+      if (sortOption === "date-desc") return dateB.getTime() - dateA.getTime();
+      if (sortOption === "date-asc") return dateA.getTime() - dateB.getTime();
+      if (sortOption === "title-asc") return a.title.localeCompare(b.title);
+      if (sortOption === "title-desc") return b.title.localeCompare(a.title);
+      if (sortOption === "visits-desc") return b.visitCount - a.visitCount;
+      return 0;
+    });
+
+  // Handle adding a new bookmark
+  const handleAddBookmark = async () => {
+    if (!user) {
+      alert("You must be logged in to add a bookmark.");
+      return;
+    }
+
+    try {
+      const url = newBookmark.url.trim();
+      if (!url.match(/^https?:\/\//)) {
+        throw new Error("Invalid URL: Please include http:// or https://");
+      }
+      new URL(url);
+
+      if (bookmarks.some((b) => b.url === url)) {
+        alert("This URL is already bookmarked!");
+        return;
+      }
+
+      const tagsArray = newBookmark.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0);
+
+      const bookmark = {
+        url,
+        title: newBookmark.title,
+        description: newBookmark.description,
+        collection: newBookmark.collection || "Uncategorized",
+        tags: tagsArray,
+        isFavorite: newBookmark.isFavorite,
+        dateAdded: new Date().toISOString(),
+        visitCount: 0,
+        favicon: url
+          ? `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}`
+          : "/placeholder.svg",
+      };
+
+      const userBookmarksRef = collection(db, `users/${user.uid}/bookmarks`);
+      await addDoc(userBookmarksRef, bookmark);
+
+      setNewBookmark({
+        url: "",
+        title: "",
+        description: "",
+        collection: "",
+        tags: "",
+        isFavorite: false,
+      });
+      setIsAddDialogOpen(false);
+
+      alert("Bookmark added successfully!");
+    } catch (error: unknown) {
+      console.error("Error adding bookmark: ", error);
+      const errorMessage = error instanceof Error ? error.message : "Please try again.";
+      alert(`Failed to add bookmark: ${errorMessage}`);
+    }
+  };
+
+  // Handle editing a bookmark
+  const handleEditBookmark = async (updatedBookmark: Bookmark) => {
+    if (!user) return;
+
+    try {
+      const bookmarkRef = doc(db, `users/${user.uid}/bookmarks`, updatedBookmark.id);
+      await updateDoc(bookmarkRef, {
+        url: updatedBookmark.url,
+        title: updatedBookmark.title,
+        description: updatedBookmark.description,
+        collection: updatedBookmark.collection,
+        tags: updatedBookmark.tags,
+        isFavorite: updatedBookmark.isFavorite,
+      });
+      alert("Bookmark updated successfully!");
+    } catch (error) {
+      console.error("Error updating bookmark: ", error);
+      alert("Failed to update bookmark. Please try again.");
+    }
+  };
+
+  // Handle deleting a bookmark
+  const handleDeleteBookmark = async (id: string) => {
+    if (!user) return;
+
+    if (!confirm("Are you sure you want to delete this bookmark?")) return;
+
+    try {
+      const bookmarkRef = doc(db, `users/${user.uid}/bookmarks`, id);
+      await deleteDoc(bookmarkRef);
+      alert("Bookmark deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting bookmark: ", error);
+      alert("Failed to delete bookmark. Please try again.");
+    }
+  };
+
+  // Handle toggling favorite
+  const handleToggleFavorite = async (id: string) => {
+    if (!user) return;
+
+    const bookmark = bookmarks.find((b) => b.id === id);
+    if (!bookmark) return;
+
+    try {
+      const bookmarkRef = doc(db, `users/${user.uid}/bookmarks`, id);
+      await updateDoc(bookmarkRef, {
+        isFavorite: !bookmark.isFavorite,
+      });
+    } catch (error) {
+      console.error("Error toggling favorite: ", error);
+    }
+  };
+
+  // Handle visit count increment
+  const handleVisit = async (id: string) => {
+    if (!user) return;
+
+    try {
+      const bookmarkRef = doc(db, `users/${user.uid}/bookmarks`, id);
+      await updateDoc(bookmarkRef, {
+        visitCount: bookmarks.find((b) => b.id === id)!.visitCount + 1,
+      });
+    } catch (error) {
+      console.error("Error incrementing visit count: ", error);
+    }
+  };
+
+  // Handle filter changes
+  const handleFilterChange = (type: "collections" | "tags", value: string) => {
+    setActiveFilters((prev) => {
+      const current = prev[type];
+      if (current.includes(value)) {
+        return { ...prev, [type]: current.filter((item) => item !== value) };
+      }
+      return { ...prev, [type]: [...current, value] };
+    });
+  };
+
+  // Handle clear all filters
+  const handleClearFilters = () => {
+    setActiveFilters({ collections: [], tags: [] });
+  };
+
+  if (!user) {
+    return <div>Please log in to view your bookmarks.</div>;
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
-      {/* <aside className="w-64 border-r p-6 flex flex-col gap-6">
-        <div className="flex items-center gap-2 font-semibold text-xl">
-          <BookmarkIcon className="h-6 w-6" />
-          <span>Bookmarks</span>
-        </div>
-
-        <nav className="space-y-1">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-          >
-            <LayoutDashboardIcon className="h-5 w-5" />
-            <span>Dashboard</span>
-          </Link>
-          <Link
-            href="/bookmarks"
-            className="flex items-center gap-3 px-3 py-2 rounded-md bg-accent text-accent-foreground"
-          >
-            <BookmarkIcon className="h-5 w-5" />
-            <span>All Bookmarks</span>
-          </Link>
-          <Link
-            href="/collections"
-            className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-          >
-            <FolderIcon className="h-5 w-5" />
-            <span>Collections</span>
-          </Link>
-          <Link
-            href="/tags"
-            className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-          >
-            <TagIcon className="h-5 w-5" />
-            <span>Tags</span>
-          </Link>
-        </nav>
-
-        <div className="mt-6">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium">Quick Access</h3>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6">
-                  <PlusIcon className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 Goodman">
-                <DropdownMenuLabel>Add to Quick Access</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {collections.map((collection) => (
-                  <DropdownMenuCheckboxItem
-                    key={collection.id}
-                    checked={["Development", "Design", "Reading List"].includes(collection.name)}
-                  >
-                    {collection.name}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <div className="space-y-2">
-            <Link
-              href="/collections/development"
-              className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors group"
-            >
-              <div className="w-6 h-6 rounded bg-blue-500 bg-opacity-20 flex items-center justify-center flex-shrink-0">
-                <BookmarkIcon className="h-3.5 w-3.5 text-blue-500" />
-              </div>
-              <span className="flex-1 truncate">Development</span>
-              <HeartIcon className="h-3.5 w-3.5 text-red-500 fill-red-500" />
-            </Link>
-            <Link
-              href="/collections/design"
-              className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors group"
-            >
-              <div className="w-6 h-6 rounded bg-purple-500 bg-opacity-20 flex items-center justify-center flex-shrink-0">
-                <BookmarkIcon className="h-3.5 w-3.5 text-purple-500" />
-              </div>
-              <span className="flex-1 truncate">Design Resources</span>
-              <HeartIcon className="h-3.5 w-3.5 text-red-500 fill-red-500" />
-            </Link>
-            <Link
-              href="/collections/reading"
-              className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors group"
-            >
-              <div className="w-6 h-6 rounded bg-green-500 bg-opacity-20 flex items-center justify-center flex-shrink-0">
-                <BookmarkIcon className="h-3.5 w-3.5 text-green-500" />
-              </div>
-              <span className="flex-1 truncate">Reading List</span>
-              <HeartIcon className="h-3.5 w-3.5 text-red-500 fill-red-500" />
-            </Link>
-          </div>
-        </div>
-      </aside> */}
-
-      {/* Main content */}
       <main className="flex-1 p-6">
         {/* Header */}
         <div className="rounded-lg p-6 mb-6 bg-primary/5 border">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
                 <BookmarkIcon className="h-6 w-6 text-primary" />
@@ -477,7 +568,7 @@ export default function BookmarksPage() {
                 <p className="text-muted-foreground mt-1">Browse and manage all your saved bookmarks</p>
               </div>
             </div>
-            <Dialog>
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
                   <PlusIcon className="h-4 w-4 mr-2" />
@@ -492,42 +583,69 @@ export default function BookmarksPage() {
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
                     <Label htmlFor="url">URL</Label>
-                    <Input id="url" placeholder="https://example.com" />
+                    <Input
+                      id="url"
+                      placeholder="https://example.com"
+                      value={newBookmark.url}
+                      onChange={(e) => setNewBookmark((prev) => ({ ...prev, url: e.target.value }))}
+                    />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="title">Title</Label>
-                    <Input id="title" placeholder="Bookmark title" />
+                    <Input
+                      id="title"
+                      placeholder="Bookmark title"
+                      value={newBookmark.title}
+                      onChange={(e) => setNewBookmark((prev) => ({ ...prev, title: e.target.value }))}
+                    />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" placeholder="Bookmark description" />
+                    <Textarea
+                      id="description"
+                      placeholder="Bookmark description"
+                      value={newBookmark.description}
+                      onChange={(e) => setNewBookmark((prev) => ({ ...prev, description: e.target.value }))}
+                    />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="collection">Collection</Label>
-                    <Select>
+                    <Select onValueChange={(value) => setNewBookmark((prev) => ({ ...prev, collection: value }))}>
                       <SelectTrigger id="collection">
                         <SelectValue placeholder="Select a collection" />
                       </SelectTrigger>
                       <SelectContent>
                         {collections.map((collection) => (
-                          <SelectItem key={collection.id} value={collection.name.toLowerCase()}>
+                          <SelectItem key={collection.id} value={collection.name}>
                             {collection.name}
                           </SelectItem>
                         ))}
+                        <SelectItem value="Uncategorized">Uncategorized</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="tags">Tags</Label>
-                    <Input id="tags" placeholder="Enter tags separated by commas" />
+                    <Input
+                      id="tags"
+                      placeholder="Enter tags separated by commas"
+                      value={newBookmark.tags}
+                      onChange={(e) => setNewBookmark((prev) => ({ ...prev, tags: e.target.value }))}
+                    />
                   </div>
                   <div className="flex items-center space-x-2 pt-2">
-                    <Switch id="favorite" />
+                    <Switch
+                      id="favorite"
+                      checked={newBookmark.isFavorite}
+                      onCheckedChange={(checked) =>
+                        setNewBookmark((prev) => ({ ...prev, isFavorite: checked }))
+                      }
+                    />
                     <Label htmlFor="favorite">Mark as favorite</Label>
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit">Add Bookmark</Button>
+                  <Button onClick={handleAddBookmark}>Add Bookmark</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -538,7 +656,12 @@ export default function BookmarksPage() {
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search bookmarks..." className="pl-9" />
+            <Input
+              placeholder="Search bookmarks..."
+              className="pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
 
           <div className="flex gap-2">
@@ -556,6 +679,7 @@ export default function BookmarksPage() {
                   <DropdownMenuCheckboxItem
                     key={collection.id}
                     checked={activeFilters.collections.includes(collection.name)}
+                    onCheckedChange={() => handleFilterChange("collections", collection.name)}
                   >
                     <div className="flex items-center gap-2">
                       <div className={`w-3 h-3 rounded-full ${collection.color}`}></div>
@@ -566,9 +690,13 @@ export default function BookmarksPage() {
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel>Filter by Tag</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {tags.slice(0, 5).map((tag) => (
-                  <DropdownMenuCheckboxItem key={tag.id} checked={activeFilters.tags.includes(tag.name)}>
-                    {tag.name}
+                {allTags.slice(0, 5).map((tag) => (
+                  <DropdownMenuCheckboxItem
+                    key={tag}
+                    checked={activeFilters.tags.includes(tag)}
+                    onCheckedChange={() => handleFilterChange("tags", tag)}
+                  >
+                    {tag}
                   </DropdownMenuCheckboxItem>
                 ))}
                 <DropdownMenuItem>
@@ -579,7 +707,7 @@ export default function BookmarksPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Select defaultValue="date-desc">
+            <Select value={sortOption} onValueChange={setSortOption}>
               <SelectTrigger className="w-[180px] gap-2">
                 <ArrowUpDownIcon className="h-4 w-4" />
                 <SelectValue placeholder="Sort by" />
@@ -614,7 +742,12 @@ export default function BookmarksPage() {
               <Badge key={collection} variant="secondary" className="flex items-center gap-1">
                 <FolderIcon className="h-3 w-3" />
                 {collection}
-                <Button variant="ghost" size="icon" className="h-4 w-4 ml-1 p-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-4 w-4 ml-1 p-0"
+                  onClick={() => handleFilterChange("collections", collection)}
+                >
                   <XIcon className="h-3 w-3" />
                 </Button>
               </Badge>
@@ -623,12 +756,17 @@ export default function BookmarksPage() {
               <Badge key={tag} variant="secondary" className="flex items-center gap-1">
                 <TagIcon className="h-3 w-3" />
                 {tag}
-                <Button variant="ghost" size="icon" className="h-4 w-4 ml-1 p-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-4 w-4 ml-1 p-0"
+                  onClick={() => handleFilterChange("tags", tag)}
+                >
                   <XIcon className="h-3 w-3" />
                 </Button>
               </Badge>
             ))}
-            <Button variant="ghost" size="sm" className="text-xs h-6">
+            <Button variant="ghost" size="sm" className="text-xs h-6" onClick={handleClearFilters}>
               Clear all
             </Button>
           </div>
@@ -662,9 +800,17 @@ export default function BookmarksPage() {
                 <CardDescription>Browse all your saved bookmarks</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {bookmarks.map((bookmark) => (
-                    <BookmarkCard key={bookmark.id} bookmark={bookmark} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredBookmarks.map((bookmark) => (
+                    <BookmarkCard
+                      key={bookmark.id}
+                      bookmark={bookmark}
+                      onEdit={handleEditBookmark}
+                      onDelete={handleDeleteBookmark}
+                      onToggleFavorite={handleToggleFavorite}
+                      onVisit={handleVisit}
+                      collections={collections}
+                    />
                   ))}
                 </div>
               </CardContent>
@@ -678,11 +824,19 @@ export default function BookmarksPage() {
                 <CardDescription>Bookmarks you&apos;ve marked as favorites</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {bookmarks
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredBookmarks
                     .filter((bookmark) => bookmark.isFavorite)
                     .map((bookmark) => (
-                      <BookmarkCard key={bookmark.id} bookmark={bookmark} />
+                      <BookmarkCard
+                        key={bookmark.id}
+                        bookmark={bookmark}
+                        onEdit={handleEditBookmark}
+                        onDelete={handleDeleteBookmark}
+                        onToggleFavorite={handleToggleFavorite}
+                        onVisit={handleVisit}
+                        collections={collections}
+                      />
                     ))}
                 </div>
               </CardContent>
@@ -696,12 +850,20 @@ export default function BookmarksPage() {
                 <CardDescription>Recently added bookmarks</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {bookmarks
-                    .sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime())
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredBookmarks
+                    .sort((a, b) => parseDate(b.dateAdded).getTime() - parseDate(a.dateAdded).getTime())
                     .slice(0, 6)
                     .map((bookmark) => (
-                      <BookmarkCard key={bookmark.id} bookmark={bookmark} />
+                      <BookmarkCard
+                        key={bookmark.id}
+                        bookmark={bookmark}
+                        onEdit={handleEditBookmark}
+                        onDelete={handleDeleteBookmark}
+                        onToggleFavorite={handleToggleFavorite}
+                        onVisit={handleVisit}
+                        collections={collections}
+                      />
                     ))}
                 </div>
               </CardContent>
@@ -715,12 +877,20 @@ export default function BookmarksPage() {
                 <CardDescription>Your most frequently visited bookmarks</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {bookmarks
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredBookmarks
                     .sort((a, b) => b.visitCount - a.visitCount)
                     .slice(0, 6)
                     .map((bookmark) => (
-                      <BookmarkCard key={bookmark.id} bookmark={bookmark} />
+                      <BookmarkCard
+                        key={bookmark.id}
+                        bookmark={bookmark}
+                        onEdit={handleEditBookmark}
+                        onDelete={handleDeleteBookmark}
+                        onToggleFavorite={handleToggleFavorite}
+                        onVisit={handleVisit}
+                        collections={collections}
+                      />
                     ))}
                 </div>
               </CardContent>
@@ -734,7 +904,12 @@ export default function BookmarksPage() {
             <h3 className="text-lg font-semibold mb-4">Popular Tags</h3>
             <div className="flex flex-wrap gap-2">
               {allTags.map((tag) => (
-                <Badge key={tag} variant="outline" className="px-3 py-1 hover:bg-accent cursor-pointer">
+                <Badge
+                  key={tag}
+                  variant="outline"
+                  className="px-3 py-1 hover:bg-accent cursor-pointer"
+                  onClick={() => handleFilterChange("tags", tag)}
+                >
                   {tag} ({bookmarks.filter((b) => b.tags.includes(tag)).length})
                 </Badge>
               ))}
@@ -742,11 +917,12 @@ export default function BookmarksPage() {
           </CardContent>
         </Card>
 
-        {/* Pagination */}
+        {/* Pagination (Placeholder - Add real pagination logic as needed) */}
         <div className="flex items-center justify-between mt-8">
           <p className="text-sm text-muted-foreground">
-            Showing <span className="font-medium">1</span> to <span className="font-medium">12</span> of{" "}
-            <span className="font-medium">247</span> bookmarks
+            Showing <span className="font-medium">1</span> to{" "}
+            <span className="font-medium">{filteredBookmarks.length}</span> of{" "}
+            <span className="font-medium">{bookmarks.length}</span> bookmarks
           </p>
           <div className="flex gap-1">
             <Button variant="outline" size="sm" disabled>
@@ -755,24 +931,14 @@ export default function BookmarksPage() {
             <Button variant="outline" size="sm" className="bg-accent text-accent-foreground">
               1
             </Button>
-            <Button variant="outline" size="sm">
-              2
-            </Button>
-            <Button variant="outline" size="sm">
-              3
-            </Button>
-            <Button variant="outline" size="sm">
-              ...
-            </Button>
-            <Button variant="outline" size="sm">
-              21
-            </Button>
-            <Button variant="outline" size="sm">
-              Next
-            </Button>
+            <Button variant="outline" size="sm">2</Button>
+            <Button variant="outline" size="sm">3</Button>
+            <Button variant="outline" size="sm">...</Button>
+            <Button variant="outline" size="sm">21</Button>
+            <Button variant="outline" size="sm">Next</Button>
           </div>
         </div>
       </main>
     </div>
-  )
+  );
 }
