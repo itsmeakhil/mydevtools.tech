@@ -24,11 +24,12 @@ import {
   PlusIcon,
   SearchIcon,
   MoreHorizontalIcon,
-  PencilIcon,
   TrashIcon,
   StarIcon,
   ExternalLinkIcon,
   ArrowRightIcon,
+  ListIcon,
+  GridIcon,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -49,6 +50,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 // Define the Bookmark type
 interface Bookmark {
@@ -91,6 +93,8 @@ export default function CollectionsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list"); // Changed default to "list"
+  const [currentPage, setCurrentPage] = useState(1);
 
   // State for new collection form
   const [newCollection, setNewCollection] = useState({
@@ -153,7 +157,7 @@ export default function CollectionsPage() {
               usageCount: doc.data().usageCount || 0,
               isQuickAccess: doc.data().isQuickAccess || false,
               createdAt: doc.data().createdAt || new Date().toISOString(),
-              color: doc.data().color || "bg-blue-500",
+              color: doc.data().color || "bg-blue-500", // Default color if none exists
               previewLinks: doc.data().previewLinks || [],
             }));
 
@@ -225,7 +229,19 @@ export default function CollectionsPage() {
     return () => unsubscribeBookmarks();
   }, []);
 
-  // Handle creating a new collection
+  // Filter collections based on search query (moved up)
+  const filteredCollections = collections.filter((collection) =>
+    collection.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Pagination settings (now after filteredCollections)
+  const itemsPerPage = 9;
+  const totalPages = Math.ceil(filteredCollections.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedCollections = filteredCollections.slice(startIndex, endIndex);
+
+  // Handle creating a new collection with random color
   const handleCreateCollection = async () => {
     const user = auth.currentUser;
     if (!user) {
@@ -234,6 +250,18 @@ export default function CollectionsPage() {
     }
 
     const newId = Date.now().toString();
+    // Define a list of possible colors
+    const colorOptions = [
+      "bg-blue-500",
+      "bg-purple-500",
+      "bg-green-500",
+      "bg-amber-500",
+      "bg-red-500",
+      "bg-indigo-500",
+    ];
+    // Select a random color
+    const randomColor = colorOptions[Math.floor(Math.random() * colorOptions.length)];
+
     const collectionData: Collection = {
       id: newId,
       title: newCollection.title,
@@ -243,11 +271,7 @@ export default function CollectionsPage() {
       usageCount: 0,
       isQuickAccess: newCollection.isQuickAccess,
       createdAt: new Date().toISOString(),
-      color: `bg-${
-        ["blue", "purple", "green", "amber", "red", "indigo"][
-          Math.floor(Math.random() * 6)
-        ]
-      }-500`,
+      color: randomColor, // Assign the random color
       previewLinks: [],
     };
 
@@ -347,10 +371,17 @@ export default function CollectionsPage() {
     }
   };
 
-  // Filter collections based on search query
-  const filteredCollections = collections.filter((collection) =>
-    collection.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Reset to page 1 when search query or view mode changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, viewMode]);
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to the top of the collections content
+    document.getElementById("collections-content")?.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -363,218 +394,385 @@ export default function CollectionsPage() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <main className="flex-1 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Collections</h1>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusIcon className="h-4 w-4 mr-2" />
-                New Collection
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Create Collection</DialogTitle>
-                <DialogDescription>
-                  Create a new collection to organize your bookmarks.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="Collection name"
-                    value={newCollection.title}
-                    onChange={(e) =>
-                      setNewCollection({
-                        ...newCollection,
-                        title: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Collection description"
-                    value={newCollection.description}
-                    onChange={(e) =>
-                      setNewCollection({
-                        ...newCollection,
-                        description: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="quick-access"
-                    checked={newCollection.isQuickAccess}
-                    onCheckedChange={(checked) =>
-                      setNewCollection({
-                        ...newCollection,
-                        isQuickAccess: checked,
-                      })
-                    }
-                  />
-                  <Label htmlFor="quick-access">Add to Quick Access</Label>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button onClick={handleCreateCollection}>
-                  Create Collection
+      <main className="flex-1 p-6 flex flex-col">
+        {/* Fixed Header Section */}
+        <div className="flex-shrink-0">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold">Collections</h1>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <PlusIcon className="h-4 w-4 mr-2" />
+                  New Collection
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Search */}
-        <div className="relative max-w-md mb-6">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search collections..."
-            className="pl-9"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        {/* Collections grid */}
-        {filteredCollections.length === 0 ? (
-          <div className="text-center py-6">
-            <p className="text-muted-foreground">No collections found.</p>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Create Collection</DialogTitle>
+                  <DialogDescription>
+                    Create a new collection to organize your bookmarks.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="name">Name</Label>
+                    <Input
+                      id="name"
+                      placeholder="Collection name"
+                      value={newCollection.title}
+                      onChange={(e) =>
+                        setNewCollection({
+                          ...newCollection,
+                          title: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Collection description"
+                      value={newCollection.description}
+                      onChange={(e) =>
+                        setNewCollection({
+                          ...newCollection,
+                          description: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="quick-access"
+                      checked={newCollection.isQuickAccess}
+                      onCheckedChange={(checked) =>
+                        setNewCollection({
+                          ...newCollection,
+                          isQuickAccess: checked,
+                        })
+                      }
+                    />
+                    <Label htmlFor="quick-access">Add to Quick Access</Label>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={handleCreateCollection}>
+                    Create Collection
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCollections.map((collection) => (
-              <Card
-                key={collection.id}
-                className="group overflow-hidden transition-all hover:shadow-md border-transparent hover:border-primary"
+
+          {/* Search and View Toggle */}
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="relative max-w-md flex-1">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search collections..."
+                className="pl-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="flex border rounded-md">
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`rounded-r-none border-r ${viewMode === "list" ? "bg-accent text-accent-foreground" : ""}`}
+                onClick={() => setViewMode("list")}
               >
-                <Link
-                  href={`/app/bookmark/collections/${collection.titleLower}`}
-                  className="block"
-                  onClick={() => incrementUsageCount(collection.id)}
+                <ListIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`rounded-l-none ${viewMode === "grid" ? "bg-accent text-accent-foreground" : ""}`}
+                onClick={() => setViewMode("grid")}
+              >
+                <GridIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Scrollable Content Section */}
+        <div id="collections-content" className="flex-1 overflow-y-auto">
+          {paginatedCollections.length === 0 ? (
+            <div className="text-center py-6">
+              <p className="text-muted-foreground">No collections found.</p>
+            </div>
+          ) : viewMode === "grid" ? (
+            // Grid View
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedCollections.map((collection) => (
+                <Card
+                  key={collection.id}
+                  className="group overflow-hidden transition-all hover:shadow-md border-transparent hover:border-primary"
                 >
-                  <CardHeader
-                    className={`p-4 ${collection.color} bg-opacity-10 border-b relative overflow-hidden`}
+                  <Link
+                    href={`/app/bookmark/collections/${collection.titleLower}`}
+                    className="block"
+                    onClick={() => incrementUsageCount(collection.id)}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="font-semibold text-lg flex items-center gap-2">
-                          {collection.title}
-                          {collection.isQuickAccess && (
-                            <StarIcon className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                          )}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {collection.description}
-                        </p>
+                    <CardHeader
+                      className={`p-4 ${collection.color} bg-opacity-10 border-b relative overflow-hidden`}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="font-semibold text-lg flex items-center gap-2">
+                            {collection.title}
+                            {collection.isQuickAccess && (
+                              <StarIcon className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            )}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {collection.description}
+                          </p>
+                        </div>
+                        <Badge variant="secondary" className="rounded-full px-2.5">
+                          {collection.bookmarkCount}
+                        </Badge>
                       </div>
-                      <Badge variant="secondary" className="rounded-full px-2.5">
-                        {collection.bookmarkCount}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                </Link>
+                    </CardHeader>
+                  </Link>
 
-                <CardContent className="p-0 h-48 flex flex-col">
-                  {collection.previewLinks.length === 0 ? (
-                    <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-                      No bookmarks in this collection
-                    </div>
-                  ) : (
-                    <div className="divide-y">
-                      {collection.previewLinks.map((link, index) => (
-                        <Link
-                          key={index}
-                          href={link.url}
-                          target="_blank"
-                          className="flex items-center gap-3 p-3 hover:bg-accent transition-colors group/link"
-                        >
-                          <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
-                            <img
-                              src={link.favicon || "/placeholder.svg"}
-                              alt=""
-                              className="w-5 h-5"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = "/placeholder.svg?height=16&width=16";
-                              }}
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium line-clamp-1 group-hover/link:text-primary transition-colors">
-                              {link.title}
+                  <CardContent className="p-0 h-48 flex flex-col">
+                    {collection.previewLinks.length === 0 ? (
+                      <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+                        No bookmarks in this collection
+                      </div>
+                    ) : (
+                      <div className="divide-y">
+                        {collection.previewLinks.map((link, index) => (
+                          <Link
+                            key={index}
+                            href={link.url}
+                            target="_blank"
+                            className="flex items-center gap-3 p-3 hover:bg-accent transition-colors group/link"
+                          >
+                            <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                              <img
+                                src={link.favicon || "/placeholder.svg"}
+                                alt=""
+                                className="w-5 h-5"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = "/placeholder.svg?height=16&width=16";
+                                }}
+                              />
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                              {link.domain}
-                            </p>
-                          </div>
-                          <ExternalLinkIcon className="h-4 w-4 text-muted-foreground opacity-0 group-hover/link:opacity-100 transition-opacity" />
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium line-clamp-1 group-hover/link:text-primary transition-colors">
+                                {link.title}
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                {link.domain}
+                              </p>
+                            </div>
+                            <ExternalLinkIcon className="h-4 w-4 text-muted-foreground opacity-0 group-hover/link:opacity-100 transition-opacity" />
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
 
-                <CardFooter className="p-4 flex justify-between items-center border-t bg-muted/20">
-                  <div className="flex items-center gap-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontalIcon className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start">
-                        <DropdownMenuItem>
-                          <PencilIcon className="h-4 w-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
+                  <CardFooter className="p-4 flex justify-between items-center border-t bg-muted/20">
+                    <div className="flex items-center gap-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontalIcon className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuItem
+                            onClick={() => toggleQuickAccess(collection.id)}
+                          >
+                            <StarIcon className="h-4 w-4 mr-2" />
+                            {collection.isQuickAccess
+                              ? "Remove from Quick Access"
+                              : "Add to Quick Access"}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => handleDeleteCollection(collection.id)}
+                          >
+                            <TrashIcon className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <span className="text-xs text-muted-foreground">
+                        Created{" "}
+                        {new Date(collection.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                      asChild
+                    >
+                      <Link
+                        href={`/app/bookmark/collections/${collection.titleLower}`}
+                        onClick={() => incrementUsageCount(collection.id)}
+                      >
+                        View all
+                        <ArrowRightIcon className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            // List View
+            <div className="border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12"></TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead className="hidden md:table-cell">Description</TableHead>
+                    <TableHead>Bookmarks</TableHead>
+                    <TableHead>Quick Access</TableHead>
+                    <TableHead className="hidden md:table-cell">Created</TableHead>
+                    <TableHead className="w-12"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedCollections.map((collection) => (
+                    <TableRow key={collection.id}>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
                           onClick={() => toggleQuickAccess(collection.id)}
                         >
-                          <StarIcon className="h-4 w-4 mr-2" />
-                          {collection.isQuickAccess
-                            ? "Remove from Quick Access"
-                            : "Add to Quick Access"}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => handleDeleteCollection(collection.id)}
+                          <StarIcon
+                            className={`h-4 w-4 ${collection.isQuickAccess ? "fill-yellow-400 text-yellow-400" : ""}`}
+                          />
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          href={`/app/bookmark/collections/${collection.titleLower}`}
+                          className="font-medium hover:underline"
+                          onClick={() => incrementUsageCount(collection.id)}
                         >
-                          <TrashIcon className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <span className="text-xs text-muted-foreground">
-                      Created{" "}
-                      {new Date(collection.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
+                          {collection.title}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <span className="text-sm text-muted-foreground">
+                          {collection.description || "No description"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{collection.bookmarkCount}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {collection.isQuickAccess ? "Yes" : "No"}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(collection.createdAt).toLocaleDateString()}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            asChild
+                          >
+                            <Link
+                              href={`/app/bookmark/collections/${collection.titleLower}`}
+                              onClick={() => incrementUsageCount(collection.id)}
+                            >
+                              <ArrowRightIcon className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontalIcon className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => toggleQuickAccess(collection.id)}
+                              >
+                                <StarIcon className="h-4 w-4 mr-2" />
+                                {collection.isQuickAccess
+                                  ? "Remove from Quick Access"
+                                  : "Add to Quick Access"}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => handleDeleteCollection(collection.id)}
+                              >
+                                <TrashIcon className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </div>
+
+        {/* Fixed Pagination Section */}
+        {filteredCollections.length > 0 && (
+          <div className="flex-shrink-0 mt-8">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Showing <span className="font-medium">{startIndex + 1}</span> to{" "}
+                <span className="font-medium">{Math.min(endIndex, filteredCollections.length)}</span> of{" "}
+                <span className="font-medium">{filteredCollections.length}</span> collections
+              </p>
+              <div className="flex gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
                   <Button
+                    key={page}
                     variant="outline"
                     size="sm"
-                    className="gap-1 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                    asChild
+                    onClick={() => handlePageChange(page)}
+                    className={currentPage === page ? "bg-accent text-accent-foreground" : ""}
                   >
-                    <Link
-                      href={`/app/bookmark/collections/${collection.titleLower}`}
-                    >
-                      View all
-                      <ArrowRightIcon className="h-3.5 w-3.5" />
-                    </Link>
+                    {page}
                   </Button>
-                </CardFooter>
-              </Card>
-            ))}
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </main>
