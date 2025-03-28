@@ -12,9 +12,9 @@ export default function LoginPage() {
   return (
     <>
       <Header />
-      <div className="container relative min-h-[calc(100vh-4rem)] flex items-center justify-center font-mono">
-        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px] px-4 sm:px-0">
-          <div className="bg-background/95 backdrop-blur-sm border border-border/50 rounded-lg p-8 shadow-lg">
+      <div className="container relative min-h-[100dvh] flex items-center justify-center font-mono py-2 sm:py-6">
+        <div className="w-full max-w-md mx-auto flex items-center justify-center">
+          <div className="w-full max-w-md bg-background/95 backdrop-blur-sm border border-border/50 rounded-lg p-6 shadow-lg">
             <LoginForm />
             <p className="mt-6 text-center text-sm text-muted-foreground">
               By continuing, you agree to our{" "}

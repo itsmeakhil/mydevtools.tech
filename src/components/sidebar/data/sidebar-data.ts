@@ -7,7 +7,7 @@ import {
   IconPhotoVideo,
   IconBlocks,
   IconNetwork,
-  // IconBook2,
+  IconBook2,
   IconAlignJustified,
   IconShieldCode,
   IconHash,
@@ -40,8 +40,8 @@ import {
   IconJson,
   IconToml,
   IconSquareRoundedLetterY,
-  IconNotes,
-  // IconBookmark,
+  // IconNotes,
+  IconBookmark,
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
@@ -55,25 +55,18 @@ export const sidebarData: SidebarData = {
     {
       title: 'General Tools',
       items: [
-        
-        // {
-        //   title: 'Bookmark',
-        //   url: '/app/bookmark',
-        //   icon: IconBookmark,
-        //   description: 'Quickly save a single bookmark.',
-        //   customUI: true // Flag to indicate a custom UI
-        // },
-        // {
-        //   title: 'Notes',
-        //   url: '/app/notes',
-        //   icon: IconBook2,
-        //   description: 'Write, save, and organize your notes.'
-        // },
         {
-          title: 'Tasks',
-          url: '/app/to-do',
-          icon: IconChecklist,
-          description: 'Manage your to-do lists efficiently.'
+          title: 'Bookmark',
+          url: '/app/bookmark',
+          icon: IconBookmark,
+          description: 'Quickly save a single bookmark.',
+          customUI: true // Flag to indicate a custom UI
+        },
+         {
+          title: 'Notes',
+          url: '/app/notes',
+          icon: IconBook2,
+          description: 'Write, save, and organize your notes.'
         },
         {
           title: 'Url Shortener',
@@ -82,18 +75,11 @@ export const sidebarData: SidebarData = {
           description: 'Shorten long URLs for easy sharing.'
         },
         {
-          title: 'Notes',
-          url: '/app/notes',
-          icon: IconNotes,
-          description: 'Minimal note application.'
+          title: 'Tasks',
+          url: '/app/to-do',
+          icon: IconChecklist,
+          description: 'Manage your to-do lists efficiently.'
         },
-       
-        // {
-        //   title: 'Json Viewer',
-        //   url: '#',
-        //   icon: IconCodeDots,
-        //   description: 'View and format JSON data.'
-        // },
       ],
     },
     {
