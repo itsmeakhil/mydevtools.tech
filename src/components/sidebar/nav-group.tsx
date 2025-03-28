@@ -1,7 +1,7 @@
 "use client";
 import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ChevronRight, Plus } from "lucide-react";
 import {
   Collapsible,
@@ -461,6 +461,22 @@ const SidebarMenuLink = ({
   onClick: (e: React.MouseEvent) => void;
 }) => {
   const { setOpenMobile } = useSidebar();
+  const pathname = usePathname();
+  const router = useRouter();
+  const isNotesItem = item.url === '/app/notes';
+  
+  const handleCreateNewNote = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Use window.location.href to avoid React rendering conflicts
+    // This will do a full page navigation but avoids the flushSync error
+    window.location.href = '/app/notes?new=true';
+    
+    // Close the mobile sidebar
+    setOpenMobile(false);
+  };
+  
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
@@ -474,10 +490,24 @@ const SidebarMenuLink = ({
             onClick(e);
             setOpenMobile(false);
           }}
+          className="relative flex items-center"
         >
           {item.icon && <item.icon />}
           <span>{item.title}</span>
           {item.badge && <NavBadge>{item.badge}</NavBadge>}
+          {isNotesItem && (
+            <div 
+              className="ml-auto flex items-center" 
+              onClick={e => e.stopPropagation()}
+            >
+              <Plus 
+                className="h-4 w-4 cursor-pointer hover:text-primary opacity-70 hover:opacity-100" 
+                onClick={handleCreateNewNote}
+                title="Create new note"
+                aria-label="Create new note"
+              />
+            </div>
+          )}
         </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>

@@ -9,7 +9,7 @@ import {
   getNoteById,
   Note 
 } from './firebase-notes';
-import { defaultEditorContent } from './content';
+import { defaultEditorContent, emptyEditorContent } from './content';
 
 export function useNotes() {
   const [user] = useAuthState(auth);
@@ -80,7 +80,7 @@ export function useNotes() {
   const createNewNote = async () => {
     return await saveNote({
       title: 'Untitled Note',
-      content: defaultEditorContent
+      content: emptyEditorContent
     });
   };
 
