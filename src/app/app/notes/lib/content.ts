@@ -1,3 +1,14 @@
+// Create a blank document structure for new notes
+export const emptyEditorContent = {
+  type: "doc",
+  content: [
+    {
+      type: "paragraph",
+      content: []
+    }
+  ]
+};
+
 export const defaultEditorContent = {
     type: "doc",
     content: [

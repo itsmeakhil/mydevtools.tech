@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { auth } from '@/database/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { 
@@ -9,7 +9,7 @@ import {
   getNoteById,
   Note 
 } from './firebase-notes';
-import { defaultEditorContent } from './content';
+import { defaultEditorContent, emptyEditorContent } from './content';
 
 export function useNotes() {
   const [user] = useAuthState(auth);
@@ -17,7 +17,7 @@ export function useNotes() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -30,7 +30,7 @@ export function useNotes() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const saveNote = async (note: { title: string; content: unknown }) => {
     if (!user) throw new Error('User not authenticated');
@@ -51,6 +51,11 @@ export function useNotes() {
 
   const updateNoteContent = async (noteId: string, updates: { title?: string; content?: unknown }) => {
     try {
+      // Don't save if title is explicitly set to empty
+      if (updates.title !== undefined && updates.title.trim() === '') {
+        return false;
+      }
+      
       await updateNote(noteId, updates);
       
       setNotes(prev => 
@@ -77,11 +82,54 @@ export function useNotes() {
     }
   };
 
+  // Create a new note - but don't save to Firebase until a title is provided
   const createNewNote = async () => {
-    return await saveNote({
-      title: 'Untitled Note',
-      content: defaultEditorContent
-    });
+    if (!user) throw new Error('User not authenticated');
+    
+    // Create a local temporary note with empty title
+    const tempNote = {
+      id: `temp-${Date.now()}`, // Create a temporary ID
+      title: '',
+      content: emptyEditorContent,
+      userId: user.uid
+    };
+    
+    // Add to local state but don't persist to Firebase yet
+    setNotes(prev => [tempNote, ...prev]);
+    
+    return tempNote;
+  };
+
+  // Add a function to persist a temporary note to Firebase
+  const persistNewNote = async (tempNoteId: string, title: string, content: unknown) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    try {
+      // Only save if there's a title
+      if (!title || title.trim() === '') {
+        return false;
+      }
+      
+      // Create a real note in Firebase
+      const savedNote = await createNote({
+        title: title,
+        content: content,
+        userId: user.uid
+      });
+      
+      // Replace the temp note with the real one in our state
+      setNotes(prev => 
+        prev.map(note => 
+          note.id === tempNoteId 
+            ? { id: savedNote.id, title, content, userId: user.uid } 
+            : note
+        )
+      );
+      
+      return savedNote;
+    } catch (err) {
+      throw err instanceof Error ? err : new Error('Failed to save note');
+    }
   };
 
   useEffect(() => {
@@ -91,7 +139,7 @@ export function useNotes() {
       setNotes([]);
       setLoading(false);
     }
-  }, [user]);
+  }, [user, fetchNotes]);
 
   return {
     notes,
@@ -101,7 +149,8 @@ export function useNotes() {
     saveNote,
     updateNote: updateNoteContent,
     deleteNote: removeNote,
-    createNewNote
+    createNewNote,
+    persistNewNote
   };
 }
 
@@ -132,18 +181,21 @@ export function useSingleNote(noteId: string | null) {
   const [localTitle, setLocalTitle] = useState<string>('');
   const [localContent, setLocalContent] = useState<unknown>(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<string>('Saved');
 
   const updateLocalTitle = (title: string) => {
     setLocalTitle(title);
     setIsDirty(true);
+    setSaveStatus('Unsaved');
   };
 
   const updateLocalContent = (content: unknown) => {
     setLocalContent(content);
     setIsDirty(true);
+    setSaveStatus('Unsaved');
   };
 
-  const saveChanges = async () => {
+  const saveChanges = useCallback(async () => {
     if (!noteId || !isDirty) return;
     
     const updates: { title?: string; content?: unknown } = {};
@@ -158,17 +210,31 @@ export function useSingleNote(noteId: string | null) {
     
     if (Object.keys(updates).length > 0) {
       try {
+        setSaveStatus('Saving...');
         await updateNote(noteId, updates);
         setNote(prev => prev ? { ...prev, ...updates } : null);
         setIsDirty(false);
+        setSaveStatus('Saved');
         return true;
       } catch (err) {
+        setSaveStatus('Failed to save');
         throw err instanceof Error ? err : new Error('Failed to save changes');
       }
     }
     
     return false;
-  };
+  }, [noteId, isDirty, localTitle, localContent, note?.title]);
+
+  // Debounced auto-save
+  useEffect(() => {
+    const saveTimer = setTimeout(() => {
+      if (isDirty && noteId) {
+        saveChanges().catch(console.error);
+      }
+    }, 2000); // Auto-save after 2 seconds of inactivity
+
+    return () => clearTimeout(saveTimer);
+  }, [isDirty, localTitle, localContent, noteId, saveChanges]);
 
   useEffect(() => {
     const fetchNote = async () => {
@@ -190,6 +256,8 @@ export function useSingleNote(noteId: string | null) {
         setNote(fetchedNote);
         setLocalTitle(fetchedNote.title);
         setLocalContent(fetchedNote.content);
+        setIsDirty(false);
+        setSaveStatus('Saved');
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to fetch note'));
       } finally {
@@ -200,14 +268,14 @@ export function useSingleNote(noteId: string | null) {
     fetchNote();
   }, [noteId, user]);
 
-  // Auto-save changes when component unmounts
+  // Ensure changes are saved when component unmounts
   useEffect(() => {
     return () => {
       if (isDirty && noteId) {
         saveChanges().catch(console.error);
       }
     };
-  }, [isDirty, noteId]);
+  }, [isDirty, noteId, saveChanges]);
 
   return { 
     note, 
@@ -216,6 +284,7 @@ export function useSingleNote(noteId: string | null) {
     localTitle, 
     localContent, 
     isDirty,
+    saveStatus,
     updateLocalTitle, 
     updateLocalContent,
     saveChanges
