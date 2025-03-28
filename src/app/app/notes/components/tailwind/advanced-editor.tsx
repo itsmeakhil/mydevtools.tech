@@ -42,14 +42,16 @@ interface TailwindAdvancedEditorProps {
   onTitleChange?: (title: string) => void;
   onContentChange?: (content: JSONContent) => void;
   saveStatus?: string;
+  titlePlaceholder?: string;
 }
 
 const TailwindAdvancedEditor = ({
-  initialTitle = "Untitled Note",
+  initialTitle = "",
   initialContent: propInitialContent,
   onTitleChange,
   onContentChange,
-  saveStatus: externalSaveStatus
+  saveStatus: externalSaveStatus,
+  titlePlaceholder = "Untitled Note"
 }: TailwindAdvancedEditorProps) => {
   const [title, setTitle] = useState(initialTitle);
   const [initialContent, setInitialContent] = useState<null | JSONContent>(null);
@@ -132,7 +134,7 @@ const TailwindAdvancedEditor = ({
           <input
             value={title}
             onChange={handleTitleChange}
-            placeholder="Untitled Note"
+            placeholder={titlePlaceholder}
             className="w-full border-none bg-transparent text-4xl font-bold focus:outline-none"
             aria-label="Note Title"
           />

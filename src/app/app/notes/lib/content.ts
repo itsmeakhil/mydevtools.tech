@@ -9,7 +9,6 @@ export const emptyEditorContent = {
   ]
 };
 
-// Keep the default content for reference but we won't use it anymore
 export const defaultEditorContent = {
     type: "doc",
     content: [

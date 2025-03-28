@@ -51,6 +51,11 @@ export function useNotes() {
 
   const updateNoteContent = async (noteId: string, updates: { title?: string; content?: unknown }) => {
     try {
+      // Don't save if title is explicitly set to empty
+      if (updates.title !== undefined && updates.title.trim() === '') {
+        return false;
+      }
+      
       await updateNote(noteId, updates);
       
       setNotes(prev => 
@@ -77,11 +82,54 @@ export function useNotes() {
     }
   };
 
+  // Create a new note - but don't save to Firebase until a title is provided
   const createNewNote = async () => {
-    return await saveNote({
-      title: 'Untitled Note',
-      content: emptyEditorContent
-    });
+    if (!user) throw new Error('User not authenticated');
+    
+    // Create a local temporary note with empty title
+    const tempNote = {
+      id: `temp-${Date.now()}`, // Create a temporary ID
+      title: '',
+      content: emptyEditorContent,
+      userId: user.uid
+    };
+    
+    // Add to local state but don't persist to Firebase yet
+    setNotes(prev => [tempNote, ...prev]);
+    
+    return tempNote;
+  };
+
+  // Add a function to persist a temporary note to Firebase
+  const persistNewNote = async (tempNoteId: string, title: string, content: unknown) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    try {
+      // Only save if there's a title
+      if (!title || title.trim() === '') {
+        return false;
+      }
+      
+      // Create a real note in Firebase
+      const savedNote = await createNote({
+        title: title,
+        content: content,
+        userId: user.uid
+      });
+      
+      // Replace the temp note with the real one in our state
+      setNotes(prev => 
+        prev.map(note => 
+          note.id === tempNoteId 
+            ? { id: savedNote.id, title, content, userId: user.uid } 
+            : note
+        )
+      );
+      
+      return savedNote;
+    } catch (err) {
+      throw err instanceof Error ? err : new Error('Failed to save note');
+    }
   };
 
   useEffect(() => {
@@ -101,7 +149,8 @@ export function useNotes() {
     saveNote,
     updateNote: updateNoteContent,
     deleteNote: removeNote,
-    createNewNote
+    createNewNote,
+    persistNewNote
   };
 }
 

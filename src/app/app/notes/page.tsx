@@ -6,93 +6,127 @@ import { useNotes } from "./lib/hooks";
 import type { JSONContent } from "novel";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/database/firebase";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Notes = () => {
+  const router = useRouter();
   const [user, userLoading] = useAuthState(auth);
-  const { createNewNote, updateNote, notes, loading, error } = useNotes();
+  const { createNewNote, updateNote, persistNewNote, notes, loading, error } = useNotes();
   const [currentNote, setCurrentNote] = useState<{ id: string; title: string; content: JSONContent } | null>(null);
   const [saveStatus, setSaveStatus] = useState<string>("Saved");
   const searchParams = useSearchParams();
   const shouldCreateNewNote = searchParams.get('new') === 'true';
+  const skipLoading = searchParams.get('skipLoading') === 'true'; 
   const processedNewNoteRef = useRef(false);
-
-  // Handle new note creation in a separate effect with fewer dependencies
+  const isInitialMount = useRef(true);
+  
+  // On initial mount, store the session flag in localStorage to track first load
   useEffect(() => {
-    const handleNewNote = async () => {
-      if (!user || userLoading || loading || !shouldCreateNewNote || processedNewNoteRef.current) {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      
+      // If skipLoading is true, we want to skip all loading states
+      if (skipLoading) {
+        localStorage.setItem('notesInitialLoadComplete', 'true');
+      }
+    }
+  }, [skipLoading]);
+  
+  // Function to check if we should show loading states
+  const shouldShowLoadingState = () => {
+    // Never show loading states if skipLoading is true
+    if (skipLoading) return false;
+    
+    // Check if we've completed initial load before
+    const initialLoadComplete = localStorage.getItem('notesInitialLoadComplete');
+    return initialLoadComplete !== 'true';
+  };
+
+  // Handle new note creation from URL parameter
+  useEffect(() => {
+    const handleNewNoteFromUrl = async () => {
+      if (!user || processedNewNoteRef.current || !shouldCreateNewNote) {
         return;
       }
 
       processedNewNoteRef.current = true;
 
       try {
-        // First save the current note if it exists
-        if (currentNote && currentNote.id) {
-          setSaveStatus("Saving current note...");
-          await updateNote(currentNote.id, { 
-            title: currentNote.title,
-            content: currentNote.content 
-          });
+        // First save the current note if it exists and has a title
+        if (currentNote && currentNote.id && currentNote.title.trim() !== '') {
+          // Check if it's a temporary note or a real note
+          if (currentNote.id.startsWith('temp-')) {
+            await persistNewNote(currentNote.id, currentNote.title, currentNote.content);
+          } else {
+            await updateNote(currentNote.id, { 
+              title: currentNote.title,
+              content: currentNote.content 
+            });
+          }
         }
         
-        // Then create a new note
-        setSaveStatus("Creating new note...");
+        // Then create a new note (in memory only until titled)
         const newNote = await createNewNote();
         setCurrentNote({
           id: newNote.id,
-          title: newNote.title,
+          title: '',  // Start with empty title
           content: newNote.content as JSONContent
         });
-        setSaveStatus("Saved");
+        setSaveStatus("Title required to save");
         
         // Remove the query parameter from the URL without refreshing
-        const url = new URL(window.location.href);
-        url.searchParams.delete('new');
-        window.history.replaceState({}, '', url);
+        router.replace('/app/notes', { scroll: false });
       } catch (error) {
         console.error("Failed to create new note:", error);
         setSaveStatus("Failed to create note");
       }
     };
 
-    handleNewNote();
-  }, [user, userLoading, loading, shouldCreateNewNote, createNewNote, updateNote]);
+    // Only run after authentication and initial loading are done
+    if (!userLoading && !loading && user) {
+      handleNewNoteFromUrl();
+    }
+  }, [user, userLoading, loading, shouldCreateNewNote, currentNote, createNewNote, updateNote, persistNewNote, router]);
 
-  // Load initial notes - separate from new note creation
+  // Load initial notes
   useEffect(() => {
     const initializeNote = async () => {
-      // Don't do anything if user is still loading or if notes are still loading
+      // Skip processing if still in initial loading
       if (userLoading || loading) return;
       
-      // User must be authenticated
-      if (!user) {
-        setSaveStatus("Please sign in to create notes");
-        return;
-      }
+      // Handle authentication check
+      if (!user) return;
 
-      // Don't initialize if we're creating a new note or if a note is already set
-      if (shouldCreateNewNote || currentNote) {
-        return;
-      }
+      // Don't initialize if we're handling shouldCreateNewNote or if a note is already set
+      if (shouldCreateNewNote || currentNote) return;
 
       // If there are notes, load the most recent one
       if (notes.length > 0) {
         const latestNote = notes[0];
-        setCurrentNote({
-          id: latestNote.id || '',
-          title: latestNote.title,
-          content: latestNote.content as JSONContent
-        });
+        
+        // Only load notes that have real IDs (not temporary ones)
+        // or temporary ones that have a title
+        if (!latestNote.id.startsWith('temp-') || latestNote.title.trim() !== '') {
+          setCurrentNote({
+            id: latestNote.id || '',
+            title: latestNote.title,
+            content: latestNote.content as JSONContent
+          });
+        } else {
+          // If the most recent note is a temporary note without a title,
+          // create a fresh new note instead
+          await handleCreateNewNote();
+        }
       }
-      // We no longer automatically create a new note if none exist
-      // We'll show an empty state instead
+      
+      // Mark that we've completed at least one initial load
+      localStorage.setItem('notesInitialLoadComplete', 'true');
     };
     
     initializeNote();
-  }, [userLoading, user, loading, notes, shouldCreateNewNote, createNewNote]);
+  }, [userLoading, user, loading, notes, shouldCreateNewNote, currentNote]);
 
   // When navigating away from the page, reset the flag
   useEffect(() => {
@@ -104,72 +138,170 @@ const Notes = () => {
   const handleTitleChange = async (title: string) => {
     if (!currentNote || !user) return;
     
-    setSaveStatus("Saving...");
-    try {
-      await updateNote(currentNote.id, { title });
-      setCurrentNote(prev => prev ? { ...prev, title } : null);
-      setSaveStatus("Saved");
-    } catch (error) {
-      console.error("Failed to update title:", error);
-      setSaveStatus("Failed to save");
+    // Only update the title in state, don't save immediately
+    setCurrentNote(prev => prev ? { ...prev, title } : null);
+    
+    // If title is empty, indicate that it's not saved
+    if (title.trim() === '') {
+      setSaveStatus("Title required to save");
+    } else {
+      // Just mark as unsaved, don't persist immediately
+      setSaveStatus("Unsaved changes");
     }
   };
 
+  // Separate function to handle persisting temporary notes
+  const persistTemporaryNoteIfNeeded = async () => {
+    if (!currentNote || !user) return;
+    
+    // Only try to persist if it's a temporary note with a title
+    if (currentNote.id.startsWith('temp-') && currentNote.title.trim() !== '') {
+      try {
+        setSaveStatus("Saving...");
+        const savedNote = await persistNewNote(currentNote.id, currentNote.title, currentNote.content);
+        if (savedNote) {
+          setCurrentNote(prev => prev ? { ...prev, id: savedNote.id } : null);
+          setSaveStatus("Saved");
+        } else {
+          setSaveStatus("Failed to save");
+        }
+      } catch (error) {
+        console.error("Failed to persist note:", error);
+        setSaveStatus("Failed to save");
+      }
+    }
+  };
+
+  // Modified handleContentChange to use the new persist function
   const handleContentChange = async (content: JSONContent) => {
     if (!currentNote || !user) return;
     
-    setSaveStatus("Saving...");
-    try {
-      await updateNote(currentNote.id, { content });
-      setCurrentNote(prev => prev ? { ...prev, content } : null);
-      setSaveStatus("Saved");
-    } catch (error) {
-      console.error("Failed to update content:", error);
-      setSaveStatus("Failed to save");
+    // Update the content in state
+    setCurrentNote(prev => prev ? { ...prev, content } : null);
+    
+    // Only save if this is not a temporary note or if it has a title
+    if (currentNote.id.startsWith('temp-')) {
+      if (currentNote.title.trim() === '') {
+        setSaveStatus("Title required to save");
+        return;
+      } else {
+        // Don't persist on every content change
+        setSaveStatus("Unsaved changes");
+      }
+    } else {
+      // Regular note with a title, save normally
+      if (currentNote.title.trim() === '') {
+        setSaveStatus("Unsaved changes");
+        return;
+      }
+      
+      setSaveStatus("Saving...");
+      try {
+        await updateNote(currentNote.id, { content });
+        setSaveStatus("Saved");
+      } catch (error) {
+        console.error("Failed to update content:", error);
+        setSaveStatus("Failed to save");
+      }
     }
   };
+  
+  // Auto-save effect with debounce - now handles both temporary and permanent notes
+  useEffect(() => {
+    if (!currentNote || !user) return;
+    
+    // Don't save if the title is empty
+    if (currentNote.title.trim() === '') return;
+    
+    const timer = setTimeout(() => {
+      if (saveStatus === "Unsaved changes") {
+        if (currentNote.id.startsWith('temp-')) {
+          // For temporary notes, persist them to create real notes
+          persistTemporaryNoteIfNeeded();
+        } else {
+          // For regular notes, update them
+          updateNote(currentNote.id, { 
+            title: currentNote.title,
+            content: currentNote.content 
+          })
+            .then(() => setSaveStatus("Saved"))
+            .catch(error => {
+              console.error("Failed to save:", error);
+              setSaveStatus("Failed to save");
+            });
+        }
+      }
+    }, 2000); // Wait 2 seconds after typing stops
+    
+    return () => clearTimeout(timer);
+  }, [currentNote, user, saveStatus, updateNote]);
 
   const handleCreateNewNote = async () => {
     try {
-      setSaveStatus("Creating new note...");
+      // First save the current note if it exists and has a title
+      if (currentNote && currentNote.id && currentNote.title.trim() !== '') {
+        // Check if it's a temporary note or a real note
+        if (currentNote.id.startsWith('temp-')) {
+          await persistNewNote(currentNote.id, currentNote.title, currentNote.content);
+        } else {
+          await updateNote(currentNote.id, { 
+            title: currentNote.title,
+            content: currentNote.content 
+          });
+        }
+      }
+      
+      // Then create a new note (in memory only until titled)
       const newNote = await createNewNote();
       setCurrentNote({
         id: newNote.id,
-        title: newNote.title,
+        title: '',  // Start with empty title
         content: newNote.content as JSONContent
       });
-      setSaveStatus("Saved");
+      setSaveStatus("Title required to save");
     } catch (error) {
       console.error("Failed to create new note:", error);
       setSaveStatus("Failed to create note");
     }
   };
 
-  // Show authentication state
-  if (userLoading) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
-        <div className="text-xl">Checking authentication...</div>
-      </div>
-    );
-  }
-
-  // Show login prompt if not authenticated
-  if (!user) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
-        <div className="text-xl">Please sign in to access your notes</div>
-      </div>
-    );
-  }
-
-  // Show loading state while notes are loading
-  if (loading) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
-        <div className="text-xl">Loading notes...</div>
-      </div>
-    );
+  // ONLY show loading states if we should (first time load)
+  if (shouldShowLoadingState()) {
+    // Show authentication checking ONLY on first visit
+    if (userLoading) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center">
+          <div className="text-xl">Checking authentication...</div>
+        </div>
+      );
+    }
+    
+    // Show login prompt 
+    if (!user) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center">
+          <div className="text-xl">Please sign in to access your notes</div>
+        </div>
+      );
+    }
+    
+    // Show notes loading ONLY on first visit
+    if (loading) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center">
+          <div className="text-xl">Loading notes...</div>
+        </div>
+      );
+    }
+  } else {
+    // If we shouldn't show loading states but user is not authenticated
+    if (!user && !userLoading) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center">
+          <div className="text-xl">Please sign in to access your notes</div>
+        </div>
+      );
+    }
   }
 
   // Show error if there was a problem
@@ -182,7 +314,7 @@ const Notes = () => {
   }
 
   // Empty state when no notes exist
-  if (!currentNote && notes.length === 0) {
+  if (!currentNote && notes.length === 0 && !loading && !userLoading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <div className="text-xl mb-6">You don't have any notes yet</div>
@@ -194,6 +326,9 @@ const Notes = () => {
     );
   }
 
+  // Always show the editor if we have a note
+  // If we don't have a note yet but we're loading (and not showing the loading screen), 
+  // show a minimal spinner here instead of a full-page loading message
   return (
     <div className="flex min-h-screen flex-col items-center gap-4 py-4 sm:px-5">
       {currentNote ? (
@@ -203,10 +338,15 @@ const Notes = () => {
           onTitleChange={handleTitleChange}
           onContentChange={handleContentChange}
           saveStatus={saveStatus}
+          titlePlaceholder="Untitled Note" 
         />
       ) : (
         <div className="flex min-h-screen flex-col items-center justify-center">
-          <div className="text-xl">Creating a new note...</div>
+          {(loading || userLoading) ? (
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+          ) : (
+            <div className="text-xl">Loading note...</div>
+          )}
         </div>
       )}
     </div>
