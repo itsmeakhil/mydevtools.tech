@@ -19,10 +19,10 @@ export function Header() {
           
           <div className="hidden md:flex items-center gap-8">
             <nav className="flex items-center gap-8 text-md font-medium">
-              <Link href="#home" className="transition hover:text-foreground/80">
+              <Link href="/" className="transition hover:text-foreground/80">
                 Home
               </Link>
-              <Link href="#features" className="transition hover:text-foreground/80">
+              <Link href="/#features" className="transition hover:text-foreground/80">
               Features
               </Link>
               <Link href="#docs" className="transition hover:text-foreground/80">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -16,12 +16,6 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../../../../components/ui/tab";
 import { Badge } from "@/components/ui/badge";
 import {
   BookmarkIcon,
@@ -29,13 +23,10 @@ import {
   TagIcon,
   PlusIcon,
   ExternalLinkIcon,
-  ClockIcon,
   StarIcon,
   TrendingUpIcon,
-  HeartIcon,
-  EyeIcon,
+  ClockIcon,
   ArrowRightIcon,
-  CheckIcon,
 } from "lucide-react";
 import {
   Dialog,
@@ -57,6 +48,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import BookmarkImporter from "./BookmarkImportDialog";
+import RecentBookmarks from "./RecentBookmarks"; // Import the updated component
 
 // Define TypeScript interfaces for type safety
 interface Bookmark {
@@ -102,8 +94,6 @@ export default function DashboardPage() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [userCollections, setUserCollections] = useState<Collection[]>([]); // For dropdown
   const [popularTags, setPopularTags] = useState<Tag[]>([]);
-  const [activeTab, setActiveTab] = useState("recent"); // To control the active tab
-  const recentSectionRef = useRef<HTMLDivElement>(null); // Ref for the recent section
 
   // Monitor authentication state
   useEffect(() => {
@@ -360,13 +350,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleScrollToRecent = () => {
-    setActiveTab("recent");
-    if (recentSectionRef.current) {
-      recentSectionRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
   return (
     <div className="flex min-h-screen bg-background">
       <main className="flex-1 p-4 sm:p-6">
@@ -466,7 +449,7 @@ export default function DashboardPage() {
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground">Total Bookmarks</h3>
                     <p className="text-2xl sm:text-3xl font-bold mt-1">{bookmarks.length}</p>
-                    <p className="text-xs text-green-600 mt-1">+12 from last week</p>
+                    <p className="text-xs text-muted-foreground mt-1">+12 from last week</p>
                   </div>
                   <BookmarkIcon className="h-5 w-5 text-muted-foreground" />
                 </div>
@@ -514,39 +497,41 @@ export default function DashboardPage() {
               </CardContent>
             </Link>
           </Card>
-          <Card onClick={handleScrollToRecent} className="cursor-pointer">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Recent Activity</h3>
-                  <p className="text-2xl sm:text-3xl font-bold mt-1">
-                    {
-                      bookmarks.filter(
-                        (bookmark) =>
-                          new Date(bookmark.dateAdded) >=
-                          new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-                      ).length
-                    }
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">Added this week</p>
+          <Card className="cursor-pointer">
+            <Link href="">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Recent Activity</h3>
+                    <p className="text-2xl sm:text-3xl font-bold mt-1">
+                      {
+                        bookmarks.filter(
+                          (bookmark) =>
+                            new Date(bookmark.dateAdded) >=
+                            new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                        ).length
+                      }
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">Added this week</p>
+                  </div>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-muted-foreground"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
                 </div>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-muted-foreground"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-              </div>
-            </CardContent>
+              </CardContent>
+            </Link>
           </Card>
         </div>
 
@@ -650,292 +635,16 @@ export default function DashboardPage() {
           </CardFooter>
         </Card>
 
-        {/* Tabs - Made responsive */}
-        <div ref={recentSectionRef}>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-            <TabsList className="flex justify-start gap-4">
-              <TabsTrigger value="recent" className="flex items-center gap-1">
-                <ClockIcon className="h-4 w-4" />
-                Recent
-              </TabsTrigger>
-              <TabsTrigger value="favorites" className="flex items-center gap-1">
-                <HeartIcon className="h-4 w-4" />
-                Favorites
-              </TabsTrigger>
-              <TabsTrigger value="popular" className="flex items-center gap-1">
-                <TrendingUpIcon className="h-4 w-4" />
-                Popular
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="recent" className="mt-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Recently Added Bookmarks</CardTitle>
-                  <CardDescription>Bookmarks you’ve added in the last few days</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {recentBookmarks.map((bookmark) => (
-                      <div
-                        key={bookmark.id}
-                        className="group relative flex flex-col rounded-lg border p-4 hover:border-primary transition-colors h-full"
-                      >
-                        <div className="absolute top-3 right-3 flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <HeartIcon className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                            asChild
-                          >
-                            <Link
-                              href={bookmark.url}
-                              target="_blank"
-                              onClick={() => incrementVisitCount(bookmark.id)}
-                            >
-                              <ExternalLinkIcon className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        </div>
-                        <div className="flex items-start gap-3 mb-2">
-                          <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
-                            <Image
-                              src={bookmark.favicon || "/placeholder.svg"}
-                              alt={`${bookmark.title} favicon`}
-                              width={20}
-                              height={20}
-                              className="w-5 h-5"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0 pr-8">
-                            <Link
-                              href={bookmark.url}
-                              target="_blank"
-                              onClick={() => incrementVisitCount(bookmark.id)}
-                              className="font-medium hover:underline line-clamp-1 block"
-                            >
-                              {bookmark.title}
-                            </Link>
-                            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                              {bookmark.description}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5 mt-auto pt-2">
-                          {bookmark.tags.map((tag: string) => (
-                            <Badge key={tag} variant="secondary" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="flex items-center justify-between mt-3 pt-3 border-t text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <ClockIcon className="h-3 w-3" />
-                            <span>{new Date(bookmark.dateAdded).toLocaleString()}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-center">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/bookmark/bookmarks" className="flex items-center gap-1">
-                      View all recent bookmarks
-                      <ArrowRightIcon className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-            <TabsContent value="favorites" className="mt-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Favorite Bookmarks</CardTitle>
-                  <CardDescription>Bookmarks you’ve marked as favorites</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {favoriteBookmarks.map((bookmark) => (
-                      <div
-                        key={bookmark.id}
-                        className="group relative flex flex-col rounded-lg border p-4 hover:border-primary transition-colors h-full"
-                      >
-                        <div className="absolute top-3 right-3 flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <CheckIcon className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                            asChild
-                          >
-                            <Link
-                              href={bookmark.url}
-                              target="_blank"
-                              onClick={() => incrementVisitCount(bookmark.id)}
-                            >
-                              <ExternalLinkIcon className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        </div>
-                        <div className="flex items-start gap-3 mb-2">
-                          <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
-                            <Image
-                              src={bookmark.favicon || "/placeholder.svg"}
-                              alt={`${bookmark.title} favicon`}
-                              width={20}
-                              height={20}
-                              className="w-5 h-5"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0 pr-8">
-                            <div className="flex items-center gap-2">
-                              <Link
-                                href={bookmark.url}
-                                target="_blank"
-                                onClick={() => incrementVisitCount(bookmark.id)}
-                                className="font-medium hover:underline line-clamp-1 block"
-                              >
-                                {bookmark.title}
-                              </Link>
-                              <HeartIcon className="h-3.5 w-3.5 text-red-500 fill-red-500 flex-shrink-0" />
-                            </div>
-                            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                              {bookmark.description}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5 mt-auto pt-2">
-                          {bookmark.tags.map((tag: string) => (
-                            <Badge key={tag} variant="secondary" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="flex items-center justify-between mt-3 pt-3 border-t text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <ClockIcon className="h-3 w-3" />
-                            <span>{new Date(bookmark.dateAdded).toLocaleString()}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-center">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/bookmark/bookmarks?filter=favorites" className="flex items-center gap-1">
-                      View all favorites
-                      <ArrowRightIcon className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-            <TabsContent value="popular" className="mt-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Popular Bookmarks</CardTitle>
-                  <CardDescription>Your most visited bookmarks</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {frequentBookmarks.map((bookmark) => (
-                      <div
-                        key={bookmark.id}
-                        className="group relative flex flex-col rounded-lg border p-4 hover:border-primary transition-colors h-full"
-                      >
-                        <div className="absolute top-3 right-3 flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <HeartIcon className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                            asChild
-                          >
-                            <Link
-                              href={bookmark.url}
-                              target="_blank"
-                              onClick={() => incrementVisitCount(bookmark.id)}
-                            >
-                              <ExternalLinkIcon className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        </div>
-                        <div className="flex items-start gap-3 mb-2">
-                          <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
-                            <Image
-                              src={bookmark.favicon || "/placeholder.svg"}
-                              alt={`${bookmark.title} favicon`}
-                              width={20}
-                              height={20}
-                              className="w-5 h-5"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0 pr-8">
-                            <Link
-                              href={bookmark.url}
-                              target="_blank"
-                              onClick={() => incrementVisitCount(bookmark.id)}
-                              className="font-medium hover:underline line-clamp-1 block"
-                            >
-                              {bookmark.title}
-                            </Link>
-                            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                              {bookmark.description}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5 mt-auto pt-2">
-                          {bookmark.tags.map((tag: string) => (
-                            <Badge key={tag} variant="secondary" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="flex items-center justify-between mt-3 pt-3 border-t text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <EyeIcon className="h-3 w-3 text-primary" />
-                            <span>{bookmark.visitCount || 0} visits</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-center">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/bookmark/bookmarks?sort=popular" className="flex items-center gap-1">
-                      View all popular bookmarks
-                      <ArrowRightIcon className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
+        {/* Combined Recent, Favorites, and Popular Bookmarks Section */}
+        <RecentBookmarks
+          recentBookmarks={recentBookmarks}
+          favoriteBookmarks={favoriteBookmarks}
+          popularBookmarks={frequentBookmarks}
+          incrementVisitCount={incrementVisitCount}
+        />
 
         {/* Popular Tags - Made responsive */}
-        <Card className="mb-6">
+        <Card className="mb-6 mt-6">
           <CardContent className="p-4 sm:p-6">
             <h3 className="text-lg sm:text-xl font-semibold mb-4">Popular Tags</h3>
             <div className="flex flex-wrap gap-2">

@@ -29,10 +29,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { NavCollapsible, NavItem, NavLink } from "./types"; // Import types
 import useAuth from "@/utils/useAuth"; // Import useAuth
 import { db } from "../../database/firebase"; // Adjust the path to your Firebase config
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, updateDoc, doc } from "firebase/firestore";
 
 // List of URLs that require authentication (General Tools)
 const authRequiredUrls = [
@@ -41,11 +50,9 @@ const authRequiredUrls = [
   "/app/url-shortener",
   "/app/bookmark",
   "/app/bookmark/dashboard",
-  "/app/bookmark/all",
+  "/app/bookmark/bookmarks",
   "/app/bookmark/collections",
   "/app/bookmark/tags",
-  "/app/bookmark/settings",
-  "/app/bookmark/add",
 ];
 
 // Define the Collection type (aligned with CollectionPage)
@@ -88,21 +95,23 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
   const isDashboardPage =
     pathname === `${itemUrl}/dashboard` || pathname === itemUrl;
 
-  // Initialize isOpen to false on the server to match SSR
   const [isOpen, setIsOpen] = useState(false);
-  const [quickAccessCollections, setQuickAccessCollections] = useState<Collection[]>([]);
+  const [quickAccessCollections, setQuickAccessCollections] = useState<
+    Collection[]
+  >([]);
+  const [allCollections, setAllCollections] = useState<Collection[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Set isOpen only on the client after mount
   useEffect(() => {
     if (isBookmarkPage) {
       setIsOpen(true);
     }
   }, [isBookmarkPage]);
 
-  // Fetch collections and filter by isQuickAccess
   useEffect(() => {
     if (!user) {
       setQuickAccessCollections([]);
+      setAllCollections([]);
       return;
     }
 
@@ -113,7 +122,9 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
         const fetchedCollections: Collection[] = snapshot.docs.map((doc) => ({
           id: doc.id,
           title: doc.data().title,
-          titleLower: doc.data().titleLower || doc.data().title.toLowerCase().replace(/\s+/g, "-"),
+          titleLower:
+            doc.data().titleLower ||
+            doc.data().title.toLowerCase().replace(/\s+/g, "-"),
           description: doc.data().description,
           bookmarkCount: doc.data().bookmarkCount || 0,
           usageCount: doc.data().usageCount || 0,
@@ -124,23 +135,21 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
           bookmarks: doc.data().bookmarks || [],
         }));
 
-        // Filter collections where isQuickAccess is true
-        const filteredCollections = fetchedCollections.filter(
-          (collection) => collection.isQuickAccess
+        setAllCollections(fetchedCollections);
+        setQuickAccessCollections(
+          fetchedCollections.filter((c) => c.isQuickAccess)
         );
-
-        setQuickAccessCollections(filteredCollections);
       },
       (error) => {
-        console.error("Error fetching collections for Quick Access:", error);
-        setQuickAccessCollections([]); // Ensure state is cleared on error
+        console.error("Error fetching collections:", error);
+        setQuickAccessCollections([]);
+        setAllCollections([]);
       }
     );
 
     return () => unsubscribe();
   }, [user]);
 
-  // Check if a URL requires authentication
   const requiresAuth = (url: string) => {
     if (authRequiredUrls.includes(url)) {
       return true;
@@ -175,6 +184,23 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
     }
   };
 
+  const toggleQuickAccess = async (collectionId: string) => {
+    if (!user) return;
+
+    const collectionToUpdate = allCollections.find((c) => c.id === collectionId);
+    if (!collectionToUpdate) return;
+
+    const updatedQuickAccess = !collectionToUpdate.isQuickAccess;
+
+    try {
+      await updateDoc(doc(db, `users/${user.uid}/collections`, collectionId), {
+        isQuickAccess: updatedQuickAccess,
+      });
+    } catch (error) {
+      console.error("Error updating Quick Access:", error);
+    }
+  };
+
   return (
     <Collapsible
       asChild
@@ -190,12 +216,7 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
             tooltip={item.title}
             className="hover:bg-accent/50 text-primary"
           >
-            <Link
-              href={`${item.url}/dashboard`}
-              onClick={(e) => {
-                handleClick(e);
-              }}
-            >
+            <Link href={`${item.url}/dashboard`} onClick={handleClick}>
               {item.icon && <item.icon />}
               <span>{item.title}</span>
               <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -354,13 +375,59 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
             <div className="mt-4 mb-2">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium">Quick Access</h3>
-                <Link
-                  href={`${item.url}/add`}
-                  className="p-1 hover:bg-accent rounded-md"
-                  onClick={(e) => handleSubLinkClick(e, `${item.url}/add`)}
-                >
-                  <Plus className="h-4 w-4" />
-                </Link>
+                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                  <DialogTrigger asChild>
+                    <button
+                      className="p-1 hover:bg-accent rounded-md"
+                      onClick={(e) => {
+                        if (
+                          loading ||
+                          (!user && requiresAuth(`${item.url}/add`))
+                        ) {
+                          e.preventDefault();
+                          if (!user) window.location.href = "/login";
+                        } else {
+                          setIsModalOpen(true);
+                        }
+                      }}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Manage Quick Access</DialogTitle>
+                    </DialogHeader>
+                    <div className="max-h-[60vh] overflow-y-auto">
+                      {allCollections.length > 0 ? (
+                        allCollections.map((collection) => (
+                          <div
+                            key={collection.id}
+                            className="flex items-center justify-between py-2 border-b"
+                          >
+                            <span>{collection.title}</span>
+                            <div className="flex items-center space-x-2">
+                              <Switch
+                                id={`quick-access-${collection.id}`}
+                                checked={collection.isQuickAccess}
+                                onCheckedChange={() =>
+                                  toggleQuickAccess(collection.id)
+                                }
+                              />
+                              <Label htmlFor={`quick-access-${collection.id}`}>
+                                {collection.isQuickAccess ? "On" : "Off"}
+                              </Label>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          No collections available.
+                        </p>
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
 
@@ -371,7 +438,8 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
                     <SidebarMenuSubButton
                       asChild
                       className={`py-1 px-3 hover:bg-accent rounded-md ${
-                        pathname === `${item.url}/collections/${collection.titleLower}`
+                        pathname ===
+                        `${item.url}/collections/${collection.titleLower}`
                           ? "bg-accent font-medium"
                           : ""
                       }`}
@@ -502,7 +570,6 @@ const SidebarMenuLink = ({
   href: string;
   onClick: (e: React.MouseEvent) => void;
 }) => {
-  const { setOpenMobile } = useSidebar();
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
@@ -514,7 +581,7 @@ const SidebarMenuLink = ({
           href={item.url}
           onClick={(e) => {
             onClick(e);
-            setOpenMobile(false);
+            // setOpenMobile(false); // Uncomment if you want to close mobile sidebar on click
           }}
         >
           {item.icon && <item.icon />}

@@ -40,7 +40,8 @@ import {
   MoreHorizontalIcon,
   HeartIcon,
   ClockIcon,
-  ArrowRightIcon,
+  GridIcon,
+  ListIcon,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -69,6 +70,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 // Define Bookmark and Collection types
 interface Bookmark {
@@ -110,6 +112,9 @@ export default function CollectionPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTagFilters, setActiveTagFilters] = useState<string[]>([]);
   const [sortOrder, setSortOrder] = useState("date-desc");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list"); // Default to list
+  const [currentPage, setCurrentPage] = useState(1);
+  const bookmarksPerPage = 9;
 
   // State for new bookmark form
   const [newBookmark, setNewBookmark] = useState({
@@ -123,11 +128,11 @@ export default function CollectionPage() {
   const sanitizeTitleLower = (title: string) =>
     title
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "") // Remove special characters
-      .replace(/\s+/g, "-") // Replace spaces with hyphens
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
       .trim();
 
-  // Fetch collection and bookmarks from Firestore, and increment usageCount
+  // Fetch collection and bookmarks from Firestore
   useEffect(() => {
     const fetchCollection = async () => {
       const user = auth.currentUser;
@@ -146,15 +151,10 @@ export default function CollectionPage() {
       const normalizedSlug = sanitizeTitleLower(decodeURIComponent(slug));
 
       try {
-        console.log("Fetching collection for slug:", slug);
-        console.log("User ID:", user.uid);
-
         let collectionData: Collection;
         let bookmarks: Bookmark[] = [];
 
-        // Handle the "Uncategorized" collection
         if (normalizedSlug === "uncategorized") {
-          // Construct a virtual "Uncategorized" collection
           collectionData = {
             id: "uncategorized",
             title: "Uncategorized",
@@ -169,31 +169,21 @@ export default function CollectionPage() {
             bookmarks: [],
           };
 
-          // Fetch bookmarks for the "Uncategorized" collection
           const bookmarksRef = firestoreCollection(db, `users/${user.uid}/bookmarks`);
-          const bookmarksQuery = query(
-            bookmarksRef,
-            where("collection", "==", "Uncategorized")
-          );
+          const bookmarksQuery = query(bookmarksRef, where("collection", "==", "Uncategorized"));
           const bookmarksSnapshot = await getDocs(bookmarksQuery);
-          bookmarks = bookmarksSnapshot.docs.map((doc) => {
-            const bookmarkData: DocumentData = doc.data();
-            return {
-              id: doc.id,
-              title: bookmarkData.title || "",
-              description: bookmarkData.description || "",
-              url: bookmarkData.url || "",
-              domain: bookmarkData.domain || new URL(bookmarkData.url || "https://example.com").hostname,
-              favicon: bookmarkData.favicon || "/placeholder.svg?height=16&width=16",
-              tags: bookmarkData.tags || [],
-              dateAdded: bookmarkData.dateAdded || new Date().toISOString(),
-              isFavorite: bookmarkData.isFavorite || false,
-            };
-          });
+          bookmarks = bookmarksSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            title: doc.data().title || "",
+            description: doc.data().description || "",
+            url: doc.data().url || "",
+            domain: doc.data().domain || new URL(doc.data().url || "https://example.com").hostname,
+            favicon: doc.data().favicon || "/placeholder.svg?height=16&width=16",
+            tags: doc.data().tags || [],
+            dateAdded: doc.data().dateAdded || new Date().toISOString(),
+            isFavorite: doc.data().isFavorite || false,
+          }));
 
-          console.log("Fetched bookmarks for Uncategorized:", bookmarks);
-
-          // Update bookmarkCount and previewLinks
           collectionData.bookmarkCount = bookmarks.length;
           collectionData.previewLinks = bookmarks.slice(0, 3).map((bookmark) => ({
             title: bookmark.title,
@@ -202,25 +192,11 @@ export default function CollectionPage() {
             favicon: bookmark.favicon,
           }));
         } else {
-          // Fetch the collection by slug (titleLower) for regular collections
           const collectionsRef = firestoreCollection(db, `users/${user.uid}/collections`);
           const q = query(collectionsRef, where("titleLower", "==", normalizedSlug));
           const snapshot = await getDocs(q);
 
-          // Debug: Log all collections
-          const allCollectionsSnapshot = await getDocs(collectionsRef);
-          console.log(
-            "All collections in Firestore:",
-            allCollectionsSnapshot.docs.map((doc) => ({
-              id: doc.id,
-              ...doc.data(),
-            }))
-          );
-
-          console.log("Query snapshot for slug:", snapshot.docs.map((doc) => doc.data()));
-
           if (snapshot.empty) {
-            console.log("No collection found for slug:", normalizedSlug);
             setError("Collection not found.");
             setLoading(false);
             return;
@@ -242,39 +218,28 @@ export default function CollectionPage() {
             bookmarks: [],
           };
 
-          // Fetch bookmarks for this collection
           const bookmarksRef = firestoreCollection(db, `users/${user.uid}/bookmarks`);
-          const bookmarksQuery = query(
-            bookmarksRef,
-            where("collection", "==", collectionData.title)
-          );
+          const bookmarksQuery = query(bookmarksRef, where("collection", "==", collectionData.title));
           const bookmarksSnapshot = await getDocs(bookmarksQuery);
-          bookmarks = bookmarksSnapshot.docs.map((doc) => {
-            const bookmarkData: DocumentData = doc.data();
-            return {
-              id: doc.id,
-              title: bookmarkData.title || "",
-              description: bookmarkData.description || "",
-              url: bookmarkData.url || "",
-              domain: bookmarkData.domain || new URL(bookmarkData.url || "https://example.com").hostname,
-              favicon: bookmarkData.favicon || "/placeholder.svg?height=16&width=16",
-              tags: bookmarkData.tags || [],
-              dateAdded: bookmarkData.dateAdded || new Date().toISOString(),
-              isFavorite: bookmarkData.isFavorite || false,
-            };
-          });
+          bookmarks = bookmarksSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            title: doc.data().title || "",
+            description: doc.data().description || "",
+            url: doc.data().url || "",
+            domain: doc.data().domain || new URL(doc.data().url || "https://example.com").hostname,
+            favicon: doc.data().favicon || "/placeholder.svg?height=16&width=16",
+            tags: doc.data().tags || [],
+            dateAdded: doc.data().dateAdded || new Date().toISOString(),
+            isFavorite: doc.data().isFavorite || false,
+          }));
 
-          console.log("Fetched bookmarks:", bookmarks);
-
-          // Increment usageCount for regular collections
           await incrementUsageCount(collectionDoc.id, collectionData.usageCount);
         }
 
-        // Set the collection with bookmarks
         setCollection({ ...collectionData, bookmarks });
       } catch (error) {
         console.error("Error fetching collection:", error);
-        setError("Failed to load collection. Please try again.");
+        setError("Failed to load collection.");
       } finally {
         setLoading(false);
       }
@@ -283,26 +248,16 @@ export default function CollectionPage() {
     fetchCollection();
   }, [slug]);
 
-  // Increment usage count (only for regular collections)
+  // Increment usage count
   const incrementUsageCount = async (collectionId: string, currentUsageCount: number) => {
     const user = auth.currentUser;
-    if (!user) return;
-
-    // Skip incrementing usageCount for "Uncategorized"
-    if (collectionId === "uncategorized") return;
+    if (!user || collectionId === "uncategorized") return;
 
     const updatedUsageCount = currentUsageCount + 1;
-
-    try {
-      await updateDoc(doc(db, `users/${user.uid}/collections`, collectionId), {
-        usageCount: updatedUsageCount,
-      });
-      setCollection((prev) =>
-        prev ? { ...prev, usageCount: updatedUsageCount } : prev
-      );
-    } catch (error) {
-      console.error("Error incrementing usage count:", error);
-    }
+    await updateDoc(doc(db, `users/${user.uid}/collections`, collectionId), {
+      usageCount: updatedUsageCount,
+    });
+    setCollection((prev) => (prev ? { ...prev, usageCount: updatedUsageCount } : prev));
   };
 
   // Handle adding a new bookmark
@@ -312,9 +267,7 @@ export default function CollectionPage() {
 
     try {
       const url = newBookmark.url.trim();
-      if (!url.match(/^https?:\/\//)) {
-        throw new Error("Invalid URL: Please include http:// or https://");
-      }
+      if (!url.match(/^https?:\/\//)) throw new Error("Invalid URL");
       const parsedUrl = new URL(url);
 
       const bookmark = {
@@ -323,10 +276,7 @@ export default function CollectionPage() {
         url: newBookmark.url,
         domain: parsedUrl.hostname,
         favicon: `https://www.google.com/s2/favicons?domain=${parsedUrl.hostname}`,
-        tags: newBookmark.tags
-          .split(",")
-          .map((tag) => tag.trim().toLowerCase())
-          .filter((tag) => tag.length > 0),
+        tags: newBookmark.tags.split(",").map((tag) => tag.trim().toLowerCase()).filter(Boolean),
         dateAdded: new Date().toISOString(),
         isFavorite: false,
         collection: collection.title,
@@ -337,15 +287,9 @@ export default function CollectionPage() {
 
       const updatedPreviewLinks = [
         ...(collection.previewLinks || []),
-        {
-          title: newBookmark.title,
-          url: newBookmark.url,
-          domain: parsedUrl.hostname,
-          favicon: bookmark.favicon,
-        },
+        { title: newBookmark.title, url: newBookmark.url, domain: parsedUrl.hostname, favicon: bookmark.favicon },
       ].slice(0, 3);
 
-      // Update Firestore only if it's not the "Uncategorized" collection
       if (collection.id !== "uncategorized") {
         await updateDoc(doc(db, `users/${user.uid}/collections`, collection.id), {
           bookmarkCount: collection.bookmarkCount + 1,
@@ -360,28 +304,22 @@ export default function CollectionPage() {
         previewLinks: updatedPreviewLinks,
       });
       setNewBookmark({ title: "", description: "", url: "", tags: "" });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error adding bookmark:", error);
-      const errorMessage = error instanceof Error ? error.message : "Please try again.";
-      alert(`Failed to add bookmark: ${errorMessage}`);
+      alert("Failed to add bookmark: " + (error instanceof Error ? error.message : "Please try again."));
     }
   };
 
-  // Toggle Quick Access (disable for "Uncategorized")
+  // Toggle Quick Access
   const toggleQuickAccess = async () => {
     const user = auth.currentUser;
     if (!user || !collection || collection.id === "uncategorized") return;
 
     const updatedCollection = { ...collection, isQuickAccess: !collection.isQuickAccess };
     setCollection(updatedCollection);
-
-    try {
-      await updateDoc(doc(db, `users/${user.uid}/collections`, collection.id), {
-        isQuickAccess: updatedCollection.isQuickAccess,
-      });
-    } catch (error) {
-      console.error("Error updating Quick Access:", error);
-    }
+    await updateDoc(doc(db, `users/${user.uid}/collections`, collection.id), {
+      isQuickAccess: updatedCollection.isQuickAccess,
+    });
   };
 
   // Delete bookmark
@@ -389,34 +327,28 @@ export default function CollectionPage() {
     const user = auth.currentUser;
     if (!user || !collection) return;
 
-    try {
-      await deleteDoc(doc(db, `users/${user.uid}/bookmarks`, bookmarkId));
+    await deleteDoc(doc(db, `users/${user.uid}/bookmarks`, bookmarkId));
+    const updatedBookmarks = collection.bookmarks.filter((b) => b.id !== bookmarkId);
+    const updatedPreviewLinks = updatedBookmarks.slice(0, 3).map((bookmark) => ({
+      title: bookmark.title,
+      url: bookmark.url,
+      domain: bookmark.domain,
+      favicon: bookmark.favicon,
+    }));
 
-      const updatedBookmarks = collection.bookmarks.filter((b) => b.id !== bookmarkId);
-      const updatedPreviewLinks = updatedBookmarks.slice(0, 3).map((bookmark) => ({
-        title: bookmark.title,
-        url: bookmark.url,
-        domain: bookmark.domain,
-        favicon: bookmark.favicon,
-      }));
-
-      // Update Firestore only if it's not the "Uncategorized" collection
-      if (collection.id !== "uncategorized") {
-        await updateDoc(doc(db, `users/${user.uid}/collections`, collection.id), {
-          bookmarkCount: collection.bookmarkCount - 1,
-          previewLinks: updatedPreviewLinks,
-        });
-      }
-
-      setCollection({
-        ...collection,
-        bookmarks: updatedBookmarks,
+    if (collection.id !== "uncategorized") {
+      await updateDoc(doc(db, `users/${user.uid}/collections`, collection.id), {
         bookmarkCount: collection.bookmarkCount - 1,
         previewLinks: updatedPreviewLinks,
       });
-    } catch (error) {
-      console.error("Error deleting bookmark:", error);
     }
+
+    setCollection({
+      ...collection,
+      bookmarks: updatedBookmarks,
+      bookmarkCount: collection.bookmarkCount - 1,
+      previewLinks: updatedPreviewLinks,
+    });
   };
 
   // Toggle favorite
@@ -428,17 +360,12 @@ export default function CollectionPage() {
       b.id === bookmarkId ? { ...b, isFavorite: !b.isFavorite } : b
     );
     setCollection({ ...collection, bookmarks: updatedBookmarks });
-
-    try {
-      await updateDoc(doc(db, `users/${user.uid}/bookmarks`, bookmarkId), {
-        isFavorite: updatedBookmarks.find((b) => b.id === bookmarkId)?.isFavorite,
-      });
-    } catch (error) {
-      console.error("Error toggling favorite:", error);
-    }
+    await updateDoc(doc(db, `users/${user.uid}/bookmarks`, bookmarkId), {
+      isFavorite: updatedBookmarks.find((b) => b.id === bookmarkId)?.isFavorite,
+    });
   };
 
-  // Filter and sort bookmarks with a fallback to an empty array
+  // Filter and sort bookmarks
   const filteredBookmarks: Bookmark[] = (collection?.bookmarks || [])
     .filter((bookmark) => {
       const matchesSearch =
@@ -451,17 +378,34 @@ export default function CollectionPage() {
       return matchesSearch && matchesTags;
     })
     .sort((a, b) => {
-      if (sortOrder === "date-desc") {
-        return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
-      } else if (sortOrder === "date-asc") {
-        return new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime();
-      } else if (sortOrder === "title-asc") {
-        return a.title.localeCompare(b.title);
-      } else if (sortOrder === "title-desc") {
-        return b.title.localeCompare(a.title);
-      }
+      if (sortOrder === "date-desc") return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
+      if (sortOrder === "date-asc") return new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime();
+      if (sortOrder === "title-asc") return a.title.localeCompare(b.title);
+      if (sortOrder === "title-desc") return b.title.localeCompare(a.title);
       return 0;
     });
+
+  // Pagination logic
+  const totalBookmarks = filteredBookmarks.length;
+  const totalPages = Math.ceil(totalBookmarks / bookmarksPerPage);
+  const paginatedBookmarks = filteredBookmarks.slice(
+    (currentPage - 1) * bookmarksPerPage,
+    currentPage * bookmarksPerPage
+  );
+
+  const favoriteBookmarks = filteredBookmarks.filter((bookmark) => bookmark.isFavorite);
+  const totalFavoritePages = Math.ceil(favoriteBookmarks.length / bookmarksPerPage);
+  const paginatedFavoriteBookmarks = favoriteBookmarks.slice(
+    (currentPage - 1) * bookmarksPerPage,
+    currentPage * bookmarksPerPage
+  );
+
+  const recentBookmarks = filteredBookmarks.slice(0, Math.min(filteredBookmarks.length, 9));
+  const totalRecentPages = Math.ceil(recentBookmarks.length / bookmarksPerPage);
+  const paginatedRecentBookmarks = recentBookmarks.slice(
+    (currentPage - 1) * bookmarksPerPage,
+    currentPage * bookmarksPerPage
+  );
 
   // Loading state
   if (loading) {
@@ -475,13 +419,11 @@ export default function CollectionPage() {
     );
   }
 
-  // Authentication check
   if (!auth.currentUser) {
     window.location.href = "/login";
     return null;
   }
 
-  // Error state
   if (error || !collection) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -495,7 +437,6 @@ export default function CollectionPage() {
     );
   }
 
-  // Explicitly type allTags as string[]
   const allTags: string[] = Array.from(new Set(collection.bookmarks.flatMap((bookmark) => bookmark.tags))).sort();
 
   return (
@@ -606,9 +547,9 @@ export default function CollectionPage() {
           </div>
         </div>
 
-        {/* Search and filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
+        {/* Search, filters, and view toggle */}
+        <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
+          <div className="relative flex-1 w-full md:w-auto">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder={`Search in ${collection.title}...`}
@@ -633,11 +574,11 @@ export default function CollectionPage() {
                   <DropdownMenuCheckboxItem
                     key={tag}
                     checked={activeTagFilters.includes(tag)}
-                    onCheckedChange={(checked) => {
+                    onCheckedChange={(checked) =>
                       setActiveTagFilters((prev) =>
                         checked ? [...prev, tag] : prev.filter((t) => t !== tag)
-                      );
-                    }}
+                      )
+                    }
                   >
                     {tag}
                   </DropdownMenuCheckboxItem>
@@ -657,6 +598,15 @@ export default function CollectionPage() {
                 <SelectItem value="title-desc">Title (Z-A)</SelectItem>
               </SelectContent>
             </Select>
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setViewMode(viewMode === "list" ? "grid" : "list")}
+              title={viewMode === "list" ? "Switch to Grid View" : "Switch to List View"}
+            >
+              {viewMode === "list" ? <GridIcon className="h-4 w-4" /> : <ListIcon className="h-4 w-4" />}
+            </Button>
           </div>
         </div>
 
@@ -713,14 +663,12 @@ export default function CollectionPage() {
                 <CardDescription>All bookmarks in this collection</CardDescription>
               </CardHeader>
               <CardContent>
-                {filteredBookmarks.length === 0 ? (
+                {paginatedBookmarks.length === 0 ? (
                   <div className="text-center py-6">
                     <p className="text-muted-foreground">No bookmarks in this collection yet.</p>
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button variant="outline" className="mt-2">
-                          Add a Bookmark
-                        </Button>
+                        <Button variant="outline" className="mt-2">Add a Bookmark</Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
@@ -743,9 +691,7 @@ export default function CollectionPage() {
                               id="description"
                               placeholder="Bookmark description"
                               value={newBookmark.description}
-                              onChange={(e) =>
-                                setNewBookmark({ ...newBookmark, description: e.target.value })
-                              }
+                              onChange={(e) => setNewBookmark({ ...newBookmark, description: e.target.value })}
                             />
                           </div>
                           <div className="grid gap-2">
@@ -773,107 +719,195 @@ export default function CollectionPage() {
                       </DialogContent>
                     </Dialog>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredBookmarks.map((bookmark) => (
+                ) : viewMode === "list" ? (
+                  <div className="space-y-2">
+                    {paginatedBookmarks.map((bookmark) => (
                       <div
                         key={bookmark.id}
-                        className="group relative flex flex-col rounded-lg border p-4 hover:border-primary transition-colors h-full"
+                        className="group flex items-center rounded-lg border p-2 hover:border-primary transition-colors"
                       >
-                        <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => toggleFavorite(bookmark.id)}
-                          >
-                            {bookmark.isFavorite ? (
-                              <HeartIcon className="h-4 w-4 fill-red-500 text-red-500" />
-                            ) : (
-                              <HeartIcon className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                            <Link href={bookmark.url} target="_blank">
-                              <ExternalLinkIcon className="h-4 w-4" />
-                            </Link>
-                          </Button>
+                        <div className="w-6 h-6 rounded overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center mr-2">
+                          <img
+                            src={bookmark.favicon || "/placeholder.svg"}
+                            alt=""
+                            className="w-4 h-4"
+                            onError={(e) => (e.currentTarget.src = "/placeholder.svg?height=16&width=16")}
+                          />
                         </div>
-
-                        <div className="flex items-start gap-3 mb-2">
-                          <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
-                            <img
-                              src={bookmark.favicon || "/placeholder.svg"}
-                              alt=""
-                              className="w-5 h-5"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = "/placeholder.svg?height=16&width=16";
-                              }}
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0 pr-8">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
                             <Link
                               href={bookmark.url}
                               target="_blank"
-                              className="font-medium hover:underline line-clamp-1 block"
+                              className="text-sm font-medium hover:underline truncate block flex-1"
                             >
                               {bookmark.title}
                             </Link>
-                            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                              {bookmark.description}
-                            </p>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => toggleFavorite(bookmark.id)}
+                              >
+                                {bookmark.isFavorite ? (
+                                  <HeartIcon className="h-3 w-3 fill-red-500 text-red-500" />
+                                ) : (
+                                  <HeartIcon className="h-3 w-3" />
+                                )}
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-6 w-6" asChild>
+                                <Link href={bookmark.url} target="_blank">
+                                  <ExternalLinkIcon className="h-3 w-3" />
+                                </Link>
+                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                                    <MoreHorizontalIcon className="h-3 w-3" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem>Edit</DropdownMenuItem>
+                                  <DropdownMenuItem>Add to Collection</DropdownMenuItem>
+                                  <DropdownMenuItem>Add Tags</DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() => deleteBookmark(bookmark.id)}
+                                  >
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">{bookmark.description}</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {bookmark.tags.map((tag) => (
+                              <Badge key={tag} variant="secondary" className="text-[10px] py-0 px-1">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            <ClockIcon className="h-3 w-3 inline mr-1" />
+                            {new Date(bookmark.dateAdded).toLocaleDateString()}
                           </div>
                         </div>
-
-                        <div className="flex flex-wrap gap-1.5 mt-auto pt-2">
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                    {paginatedBookmarks.map((bookmark) => (
+                      <div
+                        key={bookmark.id}
+                        className="group relative flex flex-col rounded-lg border p-2 hover:border-primary transition-colors"
+                      >
+                        <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => toggleFavorite(bookmark.id)}
+                          >
+                            {bookmark.isFavorite ? (
+                              <HeartIcon className="h-3 w-3 fill-red-500 text-red-500" />
+                            ) : (
+                              <HeartIcon className="h-3 w-3" />
+                            )}
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" asChild>
+                            <Link href={bookmark.url} target="_blank">
+                              <ExternalLinkIcon className="h-3 w-3" />
+                            </Link>
+                          </Button>
+                        </div>
+                        <div className="flex items-start gap-2 mb-1">
+                          <div className="w-6 h-6 rounded overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                            <img
+                              src={bookmark.favicon || "/placeholder.svg"}
+                              alt=""
+                              className="w-4 h-4"
+                              onError={(e) => (e.currentTarget.src = "/placeholder.svg?height=16&width=16")}
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0 pr-6">
+                            <Link
+                              href={bookmark.url}
+                              target="_blank"
+                              className="text-sm font-medium hover:underline line-clamp-1 block"
+                            >
+                              {bookmark.title}
+                            </Link>
+                            <p className="text-xs text-muted-foreground line-clamp-1">{bookmark.description}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-auto">
                           {bookmark.tags.map((tag) => (
-                            <Badge key={tag} variant="secondary" className="text-xs">
+                            <Badge key={tag} variant="secondary" className="text-[10px] py-0 px-1">
                               {tag}
                             </Badge>
                           ))}
                         </div>
-
-                        <div className="flex items-center justify-between mt-3 pt-3 border-t text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <ClockIcon className="h-3 w-3" />
-                            <span>{new Date(bookmark.dateAdded).toLocaleDateString()}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-6 w-6">
-                                  <MoreHorizontalIcon className="h-3.5 w-3.5" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>Edit</DropdownMenuItem>
-                                <DropdownMenuItem>Add to Collection</DropdownMenuItem>
-                                <DropdownMenuItem>Add Tags</DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => deleteBookmark(bookmark.id)}
-                                >
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
+                        <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground">
+                          <span>{new Date(bookmark.dateAdded).toLocaleDateString()}</span>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-6 w-6">
+                                <MoreHorizontalIcon className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>Edit</DropdownMenuItem>
+                              <DropdownMenuItem>Add to Collection</DropdownMenuItem>
+                              <DropdownMenuItem>Add Tags</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => deleteBookmark(bookmark.id)}
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="flex justify-center">
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/app/bookmark/bookmarks" className="flex items-center gap-1">
-                    View all bookmarks
-                    <ArrowRightIcon className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardFooter>
+              {totalPages > 1 && (
+                <CardFooter>
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page)}
+                            isActive={currentPage === page}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </CardFooter>
+              )}
             </Card>
           </TabsContent>
 
@@ -884,79 +918,52 @@ export default function CollectionPage() {
                 <CardDescription>Bookmarks you&apos;ve marked as favorites</CardDescription>
               </CardHeader>
               <CardContent>
-                {filteredBookmarks.filter((bookmark) => bookmark.isFavorite).length === 0 ? (
+                {paginatedFavoriteBookmarks.length === 0 ? (
                   <div className="text-center py-6">
                     <p className="text-muted-foreground">No favorite bookmarks in this collection.</p>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredBookmarks
-                      .filter((bookmark) => bookmark.isFavorite)
-                      .map((bookmark) => (
-                        <div
-                          key={bookmark.id}
-                          className="group relative flex flex-col rounded-lg border p-4 hover:border-primary transition-colors h-full"
-                        >
-                          <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => toggleFavorite(bookmark.id)}
+                ) : viewMode === "list" ? (
+                  <div className="space-y-2">
+                    {paginatedFavoriteBookmarks.map((bookmark) => (
+                      <div
+                        key={bookmark.id}
+                        className="group flex items-center rounded-lg border p-2 hover:border-primary transition-colors"
+                      >
+                        <div className="w-6 h-6 rounded overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center mr-2">
+                          <img
+                            src={bookmark.favicon || "/placeholder.svg"}
+                            alt=""
+                            className="w-4 h-4"
+                            onError={(e) => (e.currentTarget.src = "/placeholder.svg?height=16&width=16")}
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <Link
+                              href={bookmark.url}
+                              target="_blank"
+                              className="text-sm font-medium hover:underline truncate block flex-1"
                             >
-                              <HeartIcon className="h-4 w-4 fill-red-500 text-red-500" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                              <Link href={bookmark.url} target="_blank">
-                                <ExternalLinkIcon className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                          </div>
-
-                          <div className="flex items-start gap-3 mb-2">
-                            <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
-                              <img
-                                src={bookmark.favicon || "/placeholder.svg"}
-                                alt=""
-                                className="w-5 h-5"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = "/placeholder.svg?height=16&width=16";
-                                }}
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0 pr-8">
-                              <Link
-                                href={bookmark.url}
-                                target="_blank"
-                                className="font-medium hover:underline line-clamp-1 block"
+                              {bookmark.title}
+                            </Link>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => toggleFavorite(bookmark.id)}
                               >
-                                {bookmark.title}
-                              </Link>
-                              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                                {bookmark.description}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-1.5 mt-auto pt-2">
-                            {bookmark.tags.map((tag) => (
-                              <Badge key={tag} variant="secondary" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-
-                          <div className="flex items-center justify-between mt-3 pt-3 border-t text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <ClockIcon className="h-3 w-3" />
-                              <span>{new Date(bookmark.dateAdded).toLocaleDateString()}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
+                                <HeartIcon className="h-3 w-3 fill-red-500 text-red-500" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-6 w-6" asChild>
+                                <Link href={bookmark.url} target="_blank">
+                                  <ExternalLinkIcon className="h-3 w-3" />
+                                </Link>
+                              </Button>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="icon" className="h-6 w-6">
-                                    <MoreHorizontalIcon className="h-3.5 w-3.5" />
+                                    <MoreHorizontalIcon className="h-3 w-3" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
@@ -974,19 +981,128 @@ export default function CollectionPage() {
                               </DropdownMenu>
                             </div>
                           </div>
+                          <p className="text-xs text-muted-foreground truncate">{bookmark.description}</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {bookmark.tags.map((tag) => (
+                              <Badge key={tag} variant="secondary" className="text-[10px] py-0 px-1">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            <ClockIcon className="h-3 w-3 inline mr-1" />
+                            {new Date(bookmark.dateAdded).toLocaleDateString()}
+                          </div>
                         </div>
-                      ))}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                    {paginatedFavoriteBookmarks.map((bookmark) => (
+                      <div
+                        key={bookmark.id}
+                        className="group relative flex flex-col rounded-lg border p-2 hover:border-primary transition-colors"
+                      >
+                        <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => toggleFavorite(bookmark.id)}
+                          >
+                            <HeartIcon className="h-3 w-3 fill-red-500 text-red-500" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" asChild>
+                            <Link href={bookmark.url} target="_blank">
+                              <ExternalLinkIcon className="h-3 w-3" />
+                            </Link>
+                          </Button>
+                        </div>
+                        <div className="flex items-start gap-2 mb-1">
+                          <div className="w-6 h-6 rounded overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                            <img
+                              src={bookmark.favicon || "/placeholder.svg"}
+                              alt=""
+                              className="w-4 h-4"
+                              onError={(e) => (e.currentTarget.src = "/placeholder.svg?height=16&width=16")}
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0 pr-6">
+                            <Link
+                              href={bookmark.url}
+                              target="_blank"
+                              className="text-sm font-medium hover:underline line-clamp-1 block"
+                            >
+                              {bookmark.title}
+                            </Link>
+                            <p className="text-xs text-muted-foreground line-clamp-1">{bookmark.description}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-auto">
+                          {bookmark.tags.map((tag) => (
+                            <Badge key={tag} variant="secondary" className="text-[10px] py-0 px-1">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                        <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground">
+                          <span>{new Date(bookmark.dateAdded).toLocaleDateString()}</span>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-6 w-6">
+                                <MoreHorizontalIcon className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>Edit</DropdownMenuItem>
+                              <DropdownMenuItem>Add to Collection</DropdownMenuItem>
+                              <DropdownMenuItem>Add Tags</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => deleteBookmark(bookmark.id)}
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="flex justify-center">
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/app/bookmark/bookmarks?favorites=true" className="flex items-center gap-1">
-                    View all favorites
-                    <ArrowRightIcon className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardFooter>
+              {totalFavoritePages > 1 && (
+                <CardFooter>
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                      {Array.from({ length: totalFavoritePages }, (_, i) => i + 1).map((page) => (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page)}
+                            isActive={currentPage === page}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalFavoritePages))}
+                          className={currentPage === totalFavoritePages ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </CardFooter>
+              )}
             </Card>
           </TabsContent>
 
@@ -997,83 +1113,56 @@ export default function CollectionPage() {
                 <CardDescription>Recently added bookmarks in this collection</CardDescription>
               </CardHeader>
               <CardContent>
-                {filteredBookmarks.length === 0 ? (
+                {paginatedRecentBookmarks.length === 0 ? (
                   <div className="text-center py-6">
                     <p className="text-muted-foreground">No recent bookmarks in this collection.</p>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredBookmarks
-                      .slice(0, 3)
-                      .map((bookmark) => (
-                        <div
-                          key={bookmark.id}
-                          className="group relative flex flex-col rounded-lg border p-4 hover:border-primary transition-colors h-full"
-                        >
-                          <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => toggleFavorite(bookmark.id)}
+                ) : viewMode === "list" ? (
+                  <div className="space-y-2">
+                    {paginatedRecentBookmarks.map((bookmark) => (
+                      <div
+                        key={bookmark.id}
+                        className="group flex items-center rounded-lg border p-2 hover:border-primary transition-colors"
+                      >
+                        <div className="w-6 h-6 rounded overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center mr-2">
+                          <img
+                            src={bookmark.favicon || "/placeholder.svg"}
+                            alt=""
+                            className="w-4 h-4"
+                            onError={(e) => (e.currentTarget.src = "/placeholder.svg?height=16&width=16")}
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <Link
+                              href={bookmark.url}
+                              target="_blank"
+                              className="text-sm font-medium hover:underline truncate block flex-1"
                             >
-                              {bookmark.isFavorite ? (
-                                <HeartIcon className="h-4 w-4 fill-red-500 text-red-500" />
-                              ) : (
-                                <HeartIcon className="h-4 w-4" />
-                              )}
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                              <Link href={bookmark.url} target="_blank">
-                                <ExternalLinkIcon className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                          </div>
-
-                          <div className="flex items-start gap-3 mb-2">
-                            <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
-                              <img
-                                src={bookmark.favicon || "/placeholder.svg"}
-                                alt=""
-                                className="w-5 h-5"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = "/placeholder.svg?height=16&width=16";
-                                }}
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0 pr-8">
-                              <Link
-                                href={bookmark.url}
-                                target="_blank"
-                                className="font-medium hover:underline line-clamp-1 block"
+                              {bookmark.title}
+                            </Link>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => toggleFavorite(bookmark.id)}
                               >
-                                {bookmark.title}
-                              </Link>
-                              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                                {bookmark.description}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-1.5 mt-auto pt-2">
-                            {bookmark.tags.map((tag) => (
-                              <Badge key={tag} variant="secondary" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-
-                          <div className="flex items-center justify-between mt-3 pt-3 border-t text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <ClockIcon className="h-3 w-3" />
-                              <span>{new Date(bookmark.dateAdded).toLocaleDateString()}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
+                                {bookmark.isFavorite ? (
+                                  <HeartIcon className="h-3 w-3 fill-red-500 text-red-500" />
+                                ) : (
+                                  <HeartIcon className="h-3 w-3" />
+                                )}
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-6 w-6" asChild>
+                                <Link href={bookmark.url} target="_blank">
+                                  <ExternalLinkIcon className="h-3 w-3" />
+                                </Link>
+                              </Button>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="icon" className="h-6 w-6">
-                                    <MoreHorizontalIcon className="h-3.5 w-3.5" />
+                                    <MoreHorizontalIcon className="h-3 w-3" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
@@ -1091,19 +1180,132 @@ export default function CollectionPage() {
                               </DropdownMenu>
                             </div>
                           </div>
+                          <p className="text-xs text-muted-foreground truncate">{bookmark.description}</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {bookmark.tags.map((tag) => (
+                              <Badge key={tag} variant="secondary" className="text-[10px] py-0 px-1">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            <ClockIcon className="h-3 w-3 inline mr-1" />
+                            {new Date(bookmark.dateAdded).toLocaleDateString()}
+                          </div>
                         </div>
-                      ))}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                    {paginatedRecentBookmarks.map((bookmark) => (
+                      <div
+                        key={bookmark.id}
+                        className="group relative flex flex-col rounded-lg border p-2 hover:border-primary transition-colors"
+                      >
+                        <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => toggleFavorite(bookmark.id)}
+                          >
+                            {bookmark.isFavorite ? (
+                              <HeartIcon className="h-3 w-3 fill-red-500 text-red-500" />
+                            ) : (
+                              <HeartIcon className="h-3 w-3" />
+                            )}
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" asChild>
+                            <Link href={bookmark.url} target="_blank">
+                              <ExternalLinkIcon className="h-3 w-3" />
+                            </Link>
+                          </Button>
+                        </div>
+                        <div className="flex items-start gap-2 mb-1">
+                          <div className="w-6 h-6 rounded overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                            <img
+                              src={bookmark.favicon || "/placeholder.svg"}
+                              alt=""
+                              className="w-4 h-4"
+                              onError={(e) => (e.currentTarget.src = "/placeholder.svg?height=16&width=16")}
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0 pr-6">
+                            <Link
+                              href={bookmark.url}
+                              target="_blank"
+                              className="text-sm font-medium hover:underline line-clamp-1 block"
+                            >
+                              {bookmark.title}
+                            </Link>
+                            <p className="text-xs text-muted-foreground line-clamp-1">{bookmark.description}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-auto">
+                          {bookmark.tags.map((tag) => (
+                            <Badge key={tag} variant="secondary" className="text-[10px] py-0 px-1">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                        <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground">
+                          <span>{new Date(bookmark.dateAdded).toLocaleDateString()}</span>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-6 w-6">
+                                <MoreHorizontalIcon className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>Edit</DropdownMenuItem>
+                              <DropdownMenuItem>Add to Collection</DropdownMenuItem>
+                              <DropdownMenuItem>Add Tags</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => deleteBookmark(bookmark.id)}
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="flex justify-center">
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/app/bookmark/bookmarks?recent=true" className="flex items-center gap-1">
-                    View all recent bookmarks
-                    <ArrowRightIcon className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardFooter>
+              {totalRecentPages > 1 && (
+                <CardFooter>
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                      {Array.from({ length: totalRecentPages }, (_, i) => i + 1).map((page) => (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page)}
+                            isActive={currentPage === page}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalRecentPages))}
+                          className={currentPage === totalRecentPages ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </CardFooter>
+              )}
             </Card>
           </TabsContent>
         </Tabs>

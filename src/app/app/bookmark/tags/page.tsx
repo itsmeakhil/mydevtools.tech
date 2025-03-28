@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { db, auth } from "../../../../database/firebase";
-import { onAuthStateChanged , User } from "firebase/auth";
+import { onAuthStateChanged, User } from "firebase/auth";
 import {
   collection,
   getDocs,
@@ -51,8 +51,9 @@ interface Tag {
 
 export default function TagsPage() {
   const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true); // Separate state for auth loading
   const [tags, setTags] = useState<Tag[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true); // Renamed for clarity
   const [error, setError] = useState<string | null>(null);
   const [newTag, setNewTag] = useState("");
   const [editTag, setEditTag] = useState<{ oldName: string; newName: string }>({
@@ -65,6 +66,7 @@ export default function TagsPage() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      setAuthLoading(false); // Auth state is resolved
     });
     return () => unsubscribe();
   }, []);
@@ -74,12 +76,12 @@ export default function TagsPage() {
     const fetchTags = async () => {
       if (!user) {
         setTags([]);
-        setLoading(false);
+        setDataLoading(false);
         return;
       }
 
       try {
-        setLoading(true);
+        setDataLoading(true);
         const bookmarksRef = collection(db, `users/${user.uid}/bookmarks`);
         const snapshot = await getDocs(bookmarksRef);
 
@@ -119,14 +121,14 @@ export default function TagsPage() {
         console.error("Error fetching tags:", err);
         setError("Failed to load tags. Please try again.");
       } finally {
-        setLoading(false);
+        setDataLoading(false);
       }
     };
 
     fetchTags();
   }, [user]);
 
-  // Handle creating a new tag (this tag will be available to add to bookmarks)
+  // Handle creating a new tag
   const handleCreateTag = async () => {
     if (!user) {
       alert("You must be logged in to create a tag.");
@@ -144,8 +146,6 @@ export default function TagsPage() {
       return;
     }
 
-    // Since tags are stored within bookmarks, we don't need to create a new tag in Firestore.
-    // Instead, we can add the tag to the list and let the user apply it to bookmarks.
     setTags([
       ...tags,
       {
@@ -157,7 +157,7 @@ export default function TagsPage() {
     setNewTag("");
   };
 
-  // Handle editing a tag (update all bookmarks with the old tag)
+  // Handle editing a tag
   const handleEditTag = async (oldName: string) => {
     if (!user) {
       alert("You must be logged in to edit a tag.");
@@ -176,12 +176,10 @@ export default function TagsPage() {
     }
 
     try {
-      // Fetch all bookmarks with the old tag
       const bookmarksRef = collection(db, `users/${user.uid}/bookmarks`);
       const q = query(bookmarksRef, where("tags", "array-contains", oldName));
       const snapshot = await getDocs(q);
 
-      // Update each bookmark
       const updatePromises = snapshot.docs.map(async (bookmarkDoc) => {
         const bookmark = bookmarkDoc.data();
         const updatedTags = bookmark.tags.map((tag: string) =>
@@ -194,12 +192,9 @@ export default function TagsPage() {
 
       await Promise.all(updatePromises);
 
-      // Update local state
       setTags(
         tags.map((tag) =>
-          tag.name === oldName
-            ? { ...tag, name: newName }
-            : tag
+          tag.name === oldName ? { ...tag, name: newName } : tag
         )
       );
       setEditTag({ oldName: "", newName: "" });
@@ -209,7 +204,7 @@ export default function TagsPage() {
     }
   };
 
-  // Handle deleting a tag (remove the tag from all bookmarks)
+  // Handle deleting a tag
   const handleDeleteTag = async (tagName: string) => {
     if (!user) {
       alert("You must be logged in to delete a tag.");
@@ -217,12 +212,10 @@ export default function TagsPage() {
     }
 
     try {
-      // Fetch all bookmarks with the tag
       const bookmarksRef = collection(db, `users/${user.uid}/bookmarks`);
       const q = query(bookmarksRef, where("tags", "array-contains", tagName));
       const snapshot = await getDocs(q);
 
-      // Update each bookmark by removing the tag
       const updatePromises = snapshot.docs.map(async (bookmarkDoc) => {
         const bookmark = bookmarkDoc.data();
         const updatedTags = bookmark.tags.filter((tag: string) => tag !== tagName);
@@ -233,7 +226,6 @@ export default function TagsPage() {
 
       await Promise.all(updatePromises);
 
-      // Update local state
       setTags(tags.filter((tag) => tag.name !== tagName));
     } catch (err) {
       console.error("Error deleting tag:", err);
@@ -246,13 +238,13 @@ export default function TagsPage() {
     tag.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Loading state
-  if (loading) {
+  // Auth loading state
+  if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-2"></div>
-          <p>Loading tags...</p>
+          <p>Checking authentication...</p>
         </div>
       </div>
     );
@@ -262,6 +254,18 @@ export default function TagsPage() {
   if (!user) {
     window.location.href = "/login";
     return null;
+  }
+
+  // Data loading state
+  if (dataLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-2"></div>
+          <p>Loading tags...</p>
+        </div>
+      </div>
+    );
   }
 
   // Error state

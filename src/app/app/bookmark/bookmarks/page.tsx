@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../../components/ui/tab";
+import { Tabs, TabsList, TabsTrigger, } from "../../../../components/ui/tab";
 import {
   BookmarkIcon,
   FolderIcon,
@@ -48,6 +48,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { db, auth } from "../../../../database/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs } from "firebase/firestore";
@@ -62,7 +63,7 @@ interface Bookmark {
   favicon: string;
   tags: string[];
   collection: string;
-  dateAdded: string | Timestamp; // Allow for both string and Timestamp
+  dateAdded: string | Timestamp;
   isFavorite: boolean;
   visitCount: number;
 }
@@ -80,13 +81,12 @@ const parseDate = (dateAdded: string | Timestamp): Date => {
   }
   const parsedDate = new Date(dateAdded);
   if (isNaN(parsedDate.getTime())) {
-    // Fallback to current date if invalid
     return new Date();
   }
   return parsedDate;
 };
 
-// Bookmark Edit Form Component
+// Bookmark Edit Form Component (unchanged)
 function BookmarkEditForm({
   bookmark,
   onSave,
@@ -173,7 +173,7 @@ function BookmarkEditForm({
   );
 }
 
-// Bookmark Card Component
+// Bookmark Card Component (unchanged)
 function BookmarkCard({
   bookmark,
   onEdit,
@@ -190,8 +190,6 @@ function BookmarkCard({
   collections: Collection[];
 }) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
-  // Parse the dateAdded field safely
   const formattedDate = format(parseDate(bookmark.dateAdded), "MM/dd/yyyy");
 
   return (
@@ -283,8 +281,6 @@ function BookmarkCard({
                   />
                 </DialogContent>
               </Dialog>
-              <DropdownMenuItem>Add to Collection</DropdownMenuItem>
-              <DropdownMenuItem>Add Tags</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive" onClick={() => onDelete(bookmark.id)}>
                 Delete
@@ -307,6 +303,7 @@ export default function BookmarksPage() {
   });
   const [sortOption, setSortOption] = useState("date-desc");
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [newBookmark, setNewBookmark] = useState({
     url: "",
     title: "",
@@ -316,8 +313,12 @@ export default function BookmarksPage() {
     isFavorite: false,
   });
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState<"all" | "favorites" | "recent" | "popular">("all"); // New state for tabs
 
-  // Monitor authentication state
+  const itemsPerPageList = 13;
+  const itemsPerPageGrid = 12;
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -325,7 +326,6 @@ export default function BookmarksPage() {
     return () => unsubscribe();
   }, []);
 
-  // Fetch collections from Firestore
   useEffect(() => {
     if (!user) {
       setCollections([]);
@@ -350,7 +350,6 @@ export default function BookmarksPage() {
     fetchCollections();
   }, [user]);
 
-  // Fetch bookmarks from Firestore with real-time updates
   useEffect(() => {
     if (!user) {
       setBookmarks([]);
@@ -380,11 +379,18 @@ export default function BookmarksPage() {
     return () => unsubscribe();
   }, [user]);
 
-  // Get all unique tags from bookmarks
   const allTags = Array.from(new Set(bookmarks.flatMap((bookmark) => bookmark.tags))).sort();
 
-  // Filter and sort bookmarks
-  const filteredBookmarks = bookmarks
+  // Filter bookmarks based on active tab first
+  const tabFilteredBookmarks = bookmarks.filter((bookmark) => {
+    if (activeTab === "favorites") return bookmark.isFavorite;
+    if (activeTab === "recent") return true; // We'll sort and limit later
+    if (activeTab === "popular") return true; // We'll sort by visitCount later
+    return true; // "all" tab
+  });
+
+  // Apply additional filters (search, collections, tags)
+  const filteredBookmarks = tabFilteredBookmarks
     .filter((bookmark) => {
       const matchesSearch =
         bookmark.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -398,6 +404,8 @@ export default function BookmarksPage() {
     .sort((a, b) => {
       const dateA = parseDate(a.dateAdded);
       const dateB = parseDate(b.dateAdded);
+      if (activeTab === "recent") return dateB.getTime() - dateA.getTime();
+      if (activeTab === "popular") return b.visitCount - a.visitCount;
       if (sortOption === "date-desc") return dateB.getTime() - dateA.getTime();
       if (sortOption === "date-asc") return dateA.getTime() - dateB.getTime();
       if (sortOption === "title-asc") return a.title.localeCompare(b.title);
@@ -406,7 +414,22 @@ export default function BookmarksPage() {
       return 0;
     });
 
-  // Handle adding a new bookmark
+  // Limit recent and popular tabs if needed
+  const displayBookmarks =
+    activeTab === "recent" || activeTab === "popular"
+      ? filteredBookmarks.slice(0, 6) // Limit to 6 for recent and popular, adjust as needed
+      : filteredBookmarks;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, activeFilters, sortOption, viewMode, activeTab]);
+
+  const itemsPerPage = viewMode === "list" ? itemsPerPageList : itemsPerPageGrid;
+  const totalPages = Math.ceil(displayBookmarks.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedBookmarks = displayBookmarks.slice(startIndex, endIndex);
+
   const handleAddBookmark = async () => {
     if (!user) {
       alert("You must be logged in to add a bookmark.");
@@ -465,7 +488,6 @@ export default function BookmarksPage() {
     }
   };
 
-  // Handle editing a bookmark
   const handleEditBookmark = async (updatedBookmark: Bookmark) => {
     if (!user) return;
 
@@ -486,7 +508,6 @@ export default function BookmarksPage() {
     }
   };
 
-  // Handle deleting a bookmark
   const handleDeleteBookmark = async (id: string) => {
     if (!user) return;
 
@@ -502,7 +523,6 @@ export default function BookmarksPage() {
     }
   };
 
-  // Handle toggling favorite
   const handleToggleFavorite = async (id: string) => {
     if (!user) return;
 
@@ -519,7 +539,6 @@ export default function BookmarksPage() {
     }
   };
 
-  // Handle visit count increment
   const handleVisit = async (id: string) => {
     if (!user) return;
 
@@ -533,7 +552,6 @@ export default function BookmarksPage() {
     }
   };
 
-  // Handle filter changes
   const handleFilterChange = (type: "collections" | "tags", value: string) => {
     setActiveFilters((prev) => {
       const current = prev[type];
@@ -544,9 +562,18 @@ export default function BookmarksPage() {
     });
   };
 
-  // Handle clear all filters
   const handleClearFilters = () => {
     setActiveFilters({ collections: [], tags: [] });
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    document.getElementById("bookmarks-content")?.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleTabChange = (tab: "all" | "favorites" | "recent" | "popular") => {
+    setActiveTab(tab);
+    setCurrentPage(1); // Reset to first page when switching tabs
   };
 
   if (!user) {
@@ -555,253 +582,266 @@ export default function BookmarksPage() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <main className="flex-1 p-6">
-        {/* Header */}
-        <div className="rounded-lg p-6 mb-6 bg-primary/5 border">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
-                <BookmarkIcon className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold">All Bookmarks</h1>
-                <p className="text-muted-foreground mt-1">Browse and manage all your saved bookmarks</p>
-              </div>
-            </div>
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  Add Bookmark
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[525px]">
-                <DialogHeader>
-                  <DialogTitle>Add Bookmark</DialogTitle>
-                  <DialogDescription>Add a new bookmark to your collection.</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="url">URL</Label>
-                    <Input
-                      id="url"
-                      placeholder="https://example.com"
-                      value={newBookmark.url}
-                      onChange={(e) => setNewBookmark((prev) => ({ ...prev, url: e.target.value }))}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="title">Title</Label>
-                    <Input
-                      id="title"
-                      placeholder="Bookmark title"
-                      value={newBookmark.title}
-                      onChange={(e) => setNewBookmark((prev) => ({ ...prev, title: e.target.value }))}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      placeholder="Bookmark description"
-                      value={newBookmark.description}
-                      onChange={(e) => setNewBookmark((prev) => ({ ...prev, description: e.target.value }))}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="collection">Collection</Label>
-                    <Select onValueChange={(value) => setNewBookmark((prev) => ({ ...prev, collection: value }))}>
-                      <SelectTrigger id="collection">
-                        <SelectValue placeholder="Select a collection" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {collections.map((collection) => (
-                          <SelectItem key={collection.id} value={collection.name}>
-                            {collection.name}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="Uncategorized">Uncategorized</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="tags">Tags</Label>
-                    <Input
-                      id="tags"
-                      placeholder="Enter tags separated by commas"
-                      value={newBookmark.tags}
-                      onChange={(e) => setNewBookmark((prev) => ({ ...prev, tags: e.target.value }))}
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2 pt-2">
-                    <Switch
-                      id="favorite"
-                      checked={newBookmark.isFavorite}
-                      onCheckedChange={(checked) =>
-                        setNewBookmark((prev) => ({ ...prev, isFavorite: checked }))
-                      }
-                    />
-                    <Label htmlFor="favorite">Mark as favorite</Label>
-                  </div>
+      <main className="flex-1 p-6 flex flex-col">
+        <div className="flex-shrink-0">
+          <div className="rounded-lg p-6 mb-6 bg-primary/5 border">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <BookmarkIcon className="h-6 w-6 text-primary" />
                 </div>
-                <DialogFooter>
-                  <Button onClick={handleAddBookmark}>Add Bookmark</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-
-        {/* Search and filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search bookmarks..."
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <FilterIcon className="h-4 w-4" />
-                  Filter
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Filter by Collection</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {collections.map((collection) => (
-                  <DropdownMenuCheckboxItem
-                    key={collection.id}
-                    checked={activeFilters.collections.includes(collection.name)}
-                    onCheckedChange={() => handleFilterChange("collections", collection.name)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full ${collection.color}`}></div>
-                      {collection.name}
+                <div>
+                  <h1 className="text-2xl font-bold">All Bookmarks</h1>
+                  <p className="text-muted-foreground mt-1">Browse and manage all your saved bookmarks</p>
+                </div>
+              </div>
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <PlusIcon className="h-4 w-4 mr-2" />
+                    Add Bookmark
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[525px]">
+                  <DialogHeader>
+                    <DialogTitle>Add Bookmark</DialogTitle>
+                    <DialogDescription>Add a new bookmark to your collection.</DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="url">URL</Label>
+                      <Input
+                        id="url"
+                        placeholder="https://example.com"
+                        value={newBookmark.url}
+                        onChange={(e) => setNewBookmark((prev) => ({ ...prev, url: e.target.value }))}
+                      />
                     </div>
-                  </DropdownMenuCheckboxItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel>Filter by Tag</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {allTags.slice(0, 5).map((tag) => (
-                  <DropdownMenuCheckboxItem
-                    key={tag}
-                    checked={activeFilters.tags.includes(tag)}
-                    onCheckedChange={() => handleFilterChange("tags", tag)}
-                  >
-                    {tag}
-                  </DropdownMenuCheckboxItem>
-                ))}
-                <DropdownMenuItem>
-                  <Link href="/tags" className="w-full">
-                    View all tags...
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <Select value={sortOption} onValueChange={setSortOption}>
-              <SelectTrigger className="w-[180px] gap-2">
-                <ArrowUpDownIcon className="h-4 w-4" />
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="date-desc">Newest First</SelectItem>
-                <SelectItem value="date-asc">Oldest First</SelectItem>
-                <SelectItem value="title-asc">Title (A-Z)</SelectItem>
-                <SelectItem value="title-desc">Title (Z-A)</SelectItem>
-                <SelectItem value="visits-desc">Most Visited</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <div className="flex border rounded-md">
-              <Button variant="ghost" size="icon" className="rounded-r-none border-r" asChild>
-                <Link href="/app/bookmark/bookmarks/list">
-                  <ListIcon className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button variant="ghost" size="icon" className="rounded-l-none bg-accent text-accent-foreground">
-                <GridIcon className="h-4 w-4" />
-              </Button>
+                    <div className="grid gap-2">
+                      <Label htmlFor="title">Title</Label>
+                      <Input
+                        id="title"
+                        placeholder="Bookmark title"
+                        value={newBookmark.title}
+                        onChange={(e) => setNewBookmark((prev) => ({ ...prev, title: e.target.value }))}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        placeholder="Bookmark description"
+                        value={newBookmark.description}
+                        onChange={(e) => setNewBookmark((prev) => ({ ...prev, description: e.target.value }))}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="collection">Collection</Label>
+                      <Select onValueChange={(value) => setNewBookmark((prev) => ({ ...prev, collection: value }))}>
+                        <SelectTrigger id="collection">
+                          <SelectValue placeholder="Select a collection" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {collections.map((collection) => (
+                            <SelectItem key={collection.id} value={collection.name}>
+                              {collection.name}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="Uncategorized">Uncategorized</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="tags">Tags</Label>
+                      <Input
+                        id="tags"
+                        placeholder="Enter tags separated by commas"
+                        value={newBookmark.tags}
+                        onChange={(e) => setNewBookmark((prev) => ({ ...prev, tags: e.target.value }))}
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2 pt-2">
+                      <Switch
+                        id="favorite"
+                        checked={newBookmark.isFavorite}
+                        onCheckedChange={(checked) =>
+                          setNewBookmark((prev) => ({ ...prev, isFavorite: checked }))
+                        }
+                      />
+                      <Label htmlFor="favorite">Mark as favorite</Label>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={handleAddBookmark}>Add Bookmark</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
+
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search bookmarks..."
+                className="pl-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <FilterIcon className="h-4 w-4" />
+                    Filter
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Filter by Collection</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {collections.map((collection) => (
+                    <DropdownMenuCheckboxItem
+                      key={collection.id}
+                      checked={activeFilters.collections.includes(collection.name)}
+                      onCheckedChange={() => handleFilterChange("collections", collection.name)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${collection.color}`}></div>
+                        {collection.name}
+                      </div>
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Filter by Tag</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {allTags.map((tag) => (
+                    <DropdownMenuCheckboxItem
+                      key={tag}
+                      checked={activeFilters.tags.includes(tag)}
+                      onCheckedChange={() => handleFilterChange("tags", tag)}
+                    >
+                      {tag}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Select value={sortOption} onValueChange={setSortOption}>
+                <SelectTrigger className="w-[180px] gap-2">
+                  <ArrowUpDownIcon className="h-4 w-4" />
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date-desc">Newest First</SelectItem>
+                  <SelectItem value="date-asc">Oldest First</SelectItem>
+                  <SelectItem value="title-asc">Title (A-Z)</SelectItem>
+                  <SelectItem value="title-desc">Title (Z-A)</SelectItem>
+                  <SelectItem value="visits-desc">Most Visited</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <div className="flex border rounded-md">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`rounded-r-none border-r ${viewMode === "list" ? "bg-accent text-accent-foreground" : ""}`}
+                  onClick={() => setViewMode("list")}
+                >
+                  <ListIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`rounded-l-none ${viewMode === "grid" ? "bg-accent text-accent-foreground" : ""}`}
+                  onClick={() => setViewMode("grid")}
+                >
+                  <GridIcon className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {(activeFilters.collections.length > 0 || activeFilters.tags.length > 0) && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              <div className="text-sm text-muted-foreground mr-2 py-1">Active filters:</div>
+              {activeFilters.collections.map((collection) => (
+                <Badge key={collection} variant="secondary" className="flex items-center gap-1">
+                  <FolderIcon className="h-3 w-3" />
+                  {collection}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-4 w-4 ml-1 p-0"
+                    onClick={() => handleFilterChange("collections", collection)}
+                  >
+                    <XIcon className="h-3 w-3" />
+                  </Button>
+                </Badge>
+              ))}
+              {activeFilters.tags.map((tag) => (
+                <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                  <TagIcon className="h-3 w-3" />
+                  {tag}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-4 w-4 ml-1 p-0"
+                    onClick={() => handleFilterChange("tags", tag)}
+                  >
+                    <XIcon className="h-3 w-3" />
+                  </Button>
+                </Badge>
+              ))}
+              <Button variant="ghost" size="sm" className="text-xs h-6" onClick={handleClearFilters}>
+                Clear all
+              </Button>
+            </div>
+          )}
+
+          <Tabs value={activeTab} onValueChange={(value) => handleTabChange(value as typeof activeTab)} className="mb-6">
+            <TabsList>
+              <TabsTrigger value="all" className="flex items-center gap-1">
+                <BookmarkIcon className="h-4 w-4" />
+                All
+              </TabsTrigger>
+              <TabsTrigger value="favorites" className="flex items-center gap-1">
+                <HeartIcon className="h-4 w-4" />
+                Favorites
+              </TabsTrigger>
+              <TabsTrigger value="recent" className="flex items-center gap-1">
+                <ClockIcon className="h-4 w-4" />
+                Recent
+              </TabsTrigger>
+              <TabsTrigger value="popular" className="flex items-center gap-1">
+                <TrendingUpIcon className="h-4 w-4" />
+                Most Visited
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
-        {/* Active filters */}
-        {(activeFilters.collections.length > 0 || activeFilters.tags.length > 0) && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            <div className="text-sm text-muted-foreground mr-2 py-1">Active filters:</div>
-            {activeFilters.collections.map((collection) => (
-              <Badge key={collection} variant="secondary" className="flex items-center gap-1">
-                <FolderIcon className="h-3 w-3" />
-                {collection}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-4 w-4 ml-1 p-0"
-                  onClick={() => handleFilterChange("collections", collection)}
-                >
-                  <XIcon className="h-3 w-3" />
-                </Button>
-              </Badge>
-            ))}
-            {activeFilters.tags.map((tag) => (
-              <Badge key={tag} variant="secondary" className="flex items-center gap-1">
-                <TagIcon className="h-3 w-3" />
-                {tag}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-4 w-4 ml-1 p-0"
-                  onClick={() => handleFilterChange("tags", tag)}
-                >
-                  <XIcon className="h-3 w-3" />
-                </Button>
-              </Badge>
-            ))}
-            <Button variant="ghost" size="sm" className="text-xs h-6" onClick={handleClearFilters}>
-              Clear all
-            </Button>
-          </div>
-        )}
-
-        {/* Tabs */}
-        <Tabs defaultValue="all" className="mb-6">
-          <TabsList>
-            <TabsTrigger value="all" className="flex items-center gap-1">
-              <BookmarkIcon className="h-4 w-4" />
-              All
-            </TabsTrigger>
-            <TabsTrigger value="favorites" className="flex items-center gap-1">
-              <HeartIcon className="h-4 w-4" />
-              Favorites
-            </TabsTrigger>
-            <TabsTrigger value="recent" className="flex items-center gap-1">
-              <ClockIcon className="h-4 w-4" />
-              Recent
-            </TabsTrigger>
-            <TabsTrigger value="popular" className="flex items-center gap-1">
-              <TrendingUpIcon className="h-4 w-4" />
-              Most Visited
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="all" className="mt-4">
+        <div id="bookmarks-content" className="flex-1 overflow-y-auto">
+          {viewMode === "grid" ? (
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">All Bookmarks</CardTitle>
-                <CardDescription>Browse all your saved bookmarks</CardDescription>
+                <CardTitle className="text-lg">
+                  {activeTab === "all" && "All Bookmarks"}
+                  {activeTab === "favorites" && "Favorite Bookmarks"}
+                  {activeTab === "recent" && "Recent Bookmarks"}
+                  {activeTab === "popular" && "Most Visited Bookmarks"}
+                </CardTitle>
+                <CardDescription>
+                  {activeTab === "all" && "Browse all your saved bookmarks"}
+                  {activeTab === "favorites" && "Bookmarks you’ve marked as favorites"}
+                  {activeTab === "recent" && "Recently added bookmarks"}
+                  {activeTab === "popular" && "Your most frequently visited bookmarks"}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredBookmarks.map((bookmark) => (
+                  {paginatedBookmarks.map((bookmark) => (
                     <BookmarkCard
                       key={bookmark.id}
                       bookmark={bookmark}
@@ -815,127 +855,190 @@ export default function BookmarksPage() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="favorites" className="mt-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Favorite Bookmarks</CardTitle>
-                <CardDescription>Bookmarks you&apos;ve marked as favorites</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredBookmarks
-                    .filter((bookmark) => bookmark.isFavorite)
-                    .map((bookmark) => (
-                      <BookmarkCard
-                        key={bookmark.id}
-                        bookmark={bookmark}
-                        onEdit={handleEditBookmark}
-                        onDelete={handleDeleteBookmark}
-                        onToggleFavorite={handleToggleFavorite}
-                        onVisit={handleVisit}
-                        collections={collections}
-                      />
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="recent" className="mt-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Recent Bookmarks</CardTitle>
-                <CardDescription>Recently added bookmarks</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredBookmarks
-                    .sort((a, b) => parseDate(b.dateAdded).getTime() - parseDate(a.dateAdded).getTime())
-                    .slice(0, 6)
-                    .map((bookmark) => (
-                      <BookmarkCard
-                        key={bookmark.id}
-                        bookmark={bookmark}
-                        onEdit={handleEditBookmark}
-                        onDelete={handleDeleteBookmark}
-                        onToggleFavorite={handleToggleFavorite}
-                        onVisit={handleVisit}
-                        collections={collections}
-                      />
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="popular" className="mt-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Most Visited Bookmarks</CardTitle>
-                <CardDescription>Your most frequently visited bookmarks</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredBookmarks
-                    .sort((a, b) => b.visitCount - a.visitCount)
-                    .slice(0, 6)
-                    .map((bookmark) => (
-                      <BookmarkCard
-                        key={bookmark.id}
-                        bookmark={bookmark}
-                        onEdit={handleEditBookmark}
-                        onDelete={handleDeleteBookmark}
-                        onToggleFavorite={handleToggleFavorite}
-                        onVisit={handleVisit}
-                        collections={collections}
-                      />
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        {/* Popular Tags */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Popular Tags</h3>
-            <div className="flex flex-wrap gap-2">
-              {allTags.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="outline"
-                  className="px-3 py-1 hover:bg-accent cursor-pointer"
-                  onClick={() => handleFilterChange("tags", tag)}
-                >
-                  {tag} ({bookmarks.filter((b) => b.tags.includes(tag)).length})
-                </Badge>
-              ))}
+          ) : (
+            <div className="border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12"></TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead className="hidden md:table-cell">Collection</TableHead>
+                    <TableHead className="hidden lg:table-cell">Tags</TableHead>
+                    <TableHead className="hidden md:table-cell">Date Added</TableHead>
+                    <TableHead className="w-12"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedBookmarks.map((bookmark) => (
+                    <TableRow key={bookmark.id}>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleToggleFavorite(bookmark.id)}
+                        >
+                          <HeartIcon
+                            className={`h-4 w-4 ${bookmark.isFavorite ? "fill-red-400 text-red-400" : ""}`}
+                          />
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 rounded-md overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                            <img
+                              src={bookmark.favicon || "/placeholder.svg"}
+                              alt=""
+                              className="w-4 h-4"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = "/placeholder.svg?height=16&width=16";
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Link
+                              href={bookmark.url}
+                              target="_blank"
+                              className="font-medium hover:underline"
+                              onClick={() => handleVisit(bookmark.id)}
+                            >
+                              {bookmark.title}
+                            </Link>
+                            <div className="text-xs text-muted-foreground truncate max-w-[300px]">
+                              {bookmark.url}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge variant="outline">{bookmark.collection}</Badge>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <div className="flex flex-wrap gap-1">
+                          {bookmark.tags.slice(0, 2).map((tag) => (
+                            <Badge key={tag} variant="secondary" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                          {bookmark.tags.length > 2 && (
+                            <span className="text-xs text-muted-foreground">
+                              +{bookmark.tags.length - 2} more
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <span className="text-sm text-muted-foreground">
+                          {format(parseDate(bookmark.dateAdded), "MM/dd/yyyy")}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                            <Link href={bookmark.url} target="_blank" onClick={() => handleVisit(bookmark.id)}>
+                              <ExternalLinkIcon className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontalIcon className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                    Edit
+                                  </DropdownMenuItem>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-[525px]">
+                                  <DialogHeader>
+                                    <DialogTitle>Edit Bookmark</DialogTitle>
+                                    <DialogDescription>Make changes to your bookmark.</DialogDescription>
+                                  </DialogHeader>
+                                  <BookmarkEditForm
+                                    bookmark={bookmark}
+                                    onSave={(updatedBookmark) => {
+                                      handleEditBookmark(updatedBookmark);
+                                    }}
+                                    collections={collections}
+                                  />
+                                </DialogContent>
+                              </Dialog>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => handleDeleteBookmark(bookmark.id)}
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-          </CardContent>
-        </Card>
+          )}
 
-        {/* Pagination (Placeholder - Add real pagination logic as needed) */}
-        <div className="flex items-center justify-between mt-8">
-          <p className="text-sm text-muted-foreground">
-            Showing <span className="font-medium">1</span> to{" "}
-            <span className="font-medium">{filteredBookmarks.length}</span> of{" "}
-            <span className="font-medium">{bookmarks.length}</span> bookmarks
-          </p>
-          <div className="flex gap-1">
-            <Button variant="outline" size="sm" disabled>
-              Previous
-            </Button>
-            <Button variant="outline" size="sm" className="bg-accent text-accent-foreground">
-              1
-            </Button>
-            <Button variant="outline" size="sm">2</Button>
-            <Button variant="outline" size="sm">3</Button>
-            <Button variant="outline" size="sm">...</Button>
-            <Button variant="outline" size="sm">21</Button>
-            <Button variant="outline" size="sm">Next</Button>
+          <Card className="mb-6 mt-6">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Popular Tags</h3>
+              <div className="flex flex-wrap gap-2">
+                {allTags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="outline"
+                    className="px-3 py-1 hover:bg-accent cursor-pointer"
+                    onClick={() => handleFilterChange("tags", tag)}
+                  >
+                    {tag} ({bookmarks.filter((b) => b.tags.includes(tag)).length})
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="flex-shrink-0 mt-8">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Showing <span className="font-medium">{startIndex + 1}</span> to{" "}
+              <span className="font-medium">{Math.min(endIndex, displayBookmarks.length)}</span> of{" "}
+              <span className="font-medium">{displayBookmarks.length}</span> bookmarks
+            </p>
+            <div className="flex gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(page)}
+                  className={currentPage === page ? "bg-accent text-accent-foreground" : ""}
+                >
+                  {page}
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
           </div>
         </div>
       </main>
