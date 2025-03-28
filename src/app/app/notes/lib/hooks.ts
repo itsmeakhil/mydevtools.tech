@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { auth } from '@/database/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { 
@@ -17,7 +17,7 @@ export function useNotes() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -30,7 +30,7 @@ export function useNotes() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const saveNote = async (note: { title: string; content: unknown }) => {
     if (!user) throw new Error('User not authenticated');
@@ -91,7 +91,7 @@ export function useNotes() {
       setNotes([]);
       setLoading(false);
     }
-  }, [user]);
+  }, [user, fetchNotes]);
 
   return {
     notes,
@@ -146,7 +146,7 @@ export function useSingleNote(noteId: string | null) {
     setSaveStatus('Unsaved');
   };
 
-  const saveChanges = async () => {
+  const saveChanges = useCallback(async () => {
     if (!noteId || !isDirty) return;
     
     const updates: { title?: string; content?: unknown } = {};
@@ -174,7 +174,7 @@ export function useSingleNote(noteId: string | null) {
     }
     
     return false;
-  };
+  }, [noteId, isDirty, localTitle, localContent, note?.title]);
 
   // Debounced auto-save
   useEffect(() => {
@@ -185,7 +185,7 @@ export function useSingleNote(noteId: string | null) {
     }, 2000); // Auto-save after 2 seconds of inactivity
 
     return () => clearTimeout(saveTimer);
-  }, [isDirty, localTitle, localContent]);
+  }, [isDirty, localTitle, localContent, noteId, saveChanges]);
 
   useEffect(() => {
     const fetchNote = async () => {
@@ -226,7 +226,7 @@ export function useSingleNote(noteId: string | null) {
         saveChanges().catch(console.error);
       }
     };
-  }, [isDirty, noteId]);
+  }, [isDirty, noteId, saveChanges]);
 
   return { 
     note, 
