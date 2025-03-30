@@ -113,7 +113,7 @@ const Notes = () => {
         
         // Only load notes that have real IDs (not temporary ones)
         // or temporary ones that have a title
-        if (!latestNote.id.startsWith('temp-') || latestNote.title.trim() !== '') {
+        if (latestNote.id && (!latestNote.id.startsWith('temp-') || latestNote.title.trim() !== '')) {
           setCurrentNote({
             id: latestNote.id || '',
             title: latestNote.title,
@@ -325,7 +325,7 @@ const Notes = () => {
   if (!currentNote && notes.length === 0 && !loading && !userLoading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
-        <div className="text-xl mb-6">You don't have any notes yet</div>
+        <div className="text-xl mb-6">You don&apos;t have any notes yet</div>
         <Button onClick={handleCreateNewNote} className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
           Create your first note
