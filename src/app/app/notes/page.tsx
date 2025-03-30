@@ -18,30 +18,35 @@ const Notes = () => {
   const [saveStatus, setSaveStatus] = useState<string>("Saved");
   const searchParams = useSearchParams();
   const shouldCreateNewNote = searchParams.get('new') === 'true';
-  const skipLoading = searchParams.get('skipLoading') === 'true'; 
+  const skipLoadingParam = searchParams.get('skipLoading') === 'true';
+  const [skipLoading, setSkipLoading] = useState(false);
   const processedNewNoteRef = useRef(false);
-  const isInitialMount = useRef(true);
+  const initialLoadCompleteRef = useRef(false);
   
-  // On initial mount, store the session flag in localStorage to track first load
+  // Initialize the skipLoading state from localStorage on the client side
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      
-      // If skipLoading is true, we want to skip all loading states
-      if (skipLoading) {
-        localStorage.setItem('notesInitialLoadComplete', 'true');
-      }
+    // Check localStorage only on the client side
+    const initialLoadComplete = typeof window !== 'undefined' ? localStorage.getItem('notesInitialLoadComplete') : null;
+    
+    // Set skipLoading if either localStorage has it or URL parameter is set
+    if (initialLoadComplete === 'true' || skipLoadingParam) {
+      setSkipLoading(true);
+      initialLoadCompleteRef.current = true;
     }
-  }, [skipLoading]);
+
+    // Save the skipLoading state to localStorage
+    if (skipLoading) {
+      localStorage.setItem('notesInitialLoadComplete', 'true');
+    }
+  }, [skipLoading, skipLoadingParam]);
   
   // Function to check if we should show loading states
   const shouldShowLoadingState = () => {
     // Never show loading states if skipLoading is true
     if (skipLoading) return false;
     
-    // Check if we've completed initial load before
-    const initialLoadComplete = localStorage.getItem('notesInitialLoadComplete');
-    return initialLoadComplete !== 'true';
+    // Use the ref instead of directly accessing localStorage
+    return !initialLoadCompleteRef.current;
   };
 
   // Handle new note creation from URL parameter
@@ -108,7 +113,7 @@ const Notes = () => {
         
         // Only load notes that have real IDs (not temporary ones)
         // or temporary ones that have a title
-        if (!latestNote.id.startsWith('temp-') || latestNote.title.trim() !== '') {
+        if (latestNote.id && (!latestNote.id.startsWith('temp-') || latestNote.title.trim() !== '')) {
           setCurrentNote({
             id: latestNote.id || '',
             title: latestNote.title,
@@ -122,7 +127,10 @@ const Notes = () => {
       }
       
       // Mark that we've completed at least one initial load
-      localStorage.setItem('notesInitialLoadComplete', 'true');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('notesInitialLoadComplete', 'true');
+        initialLoadCompleteRef.current = true;
+      }
     };
     
     initializeNote();
@@ -317,7 +325,7 @@ const Notes = () => {
   if (!currentNote && notes.length === 0 && !loading && !userLoading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
-        <div className="text-xl mb-6">You don't have any notes yet</div>
+        <div className="text-xl mb-6">You don&apos;t have any notes yet</div>
         <Button onClick={handleCreateNewNote} className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
           Create your first note
