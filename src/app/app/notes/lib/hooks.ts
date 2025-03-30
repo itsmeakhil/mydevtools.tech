@@ -9,7 +9,7 @@ import {
   getNoteById,
   Note 
 } from './firebase-notes';
-import { defaultEditorContent, emptyEditorContent } from './content';
+import { emptyEditorContent } from './content';
 
 export function useNotes() {
   const [user] = useAuthState(auth);
