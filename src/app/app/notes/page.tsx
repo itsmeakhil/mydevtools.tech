@@ -1,22 +1,32 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import TailwindAdvancedEditor from "./components/tailwind/advanced-editor";
 import { useNotes } from "./lib/hooks";
 import type { JSONContent } from "novel";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/database/firebase";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const Notes = () => {
+// Create a separate client component for the content that uses useSearchParams
+function NotesContent() {
   const router = useRouter();
   const [user, userLoading] = useAuthState(auth);
   const { createNewNote, updateNote, persistNewNote, notes, loading, error } = useNotes();
   const [currentNote, setCurrentNote] = useState<{ id: string; title: string; content: JSONContent } | null>(null);
   const [saveStatus, setSaveStatus] = useState<string>("Saved");
-  const searchParams = useSearchParams();
+  
+  // Move useSearchParams into this component
+  const searchParams = React.useMemo(() => {
+    // Only run on the client side
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search);
+    }
+    return new URLSearchParams();
+  }, []);
+  
   const shouldCreateNewNote = searchParams.get('new') === 'true';
   const skipLoadingParam = searchParams.get('skipLoading') === 'true';
   const [skipLoading, setSkipLoading] = useState(false);
@@ -358,6 +368,19 @@ const Notes = () => {
         </div>
       )}
     </div>
+  );
+}
+
+// Main component with Suspense boundary
+const Notes = () => {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+      </div>
+    }>
+      <NotesContent />
+    </Suspense>
   );
 };
 
