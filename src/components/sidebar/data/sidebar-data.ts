@@ -62,23 +62,23 @@ export const sidebarData: SidebarData = {
           description: 'Quickly save a single bookmark.',
           customUI: true // Flag to indicate a custom UI
         },
-         {
-          title: 'Notes',
-          url: '/app/notes',
-          icon: IconBook2,
-          description: 'Write, save, and organize your notes.'
+        //  {
+        //   title: 'Notes',
+        //   url: '/app/notes',
+        //   icon: IconBook2,
+        //   description: 'Write, save, and organize your notes.'
+        // },
+        {
+          title: 'Tasks',
+          url: '/app/to-do',
+          icon: IconChecklist,
+          description: 'Manage your to-do lists efficiently.'
         },
         {
           title: 'Url Shortener',
           url: '/app/url-shortener',
           icon: IconUnlink,
           description: 'Shorten long URLs for easy sharing.'
-        },
-        {
-          title: 'Tasks',
-          url: '/app/to-do',
-          icon: IconChecklist,
-          description: 'Manage your to-do lists efficiently.'
         },
       ],
     },
