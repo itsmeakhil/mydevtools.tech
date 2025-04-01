@@ -7,7 +7,7 @@ import {
   IconPhotoVideo,
   IconBlocks,
   IconNetwork,
-  // IconBook2,
+  IconBook2,
   IconAlignJustified,
   IconShieldCode,
   IconHash,
@@ -62,12 +62,12 @@ export const sidebarData: SidebarData = {
           description: 'Quickly save a single bookmark.',
           customUI: true // Flag to indicate a custom UI
         },
-        //  {
-        //   title: 'Notes',
-        //   url: '/app/notes',
-        //   icon: IconBook2,
-        //   description: 'Write, save, and organize your notes.'
-        // },
+         {
+          title: 'Notes',
+          url: '/app/notes',
+          icon: IconBook2,
+          description: 'Write, save, and organize your notes.'
+        },
         {
           title: 'Tasks',
           url: '/app/to-do',
