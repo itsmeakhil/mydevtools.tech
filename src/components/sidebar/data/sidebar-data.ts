@@ -7,7 +7,7 @@ import {
   IconPhotoVideo,
   IconBlocks,
   IconNetwork,
-  IconBook2,
+  // IconBook2,
   IconAlignJustified,
   IconShieldCode,
   IconHash,
