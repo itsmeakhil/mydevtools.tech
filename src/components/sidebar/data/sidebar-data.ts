@@ -41,7 +41,6 @@ import {
   IconToml,
   IconSquareRoundedLetterY,
   // IconNotes,
-  IconBookmark,
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
@@ -55,13 +54,6 @@ export const sidebarData: SidebarData = {
     {
       title: 'General Tools',
       items: [
-        {
-          title: 'Bookmark',
-          url: '/app/bookmark',
-          icon: IconBookmark,
-          description: 'Quickly save a single bookmark.',
-          customUI: true // Flag to indicate a custom UI
-        },
         //  {
         //   title: 'Notes',
         //   url: '/app/notes',
