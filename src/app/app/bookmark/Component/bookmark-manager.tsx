@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import BookmarkImporter from "./BookmarkImportDialog";
+import BookmarkExporter from "./BookmarkExportDialog";
 import RecentBookmarks from "./RecentBookmarks"; // Import the updated component
 
 // Define TypeScript interfaces for type safety
@@ -356,6 +357,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-end mb-6">
           <div className="flex gap-4">
             <BookmarkImporter user={user} userCollections={userCollections} />
+            <BookmarkExporter user={user} bookmarks={bookmarks} />
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
