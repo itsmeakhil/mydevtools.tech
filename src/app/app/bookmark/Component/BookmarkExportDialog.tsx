@@ -23,9 +23,9 @@ interface Bookmark {
   collection: string;
   tags: string[];
   isFavorite: boolean;
-  dateAdded: string;
+  dateAdded: string | any; // Can be string or Timestamp
   visitCount: number;
-  lastVisited: string | null;
+  lastVisited?: string | null;
   favicon: string;
 }
 
@@ -138,7 +138,14 @@ export default function BookmarkExporter({ user, bookmarks }: BookmarkExporterPr
   };
 
   const generateBookmarkHTML = (bookmark: Bookmark): string => {
-    const addDate = bookmark.dateAdded ? Math.floor(new Date(bookmark.dateAdded).getTime() / 1000) : Math.floor(Date.now() / 1000);
+    let addDate = Math.floor(Date.now() / 1000);
+    if (bookmark.dateAdded) {
+      // Handle both string and Timestamp objects
+      const date = typeof bookmark.dateAdded === 'string' 
+        ? new Date(bookmark.dateAdded) 
+        : bookmark.dateAdded.toDate ? bookmark.dateAdded.toDate() : new Date(bookmark.dateAdded);
+      addDate = Math.floor(date.getTime() / 1000);
+    }
     const tags = bookmark.tags.length > 0 ? ` TAGS="${bookmark.tags.join(",")}"` : "";
     const icon = bookmark.favicon ? ` ICON="${bookmark.favicon}"` : "";
     

@@ -295,10 +295,21 @@ function BookmarkCard({
   );
 }
 
+// Define extended Collection interface for BookmarkImporter
+interface UserCollection {
+  id: string;
+  title: string;
+  description: string;
+  count: number;
+  previewLinks: { title: string; url: string; domain: string; favicon: string }[];
+  color: string;
+}
+
 export default function BookmarksPage() {
   const [user, setUser] = useState<User | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
+  const [userCollections, setUserCollections] = useState<UserCollection[]>([]);
   const [activeFilters, setActiveFilters] = useState({
     collections: [] as string[],
     tags: [] as string[],
@@ -331,6 +342,7 @@ export default function BookmarksPage() {
   useEffect(() => {
     if (!user) {
       setCollections([]);
+      setUserCollections([]);
       return;
     }
 
@@ -344,6 +356,17 @@ export default function BookmarksPage() {
           color: doc.data().color || "bg-blue-500",
         }));
         setCollections(fetchedCollections);
+        
+        // Also fetch for BookmarkImporter
+        const fetchedUserCollections: UserCollection[] = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          title: doc.data().title,
+          description: doc.data().description,
+          count: doc.data().bookmarkCount || 0,
+          previewLinks: doc.data().previewLinks || [],
+          color: doc.data().color || "bg-blue-500",
+        }));
+        setUserCollections(fetchedUserCollections);
       } catch (error) {
         console.error("Error fetching collections:", error);
       }
@@ -597,7 +620,10 @@ export default function BookmarksPage() {
                   <p className="text-muted-foreground mt-1">Browse and manage all your saved bookmarks</p>
                 </div>
               </div>
-              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <div className="flex gap-2">
+                <BookmarkImporter user={user} userCollections={userCollections} />
+                <BookmarkExporter user={user} bookmarks={bookmarks} />
+                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
                     <PlusIcon className="h-4 w-4 mr-2" />
