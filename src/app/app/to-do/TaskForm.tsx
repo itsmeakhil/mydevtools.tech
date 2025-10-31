@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Plus, Sparkles } from "lucide-react";
 
 interface TaskFormProps {
   onAddTask: (task: string) => void;
@@ -10,6 +12,7 @@ interface TaskFormProps {
 
 export default function TaskForm({ onAddTask }: TaskFormProps) {
   const [newTask, setNewTask] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
 
   const handleAddTask = () => {
     if (newTask.trim() === "") return;
@@ -24,30 +27,43 @@ export default function TaskForm({ onAddTask }: TaskFormProps) {
   };
 
   return (
-    <div className="flex gap-2 mb-4">
-      {/* Input Field */}
-      <Input
-        type="text"
-        value={newTask}
-        onChange={(e) => setNewTask(e.target.value)}
-        placeholder="Add a new task"
-        className="m-1 px-3 py-2 border rounded-md text-black bg-white border-gray-300
-                   focus:ring focus:ring-gray-300 
-                   dark:text-white dark:bg-black dark:border-gray-500 
-                   dark:focus:ring-gray-600"
-        onKeyDown={handleKeyDown}
-      />
+    <Card className={`transition-all duration-300 ${isFocused ? 'border-primary shadow-lg ring-2 ring-primary/20' : 'border-2'}`}>
+      <div className="p-6">
+        <div className="flex gap-3">
+          {/* Icon */}
+          <div className="flex items-center justify-center p-2 bg-primary/10 rounded-lg border border-primary/20">
+            <Sparkles className="h-5 w-5 text-primary" />
+          </div>
+          
+          {/* Input Field */}
+          <div className="flex-1">
+            <Input
+              type="text"
+              value={newTask}
+              onChange={(e) => setNewTask(e.target.value)}
+              placeholder="What needs to be done?"
+              className="text-lg h-12 border-2 focus-visible:ring-0 focus-visible:ring-offset-0"
+              onKeyDown={handleKeyDown}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+            />
+            <p className="text-xs text-muted-foreground mt-1.5 ml-1">
+              Press Enter to add
+            </p>
+          </div>
 
-      {/* Add Task Button */}
-      <Button
-        onClick={handleAddTask}
-        className="mt-1 px-4 py-2 rounded-md bg-black text-white 
-                   hover:bg-gray-900 
-                   dark:bg-white dark:text-black dark:hover:bg-gray-200 
-                   border border-gray-300 dark:border-gray-500"
-      >
-        Add Task
-      </Button>
-    </div>
+          {/* Add Task Button */}
+          <Button
+            onClick={handleAddTask}
+            size="lg"
+            className="gap-2 h-12 px-6 shadow-md hover:shadow-lg transition-all duration-200"
+            disabled={newTask.trim() === ""}
+          >
+            <Plus className="h-5 w-5" />
+            Add
+          </Button>
+        </div>
+      </div>
+    </Card>
   );
 }

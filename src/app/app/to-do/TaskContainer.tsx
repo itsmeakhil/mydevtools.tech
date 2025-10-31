@@ -1,12 +1,20 @@
 "use client";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useState } from "react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import TaskForm from "@/app/app/to-do/TaskForm";
 import TaskList from "@/app/app/to-do/TaskList";
 import PaginationDemo from "@/app/app/to-do/PaginationS";
 import { useTaskContext } from "@/app/app/to-do/context/TaskContext";
+import { Button } from "@/components/ui/button";
+import { ListTodo, CheckCircle2, Circle, Clock, TrendingUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+type FilterStatus = "all" | "not-started" | "ongoing" | "completed";
 
 export const TaskContainer = () => {
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
+  
   const {
     tasks,
     isLoading,
@@ -32,29 +40,116 @@ export const TaskContainer = () => {
     }
   );
 
+  // Calculate statistics
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter(t => t.status === "completed").length;
+  const ongoingTasks = tasks.filter(t => t.status === "ongoing").length;
+  const notStartedTasks = tasks.filter(t => t.status === "not-started").length;
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  // Apply filter
+  const filteredTasks = filterStatus === "all" 
+    ? sortedTasks 
+    : sortedTasks.filter(task => task.status === filterStatus);
+
   return (
-    <div className="flex justify-center h-auto font-sans">
-      <div className="border border-gray-300 dark:border-gray-600 
-                      rounded-md p-4 flex flex-col gap-4 
-                      bg-white dark:bg-[#121212] mt-2 mb-3">
-        <ScrollArea className="p-2">
-          <div className="w-[900px] min-h-[600px] flex flex-col justify-between">
-            <div className="space-y-4">
-              <TaskForm onAddTask={addTask} />
-              
-              {/* Task List Container with Dark Mode Support */}
-              <div className="min-h-[400px] dark:bg-[#1E1E1E] dark:border dark:border-gray-700 p-4 rounded-lg">
-                <TaskList
-                  tasks={sortedTasks}
-                  isLoading={isLoading}
-                  onUpdateStatus={updateTaskStatus}
-                  onDeleteTask={deleteTask}
-                />
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header Card */}
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <ListTodo className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight">My Tasks</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Stay organized and productive
+                  </p>
+                </div>
               </div>
+              <Badge variant="secondary" className="px-3 py-1.5 text-lg font-semibold">
+                {completionRate}%
+              </Badge>
             </div>
 
-            {/* Pagination Section */}
-            <div className="mt-1">
+            {/* Statistics */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+              <div className="p-3 rounded-lg bg-muted/50 border">
+                <div className="flex items-center gap-2 mb-1">
+                  <Circle className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Total</span>
+                </div>
+                <p className="text-2xl font-bold">{totalTasks}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <div className="flex items-center gap-2 mb-1">
+                  <Clock className="h-4 w-4 text-blue-500" />
+                  <span className="text-xs text-blue-700 dark:text-blue-400">Not Started</span>
+                </div>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{notStartedTasks}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                <div className="flex items-center gap-2 mb-1">
+                  <TrendingUp className="h-4 w-4 text-orange-500" />
+                  <span className="text-xs text-orange-700 dark:text-orange-400">Ongoing</span>
+                </div>
+                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{ongoingTasks}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                <div className="flex items-center gap-2 mb-1">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <span className="text-xs text-green-700 dark:text-green-400">Completed</span>
+                </div>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{completedTasks}</p>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Task Form */}
+        <TaskForm onAddTask={addTask} />
+
+        {/* Filter Buttons */}
+        <div className="flex flex-wrap gap-2">
+          {[
+            { value: "all" as FilterStatus, label: "All", icon: ListTodo },
+            { value: "not-started" as FilterStatus, label: "Not Started", icon: Circle },
+            { value: "ongoing" as FilterStatus, label: "Ongoing", icon: TrendingUp },
+            { value: "completed" as FilterStatus, label: "Completed", icon: CheckCircle2 },
+          ].map(({ value, label, icon: Icon }) => (
+            <Button
+              key={value}
+              variant={filterStatus === value ? "default" : "outline"}
+              onClick={() => setFilterStatus(value)}
+              className="gap-2"
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </Button>
+          ))}
+        </div>
+
+        {/* Task List Card */}
+        <Card className="border-2 shadow-lg">
+          <CardContent className="p-6">
+            <div className="min-h-[400px]">
+              <TaskList
+                tasks={filteredTasks}
+                isLoading={isLoading}
+                onUpdateStatus={updateTaskStatus}
+                onDeleteTask={deleteTask}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <Card>
+            <CardContent className="p-4">
               <PaginationDemo
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -62,9 +157,9 @@ export const TaskContainer = () => {
                 onPreviousPage={fetchPreviousPage}
                 onPageChange={handlePageChange}
               />
-            </div>
-          </div>
-        </ScrollArea>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
