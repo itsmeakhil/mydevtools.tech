@@ -7,7 +7,6 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import Image from "next/image";
 import {
-  IconBookmark,
   IconUnlink,
   IconElevator,
   IconShieldCode,
@@ -34,16 +33,6 @@ const Page: React.FC = () => {
 
     return () => observer.disconnect();
   }, []);
-
-  // Define the Bookmark tool data with dynamic image paths based on theme
-  const bookmarkTool = {
-    title: "Bookmark",
-    description:
-      "Effortlessly save and organize your favorite web pages with Bookmark.",
-    icon: IconBookmark,
-    imageDark: "/images/bookmark/bookmark-screenshot-black.png",
-    imageLight: "/images/bookmark/bookmark-screenshot-light.png",
-  };
 
   const urlShortener = {
     title: "URL Shortener",
@@ -200,33 +189,7 @@ const Page: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Feature 1: Bookmark Tool */}
-            <Card className="group border border-border/20 bg-card/5 p-6 rounded-xl transition-all hover:border-primary/20 hover:shadow-md">
-              <div className="space-y-4">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <bookmarkTool.icon className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold">{bookmarkTool.title}</h3>
-                <p className="text-muted-foreground">
-                  {bookmarkTool.description}
-                </p>
-              </div>
-              <div className="mt-6 rounded-lg bg-background border border-border/20 overflow-hidden shadow-sm transition-all group-hover:shadow-md">
-                <Image
-                  src={
-                    isDarkTheme
-                      ? bookmarkTool.imageDark
-                      : bookmarkTool.imageLight
-                  }
-                  alt={`${bookmarkTool.title} Screenshot`}
-                  width={400}
-                  height={200}
-                  className="w-full h-auto object-cover"
-                />
-              </div>
-            </Card>
-
-            {/* Feature 2: URL Shortener */}
+            {/* Feature 1: URL Shortener */}
             <Card className="group border border-border/20 bg-card/5 p-6 rounded-xl transition-all hover:border-primary/20 hover:shadow-md">
               <div className="space-y-4">
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -252,7 +215,7 @@ const Page: React.FC = () => {
               </div>
             </Card>
 
-            {/* Feature 3: UUIDs Generator */}
+            {/* Feature 2: UUIDs Generator */}
             <Card className="group border border-border/20 bg-card/5 p-6 rounded-xl transition-all hover:border-primary/20 hover:shadow-md">
               <div className="space-y-4">
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -278,7 +241,7 @@ const Page: React.FC = () => {
               </div>
             </Card>
 
-            {/* Feature 4: Encrypt-Decrypt Tool */}
+            {/* Feature 3: Encrypt-Decrypt Tool */}
             <Card className="group border border-border/20 bg-card/5 p-6 rounded-xl transition-all hover:border-primary/20 hover:shadow-md">
               <div className="space-y-4">
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -306,7 +269,7 @@ const Page: React.FC = () => {
               </div>
             </Card>
 
-            {/* Feature 5: OTP Generator Tool */}
+            {/* Feature 4: OTP Generator Tool */}
             <Card className="group border border-border/20 bg-card/5 p-6 rounded-xl transition-all hover:border-primary/20 hover:shadow-md">
               <div className="space-y-4">
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -332,7 +295,7 @@ const Page: React.FC = () => {
               </div>
             </Card>
 
-            {/* Feature 6: Token Generator */}
+            {/* Feature 5: Token Generator */}
             <Card className="group border border-border/20 bg-card/5 p-6 rounded-xl transition-all hover:border-primary/20 hover:shadow-md">
               <div className="space-y-4">
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">

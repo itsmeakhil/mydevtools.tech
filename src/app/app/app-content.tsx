@@ -1,20 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "../../components/sidebar/app-sidebar";
 import { NavBar } from '@/components/nav-bar';
-import { usePathname } from 'next/navigation';
 
 export function AppContent({ children }: { children: React.ReactNode }) {
   const { state } = useSidebar();
-  const pathname = usePathname();
-  const [isBookmarkRoute, setIsBookmarkRoute] = useState(false);
-
-  // Use useEffect to set isBookmarkRoute after hydration
-  useEffect(() => {
-    setIsBookmarkRoute(pathname.startsWith('/app/bookmark'));
-  }, [pathname]);
 
   return (
     <div
@@ -41,7 +33,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
             <NavBar />
           </div>
           <div className="w-full h-full flex flex-col items-center z-10">
-            <div className={`w-full ${isBookmarkRoute ? 'px-0' : 'max-w-5xl px-4'}`}>
+            <div className="w-full max-w-5xl px-4">
               {children}
             </div>
           </div>

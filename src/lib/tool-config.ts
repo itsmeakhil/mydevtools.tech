@@ -4,11 +4,6 @@
  */
 
 export const AUTH_REQUIRED_URLS = [
-  '/app/bookmark',
-  '/app/bookmark/dashboard',
-  '/app/bookmark/bookmarks',
-  '/app/bookmark/collections',
-  '/app/bookmark/tags',
   '/app/notes',
   '/app/to-do',
   '/app/url-shortener',
@@ -20,11 +15,6 @@ export const AUTH_REQUIRED_URLS = [
 export function requiresAuth(url: string): boolean {
   // Check exact matches
   if (AUTH_REQUIRED_URLS.includes(url as any)) {
-    return true;
-  }
-  
-  // Check if URL starts with any auth-required path
-  if (url.startsWith('/app/bookmark/collections/')) {
     return true;
   }
   
