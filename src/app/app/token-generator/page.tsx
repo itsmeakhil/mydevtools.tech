@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
-import { Copy, RefreshCw } from "lucide-react"
+import { RefreshCw } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { toast } from "sonner"
+import { Card, CardContent } from "@/components/ui/card"
+import { ToolHeader } from "@/components/tools/tool-header"
+import { CopyButton } from "@/components/tools/copy-button"
 
 interface CharacterSet {
   uppercase: boolean
@@ -54,19 +55,6 @@ export default function TokenGenerator() {
     setToken(result)
   }, [chars, length])
 
-  const copyToClipboard = async () => {
-    if (!token) {
-      setTimeout(() => toast.error("Generate a token first"), 0)
-      return
-    }
-
-    try {
-      await navigator.clipboard.writeText(token)
-      setTimeout(() => toast.success("Token copied to clipboard"), 0)
-    } catch {
-      setTimeout(() => toast.error("Failed to copy token"), 0)
-    }
-  }
 
   useEffect(() => {
     generateToken()
@@ -75,12 +63,11 @@ export default function TokenGenerator() {
   return (
     <div className="p-2 flex justify-center">
     <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle className="text-3xl font-bold mx-auto w-fit">Token generator</CardTitle>
-        <CardDescription className="mx-auto w-fit">
-          Generate random string with the chars you want, uppercase or lowercase letters, numbers and/or symbols.
-        </CardDescription>
-      </CardHeader>
+      <ToolHeader
+        title="Token generator"
+        description="Generate random string with the chars you want, uppercase or lowercase letters, numbers and/or symbols."
+        toolId="1-0-3"
+      />
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex items-center justify-between max-w-[250px] ml-16">
@@ -148,10 +135,13 @@ export default function TokenGenerator() {
             />
           </div>
           <div className="flex gap-2 justify-end">
-            <Button variant="outline" size="sm" onClick={copyToClipboard}>
-              <Copy className="h-4 w-4 mr-2" />
-              Copy
-            </Button>
+            <CopyButton
+              text={token}
+              successMessage="Token copied to clipboard!"
+              variant="outline"
+              size="sm"
+              disabled={!token}
+            />
             <Button variant="outline" size="sm" onClick={generateToken}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh

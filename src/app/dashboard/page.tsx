@@ -1,12 +1,17 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { sidebarData } from "../../components/sidebar/data/sidebar-data";
 import useAuth from "@/utils/useAuth";
 import Link, { LinkProps } from "next/link";
-import { Heart } from 'lucide-react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../database/firebase';
+import { Heart, Search, X, Clock } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { requiresAuth } from '@/lib/tool-config';
+import { useFavoriteTool } from '@/hooks/use-favorite-tool';
+import { useToolUsage } from '@/hooks/use-tool-usage';
+import { searchTools, filterToolsByCategory, getAllCategories, getAllToolsMetadata } from '@/lib/tools-registry';
 
 // Define types for our items
 interface ToolItem {
@@ -56,52 +61,20 @@ const findItemById = (id: string): ToolItem | undefined => {
   }
 };
 
-// List of General Tools that require authentication
-const authRequiredUrls = [
-  '/app/bookmark', // Bookmark
-  '/app/notes',    // Notes
-  '/app/to-do',    // Tasks
-  '/app/url-shortener', // URL Shortener
-  
-];
+// Auth requirements are now centralized in tool-config.ts
 
 const DashboardPage: React.FC = () => {
   const { user, loading } = useAuth(false); // Dashboard is public
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const { favorites, isFavorite, toggleFavorite, isLoading: favoritesLoading } = useFavoriteTool();
+  const { getRecentlyUsedTools } = useToolUsage();
   const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [initialized, setInitialized] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [recentlyUsedItems, setRecentlyUsedItems] = useState<FavoriteItem[]>([]);
 
-  // Load favorites from Firebase for authenticated users only
-  useEffect(() => {
-    const loadFavorites = async () => {
-      if (user?.uid) {
-        setIsLoading(true);
-        try {
-          const userFavoritesRef = doc(db, 'users', user.uid, 'userData', 'favorites');
-          const favoritesDoc = await getDoc(userFavoritesRef);
-
-          if (favoritesDoc.exists()) {
-            const userData = favoritesDoc.data();
-            setFavorites(userData.toolFavorites || []);
-          } else {
-            await setDoc(userFavoritesRef, { toolFavorites: [] });
-            setFavorites([]);
-          }
-          setInitialized(true);
-        } catch (error) {
-          console.error("Error loading favorites:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      } else {
-        setFavorites([]);
-        setIsLoading(false);
-      }
-    };
-
-    loadFavorites();
-  }, [user?.uid]);
+  // Get all tools metadata
+  const allToolsMetadata = useMemo(() => getAllToolsMetadata(), []);
+  const categories = useMemo(() => getAllCategories(), []);
 
   // Update favoriteItems whenever favorites change
   useEffect(() => {
@@ -113,41 +86,78 @@ const DashboardPage: React.FC = () => {
     setFavoriteItems(items);
   }, [favorites]);
 
-  // Save favorites to Firebase whenever they change
+  // Get recently used tools
   useEffect(() => {
-    const saveFavorites = async () => {
-      if (user?.uid && initialized && !isLoading) {
-        try {
-          const userFavoritesRef = doc(db, 'users', user.uid, 'userData', 'favorites');
-          await setDoc(userFavoritesRef, { toolFavorites: favorites }, { merge: true });
-        } catch (error) {
-          console.error("Error saving favorites:", error);
-        }
-      }
-    };
+    const recent = getRecentlyUsedTools(5);
+    const items = recent.map(usage => {
+      const item = findItemById(usage.toolId);
+      return item ? { id: usage.toolId, ...item } : null;
+    }).filter((item): item is FavoriteItem => item !== null);
+    
+    setRecentlyUsedItems(items);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount, getRecentlyUsedTools reads from localStorage which doesn't trigger re-renders
 
-    saveFavorites();
-  }, [favorites, user?.uid, initialized, isLoading]);
+  // Filter tools based on search and category
+  const filteredGroups = useMemo(() => {
+    let filtered = sidebarData.navGroups;
 
-  const toggleFavorite = async (id: string) => {
-    if (!user?.uid) {
-      window.location.href = '/login'; // Redirect to login if not authenticated
-      return;
+    // If search query exists, filter by search
+    if (searchQuery.trim()) {
+      const searchResults = searchTools(searchQuery, allToolsMetadata);
+      const searchUrls = new Set(searchResults.map(t => t.url));
+      
+      filtered = sidebarData.navGroups.map(group => ({
+        ...group,
+        items: group.items.map(item => {
+          if (!item.items) {
+            // Top-level item
+            if (item.url && searchUrls.has(item.url.toString())) {
+              return item;
+            }
+            return null;
+          } else {
+            // Nested items
+            const filteredSubItems = item.items.filter(subItem => 
+              subItem.url && searchUrls.has(subItem.url.toString())
+            );
+            if (filteredSubItems.length > 0) {
+              return { ...item, items: filteredSubItems };
+            }
+            return null;
+          }
+        }).filter(Boolean) as typeof group.items,
+      })).filter(group => group.items.length > 0);
     }
 
-    try {
-      const newFavorites = favorites.includes(id)
-        ? favorites.filter(favId => favId !== id)
-        : [...favorites, id];
-
-      setFavorites(newFavorites);
-
-      const userFavoritesRef = doc(db, 'users', user.uid, 'userData', 'favorites');
-      await setDoc(userFavoritesRef, { toolFavorites: newFavorites }, { merge: true });
-    } catch (error) {
-      console.error("Error toggling favorite:", error);
+    // Filter by category if selected
+    if (selectedCategory) {
+      const categoryResults = filterToolsByCategory(selectedCategory, allToolsMetadata);
+      const categoryUrls = new Set(categoryResults.map(t => t.url));
+      
+      filtered = filtered.map(group => ({
+        ...group,
+        items: group.items.map(item => {
+          if (!item.items) {
+            if (item.url && categoryUrls.has(item.url.toString())) {
+              return item;
+            }
+            return null;
+          } else {
+            const filteredSubItems = item.items.filter(subItem => 
+              subItem.url && categoryUrls.has(subItem.url.toString())
+            );
+            if (filteredSubItems.length > 0) {
+              return { ...item, items: filteredSubItems };
+            }
+            return null;
+          }
+        }).filter(Boolean) as typeof group.items,
+      })).filter(group => group.items.length > 0);
     }
-  };
+
+    return filtered;
+  }, [searchQuery, selectedCategory, allToolsMetadata]);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -155,11 +165,10 @@ const DashboardPage: React.FC = () => {
 
   // Component for rendering a tool card
   const ToolCard = ({ item, id }: { item: ToolItem, id: string }) => {
-    const isFavorite = favorites.includes(id);
-    const requiresAuth = authRequiredUrls.includes(item.url?.toString() || '');
+    const itemRequiresAuth = item.url ? requiresAuth(item.url.toString()) : false;
 
     const handleClick = (e: React.MouseEvent) => {
-      if (requiresAuth && !user) {
+      if (itemRequiresAuth && !user) {
         e.preventDefault();
         window.location.href = '/login';
       }
@@ -178,7 +187,7 @@ const DashboardPage: React.FC = () => {
               }}
             >
               <Heart
-                className={`cursor-pointer ${isFavorite
+                className={`cursor-pointer ${isFavorite(id)
                   ? "text-foreground dark:text-foreground fill-foreground dark:fill-foreground"
                   : "text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground"}`}
                 size={18}
@@ -211,8 +220,106 @@ const DashboardPage: React.FC = () => {
   return (
     <div className="min-h-screen p-6 bg-background dark:bg-background text-foreground dark:text-foreground transition-colors duration-200">
       <div className="max-w-7xl mx-auto">
+        {/* Search and Filter Section */}
+        <section className="mb-8 space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              type="text"
+              placeholder="Search tools by name, description, or keywords..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8"
+                onClick={() => setSearchQuery('')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
+          {/* Category Filter */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-sm text-muted-foreground">Filter by category:</span>
+            <Button
+              variant={selectedCategory === '' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSelectedCategory('')}
+            >
+              All
+            </Button>
+            {categories.slice(0, 8).map((category) => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedCategory(category)}
+              >
+                {category}
+              </Button>
+            ))}
+            {categories.length > 8 && (
+              <Badge variant="secondary" className="ml-2">
+                +{categories.length - 8} more
+              </Badge>
+            )}
+          </div>
+
+          {/* Active filters display */}
+          {(searchQuery || selectedCategory) && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-muted-foreground">Active filters:</span>
+              {searchQuery && (
+                <Badge variant="secondary" className="gap-1">
+                  Search: "{searchQuery}"
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="ml-1 hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {selectedCategory && (
+                <Badge variant="secondary" className="gap-1">
+                  Category: {selectedCategory}
+                  <button
+                    onClick={() => setSelectedCategory('')}
+                    className="ml-1 hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* Recently Used Tools - Only for authenticated users */}
+        {user && recentlyUsedItems.length > 0 && !searchQuery && !selectedCategory && (
+          <section className="space-y-4 mb-12">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="h-1 w-6 bg-muted dark:bg-muted rounded-full" />
+              <h2 className="text-xl font-semibold text-foreground dark:text-foreground flex items-center">
+                <Clock className="mr-2 text-foreground dark:text-foreground" size={16} />
+                Recently Used
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {recentlyUsedItems.map((item) => (
+                <ToolCard key={`recent-${item.id}`} item={item} id={item.id} />
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Favorites Section - Only for authenticated users */}
-        {user && favorites.length > 0 && (
+        {user && favorites.length > 0 && !searchQuery && !selectedCategory && (
           <section className="space-y-4 mb-12">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-1 w-6 bg-muted dark:bg-muted rounded-full" />
@@ -230,40 +337,58 @@ const DashboardPage: React.FC = () => {
         )}
 
         {/* All Tools Section */}
-        <div className="space-y-8">
-          {sidebarData.navGroups.map((group, groupIndex) => (
-            <section key={groupIndex} className="space-y-4">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="h-1 w-6 bg-muted dark:bg-muted rounded-full" />
-                <h2 className="text-xl font-semibold text-foreground dark:text-foreground">
-                  {group.title}
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {group.items.map((item, itemIndex) => (
-                  <React.Fragment key={`${groupIndex}-${itemIndex}`}>
-                    {/* Render top-level items */}
-                    {!item.items && (
-                      <ToolCard
-                        item={item}
-                        id={createItemId(groupIndex, itemIndex)}
-                      />
-                    )}
+        {filteredGroups.length > 0 ? (
+          <div className="space-y-8">
+            {filteredGroups.map((group, groupIndex) => (
+              <section key={groupIndex} className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-1 w-6 bg-muted dark:bg-muted rounded-full" />
+                  <h2 className="text-xl font-semibold text-foreground dark:text-foreground">
+                    {group.title}
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {group.items.map((item, itemIndex) => (
+                    <React.Fragment key={`${groupIndex}-${itemIndex}`}>
+                      {/* Render top-level items */}
+                      {!item.items && (
+                        <ToolCard
+                          item={item}
+                          id={createItemId(groupIndex, itemIndex)}
+                        />
+                      )}
 
-                    {/* Render nested items directly in the grid */}
-                    {item.items && item.items.map((subItem, subIndex) => (
-                      <ToolCard
-                        key={`${groupIndex}-${itemIndex}-${subIndex}`}
-                        item={{ ...subItem, icon: item.icon }}
-                        id={createItemId(groupIndex, itemIndex, subIndex)}
-                      />
-                    ))}
-                  </React.Fragment>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
+                      {/* Render nested items directly in the grid */}
+                      {item.items && item.items.map((subItem, subIndex) => (
+                        <ToolCard
+                          key={`${groupIndex}-${itemIndex}-${subIndex}`}
+                          item={{ ...subItem, icon: item.icon }}
+                          id={createItemId(groupIndex, itemIndex, subIndex)}
+                        />
+                      ))}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground text-lg">
+              No tools found matching your search criteria.
+            </p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedCategory('');
+              }}
+            >
+              Clear filters
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

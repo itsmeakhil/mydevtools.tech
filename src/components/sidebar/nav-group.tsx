@@ -42,18 +42,7 @@ import { NavCollapsible, NavItem, NavLink } from "./types"; // Import types
 import useAuth from "@/utils/useAuth"; // Import useAuth
 import { db } from "../../database/firebase"; // Adjust the path to your Firebase config
 import { collection, onSnapshot, updateDoc, doc } from "firebase/firestore";
-
-// List of URLs that require authentication (General Tools)
-const authRequiredUrls = [
-  "/app/to-do",
-  "/app/notes",
-  "/app/url-shortener",
-  "/app/bookmark",
-  "/app/bookmark/dashboard",
-  "/app/bookmark/bookmarks",
-  "/app/bookmark/collections",
-  "/app/bookmark/tags",
-];
+import { requiresAuth } from "@/lib/tool-config";
 
 // Define the Collection type (aligned with CollectionPage)
 interface Collection {
@@ -150,15 +139,7 @@ const CustomBookmarkLink = ({ item, href }: { item: NavLink; href: string }) => 
     return () => unsubscribe();
   }, [user]);
 
-  const requiresAuth = (url: string) => {
-    if (authRequiredUrls.includes(url)) {
-      return true;
-    }
-    if (url.startsWith("/app/bookmark/collections/")) {
-      return true;
-    }
-    return false;
-  };
+  // Use centralized requiresAuth function from tool-config
 
   const handleClick = (e: React.MouseEvent) => {
     if (loading) {
@@ -486,15 +467,7 @@ export function NavGroup({ title, items }: NavGroupProps) {
   const pathname = usePathname();
   const { user, loading } = useAuth(false); // Check auth state with loading
 
-  const requiresAuth = (url: string) => {
-    if (authRequiredUrls.includes(url)) {
-      return true;
-    }
-    if (url.startsWith("/app/bookmark/collections/")) {
-      return true;
-    }
-    return false;
-  };
+  // Use centralized requiresAuth function from tool-config
 
   const handleClick = (e: React.MouseEvent, url: string) => {
     if (loading) {
@@ -633,15 +606,7 @@ const SidebarMenuCollapsible = ({
   const { setOpenMobile } = useSidebar();
   const { user, loading } = useAuth(false);
 
-  const requiresAuth = (url: string) => {
-    if (authRequiredUrls.includes(url)) {
-      return true;
-    }
-    if (url.startsWith("/app/bookmark/collections/")) {
-      return true;
-    }
-    return false;
-  };
+  // Use centralized requiresAuth function from tool-config
 
   const handleSubLinkClick = (e: React.MouseEvent, subUrl: string) => {
     if (loading) {
@@ -714,15 +679,7 @@ const SidebarMenuCollapsedDropdown = ({
 }) => {
   const { user, loading } = useAuth(false);
 
-  const requiresAuth = (url: string) => {
-    if (authRequiredUrls.includes(url)) {
-      return true;
-    }
-    if (url.startsWith("/app/bookmark/collections/")) {
-      return true;
-    }
-    return false;
-  };
+  // Use centralized requiresAuth function from tool-config
 
   const handleSubLinkClick = (e: React.MouseEvent, subUrl: string) => {
     if (loading) {

@@ -1,13 +1,13 @@
 "use client"
 
-import { toast } from 'sonner'
 import { useCallback, useEffect } from 'react'
 import { useState } from "react"
-import { Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
+import { ToolHeader } from "@/components/tools/tool-header"
+import { CopyButton } from "@/components/tools/copy-button"
 import { v1, v3, v4, v5, v6, v7 } from "uuid"
 
 type UUIDVersion = "NIL" | "v1" | "v3" | "v4" | "v5" | "v6" | "v7"
@@ -60,34 +60,16 @@ export function UUIDGenerator() {
     handleGenerate()
   }, [handleGenerate])
 
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(uuids.join("\n"))
-      toast.success('Copied to clipboard!', {
-        duration: 2000,
-      })
-    } catch {
-      toast.error('Failed to copy')
-    }
-  }, [uuids])
+  const uuidText = uuids.join("\n")
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4">
       <Card className="max-w-4xl mx-auto">
-        <CardHeader>
-          <div className="flex justify-center items-center">
-            <div className='w-full text-center'>
-                <div className='flex justify-center items-center'>
-
-              <CardTitle className="text-2xl font-bold mb-2">UUIDs generator</CardTitle>
-              </div>
-              <CardDescription>Generate Universally Unique Identifiers (UUIDs) of various versions.</CardDescription>
-            </div>
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-              <Heart className="h-5 w-5" />
-            </Button>
-          </div>
-        </CardHeader>
+        <ToolHeader
+          title="UUIDs generator"
+          description="Generate Universally Unique Identifiers (UUIDs) of various versions."
+          toolId="0-0"
+        />
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">UUID version</label>
@@ -158,9 +140,13 @@ export function UUIDGenerator() {
             <Button onClick={handleGenerate} variant="default" size="sm">
               Regenerate
             </Button>
-            <Button onClick={handleCopy} variant="outline" size="sm">
-              Copy
-            </Button>
+            <CopyButton
+              text={uuidText}
+              successMessage="UUIDs copied to clipboard!"
+              variant="outline"
+              size="sm"
+              disabled={!uuidText}
+            />
           </div>
         </CardContent>
       </Card>
