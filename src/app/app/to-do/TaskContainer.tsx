@@ -79,29 +79,29 @@ export const TaskContainer = () => {
 
             {/* Statistics */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-              <div className="p-3 rounded-lg bg-muted/50 border transition-all hover:shadow-md">
-                <div className="flex items-center gap-2 mb-1">
+              <div className="p-3 rounded-lg bg-muted/50 border transition-all hover:shadow-md text-center">
+                <div className="flex items-center justify-center gap-2 mb-1">
                   <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   <span className="text-xs text-muted-foreground">Total</span>
                 </div>
                 <p className="text-2xl font-bold">{totalTasks}</p>
               </div>
-              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 transition-all hover:shadow-md">
-                <div className="flex items-center gap-2 mb-1">
+              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 transition-all hover:shadow-md text-center">
+                <div className="flex items-center justify-center gap-2 mb-1">
                   <Clock className="h-4 w-4 text-blue-500 flex-shrink-0" />
                   <span className="text-xs text-blue-700 dark:text-blue-400">Not Started</span>
                 </div>
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{notStartedTasks}</p>
               </div>
-              <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 transition-all hover:shadow-md">
-                <div className="flex items-center gap-2 mb-1">
+              <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 transition-all hover:shadow-md text-center">
+                <div className="flex items-center justify-center gap-2 mb-1">
                   <TrendingUp className="h-4 w-4 text-orange-500 flex-shrink-0" />
                   <span className="text-xs text-orange-700 dark:text-orange-400">Ongoing</span>
                 </div>
                 <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{ongoingTasks}</p>
               </div>
-              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 transition-all hover:shadow-md">
-                <div className="flex items-center gap-2 mb-1">
+              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 transition-all hover:shadow-md text-center">
+                <div className="flex items-center justify-center gap-2 mb-1">
                   <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
                   <span className="text-xs text-green-700 dark:text-green-400">Completed</span>
                 </div>
