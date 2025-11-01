@@ -72,6 +72,7 @@
     "framer-motion": "^12.23.24",
     "geist": "^1.5.1",
     "highlight.js": "^11.11.1",
+    "js-yaml": "^4.1.0",
     "katex": "^0.16.25",
     "lodash": "^4.17.21",
     "lodash.debounce": "^4.0.8",
