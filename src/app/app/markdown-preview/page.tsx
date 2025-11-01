@@ -61,25 +61,8 @@ Happy writing! 🎉
 
 export default function MarkdownPreviewPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Hero Section */}
-        <Card className="border-2 shadow-lg bg-gradient-to-br from-primary/5 via-primary/5 to-muted/10">
-          <div className="p-8 md:p-12 text-center space-y-4">
-            <div className="flex items-center justify-center mb-4">
-              <div className="p-3 bg-primary/10 rounded-full">
-                <FileText className="h-8 w-8 text-primary" />
-              </div>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Markdown Preview
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Write and preview markdown in real-time with GitHub Flavored Markdown support.
-            </p>
-          </div>
-        </Card>
-
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 ml-0 mr-0 px-0 w-full">
+      <div className="space-y-8 px-4 md:px-6 lg:px-8 py-4 md:py-8">
         {/* Main Editor */}
         <MarkdownPreview />
       </div>
