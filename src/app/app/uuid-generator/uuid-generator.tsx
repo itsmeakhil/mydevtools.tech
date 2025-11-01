@@ -94,15 +94,17 @@ export function UUIDGenerator() {
   return (
     <Card className="border-2 shadow-lg">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Fingerprint className="h-5 w-5 text-primary" />
-          </div>
-          Generator & Validator
-        </CardTitle>
-        <CardDescription className="mt-2">
-          Choose your preferred version and generate unique identifiers
-        </CardDescription>
+        <div className="text-center">
+          <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+            <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+              <Fingerprint className="h-5 w-5 text-primary" />
+            </div>
+            UUID Generator & Validator
+          </CardTitle>
+          <CardDescription>
+            Choose your preferred version and generate unique identifiers
+          </CardDescription>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
           <Tabs defaultValue="generate" className="w-full">
