@@ -112,10 +112,10 @@ function MarkdownPreview() {
   return (
     <Card className="border-2 shadow-lg">
       <CardHeader>
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <div className="p-2 bg-primary/10 rounded-lg">
+        <div className="space-y-4">
+          <div className="text-center">
+            <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+              <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
                 <Eye className="h-5 w-5 text-primary" />
               </div>
               Markdown Editor & Preview
@@ -124,7 +124,7 @@ function MarkdownPreview() {
               Write markdown and see live preview with GitHub Flavored Markdown support
             </CardDescription>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex justify-center gap-2 flex-wrap">
             <Button
               variant={viewMode === 'split' ? 'default' : 'outline'}
               size="sm"
