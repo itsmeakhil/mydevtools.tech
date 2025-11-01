@@ -3,10 +3,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from 'next-themes';
 import { CopyIcon, HeartIcon, SearchIcon, CheckIcon } from 'lucide-react';
-import figlet, { Fonts} from 'figlet';
+import figlet from 'figlet';
 
 // Font options moved outside component to avoid recreation on each render
-const FONT_OPTIONS: Fonts[] = [
+const FONT_OPTIONS: string[] = [
   '1Row', '3-D', '3D Diagonal', '3D-ASCII', '3x5', '4Max', '5 Line Oblique', 'AMC 3 Line', 
   'ANSI Regular', 'ANSI Shadow', 'ASCII New Roman', 'Acrobatic', 'Alligator', 'Alligator2', 
   'Alpha', 'Alphabet', 'Avatar', 'Banner', 'Banner3', 'Banner3-D', 'Banner4', 'Barbwire', 
@@ -44,7 +44,7 @@ const FONT_OPTIONS: Fonts[] = [
 const AsciiArtGenerator = () => {
   // State management
   const [inputText, setInputText] = useState('Ascii ART');
-  const [fontStyle, setFontStyle] = useState<Fonts>('Weird');
+  const [fontStyle, setFontStyle] = useState<string>('Weird');
   const [width, setWidth] = useState(33);
   const [asciiOutput, setAsciiOutput] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
@@ -126,7 +126,7 @@ const AsciiArtGenerator = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleFontSelect = (font: Fonts) => {
+  const handleFontSelect = (font: string) => {
     setFontStyle(font);
     setDropdownOpen(false);
     setSearchTerm('');
