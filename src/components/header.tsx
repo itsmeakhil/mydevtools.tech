@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Github, Wrench, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./modeToggle";
+import { ColorPicker } from "./color-picker";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -42,6 +43,7 @@ export function Header() {
             </Button>
             
             <div className="hidden md:flex items-center gap-4">
+              <ColorPicker />
               <ModeToggle />
               <Link href="https://github.com/itsmeakhil/mydevtools.tech" target="_blank" rel="noreferrer">
                 <Button

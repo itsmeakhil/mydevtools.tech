@@ -9,6 +9,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ModeToggle } from "./modeToggle";
+import { ColorPicker } from "./color-picker";
 import { sidebarData } from "../components/sidebar/data/sidebar-data";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
@@ -236,6 +237,7 @@ export function NavBar() {
                 <span className="sr-only">GitHub</span>
               </Link>
             </Button>
+            <ColorPicker />
             <ModeToggle />
           </div>
         </div>

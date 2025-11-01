@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider, useTheme as useNextTheme } from "next-themes"
-import { SpacemanThemeProvider } from "@space-man/react-theme-animation"
+import { SpacemanThemeProvider, ThemeAnimationType } from "@space-man/react-theme-animation"
 
 function ThemeSync({ children }: { children: React.ReactNode }) {
   const { theme, setTheme } = useNextTheme()
@@ -29,10 +29,9 @@ export function ThemeProvider({
   return (
     <NextThemesProvider {...props}>
       <SpacemanThemeProvider
-        defaultTheme={props.defaultTheme || "system"}
-        animationType="CIRCLE"
+        defaultTheme={props.defaultTheme as "light" | "dark" | "system" | undefined}
+        animationType={ThemeAnimationType.CIRCLE}
         duration={400}
-        blurAmount={8}
       >
         <ThemeSync>{children}</ThemeSync>
       </SpacemanThemeProvider>
