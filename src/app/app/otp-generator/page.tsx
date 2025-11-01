@@ -5,12 +5,40 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
-import { Copy, RotateCcw } from "lucide-react"
+import { Copy, RotateCcw, ShieldCheck } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import {QRCodeSVG} from "qrcode.react"
 import { authenticator } from "otplib"
 
 export default function OTPGenerator() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-8">
+        {/* Hero Section */}
+        <Card className="border-2 shadow-lg bg-gradient-to-br from-primary/5 via-primary/5 to-muted/10">
+          <div className="p-8 md:p-12 text-center space-y-4">
+            <div className="flex items-center justify-center mb-4">
+              <div className="p-3 bg-primary/10 rounded-full">
+                <ShieldCheck className="h-8 w-8 text-primary" />
+              </div>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              OTP Code Generator
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Generate and validate time-based OTP (one time password) for multi-factor authentication.
+            </p>
+          </div>
+        </Card>
+
+        {/* Main Generator */}
+        <OTPGeneratorMain />
+      </div>
+    </div>
+  )
+}
+
+function OTPGeneratorMain() {
   const [secret, setSecret] = useState("RPOPN5X2Q25JHZ3")
   const [hexSecret, setHexSecret] = useState("8bdcf6f6fa86ba93eb3b")
   const [otps, setOtps] = useState({
@@ -121,15 +149,18 @@ export default function OTPGenerator() {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-5xl">
-      <Card className="bg-background">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-3xl text-center">OTP Code Generator</CardTitle>
-          <CardDescription className="text-center">
-            Generate and validate time-based OTP (one time password) for multi-factor authentication.
+    <Card className="border-2 shadow-lg">
+      <CardHeader>
+        <div className="text-center">
+          <CardTitle className="text-3xl md:text-4xl mb-2">
+            Live OTP Codes
+          </CardTitle>
+          <CardDescription>
+            Time-based codes that update every 30 seconds
           </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
           {/* Secret Fields */}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
@@ -239,7 +270,6 @@ export default function OTPGenerator() {
 
         </CardContent>
       </Card>
-    </div>
   )
 }
 

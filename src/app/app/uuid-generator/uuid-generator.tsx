@@ -5,12 +5,11 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent } from "@/components/ui/card"
-import { ToolHeader } from "@/components/tools/tool-header"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { CopyButton } from "@/components/tools/copy-button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tab"
 import { v1, v3, v4, v5, v6, v7, validate as validateUUID, version as getUUIDVersion } from "uuid"
-import { CheckCircle, XCircle } from "lucide-react"
+import { CheckCircle, XCircle, Fingerprint, RefreshCw } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 type UUIDVersion = "NIL" | "v1" | "v3" | "v4" | "v5" | "v6" | "v7"
@@ -93,14 +92,19 @@ export function UUIDGenerator() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-4">
-      <Card className="max-w-4xl mx-auto">
-        <ToolHeader
-          title="UUID Generator & Validator"
-          description="Generate and validate Universally Unique Identifiers (UUIDs) of various versions."
-          toolId="0-0"
-        />
-        <CardContent className="space-y-6">
+    <Card className="border-2 shadow-lg">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Fingerprint className="h-5 w-5 text-primary" />
+          </div>
+          Generator & Validator
+        </CardTitle>
+        <CardDescription className="mt-2">
+          Choose your preferred version and generate unique identifiers
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
           <Tabs defaultValue="generate" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="generate">Generate</TabsTrigger>
@@ -171,17 +175,23 @@ export function UUIDGenerator() {
             </>
           )}
 
-          <Textarea value={uuids.join("\n")} readOnly className="font-mono h-24" />
+          <Textarea 
+            value={uuids.join("\n")} 
+            readOnly 
+            className="font-mono min-h-[120px]" 
+            placeholder="Generated UUIDs will appear here..."
+          />
 
           <div className="flex gap-2">
-            <Button onClick={handleGenerate} variant="default" size="sm">
+            <Button onClick={handleGenerate} variant="default" size="lg" className="flex-1">
+              <RefreshCw className="w-5 h-5 mr-2" />
               Regenerate
             </Button>
             <CopyButton
               text={uuidText}
               successMessage="UUIDs copied to clipboard!"
               variant="outline"
-              size="sm"
+              size="lg"
               disabled={!uuidText}
             />
           </div>
@@ -234,9 +244,8 @@ export function UUIDGenerator() {
               )}
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
-    </div>
+      </CardContent>
+    </Card>
   )
 }
 

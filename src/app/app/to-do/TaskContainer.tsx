@@ -8,7 +8,6 @@ import KanbanBoard from "@/app/app/to-do/KanbanBoard";
 import PaginationDemo from "@/app/app/to-do/PaginationS";
 import { useTaskContext } from "@/app/app/to-do/context/TaskContext";
 import { ListTodo, CheckCircle2, Circle, Clock, TrendingUp, LayoutGrid, List } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
@@ -57,23 +56,18 @@ export const TaskContainer = () => {
         {/* Header Card */}
         <Card className="border-2 shadow-lg">
           <CardHeader className="pb-4">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-3">
+            <div className="text-center mb-4">
+              <div className="flex items-center justify-center gap-2 mb-2">
                 <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
-                  <ListTodo className="h-6 w-6 text-primary" />
+                  <ListTodo className="h-5 w-5 text-primary" />
                 </div>
-                <div>
-                  <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                    My Tasks
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                    Stay organized and productive
-                  </p>
-                </div>
+                <h1 className="text-2xl font-bold tracking-tight text-primary">
+                  My Tasks
+                </h1>
               </div>
-              <Badge variant="secondary" className="px-3 py-1.5 text-lg font-semibold">
-                {completionRate}%
-              </Badge>
+              <p className="text-sm text-muted-foreground">
+                Stay organized and productive
+              </p>
             </div>
 
             {/* Statistics */}
