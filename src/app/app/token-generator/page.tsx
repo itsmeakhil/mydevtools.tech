@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react"
 import { RefreshCw } from "lucide-react"
+import { toast } from "sonner"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
