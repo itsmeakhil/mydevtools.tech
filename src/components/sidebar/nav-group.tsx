@@ -202,36 +202,38 @@ const SidebarMenuCollapsible = ({
             <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
-        <CollapsibleContent className="CollapsibleContent">
-          <SidebarMenuSub>
-            {item.items.map((subItem) => {
-              const subItemUrl =
-                typeof subItem.url === "string"
-                  ? subItem.url
-                  : subItem.url.toString();
-              return (
-                <SidebarMenuSubItem key={subItem.title}>
-                  <SidebarMenuSubButton
-                    asChild
-                    isActive={checkIsActive(href, subItem)}
-                  >
-                    <Link
-                      href={subItem.url}
-                      onClick={(e) => {
-                        handleSubLinkClick(e, subItemUrl);
-                        setOpenMobile(false);
-                      }}
+        <div suppressHydrationWarning>
+          <CollapsibleContent className="CollapsibleContent">
+            <SidebarMenuSub>
+              {item.items.map((subItem) => {
+                const subItemUrl =
+                  typeof subItem.url === "string"
+                    ? subItem.url
+                    : subItem.url.toString();
+                return (
+                  <SidebarMenuSubItem key={subItem.title}>
+                    <SidebarMenuSubButton
+                      asChild
+                      isActive={checkIsActive(href, subItem)}
                     >
-                      {subItem.icon && <subItem.icon />}
-                      <span>{subItem.title}</span>
-                      {subItem.badge && <NavBadge>{subItem.badge}</NavBadge>}
-                    </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              );
-            })}
-          </SidebarMenuSub>
-        </CollapsibleContent>
+                      <Link
+                        href={subItem.url}
+                        onClick={(e) => {
+                          handleSubLinkClick(e, subItemUrl);
+                          setOpenMobile(false);
+                        }}
+                      >
+                        {subItem.icon && <subItem.icon />}
+                        <span>{subItem.title}</span>
+                        {subItem.badge && <NavBadge>{subItem.badge}</NavBadge>}
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                );
+              })}
+            </SidebarMenuSub>
+          </CollapsibleContent>
+        </div>
       </SidebarMenuItem>
     </Collapsible>
   );
@@ -261,9 +263,10 @@ const SidebarMenuCollapsedDropdown = ({
   };
 
   return (
-    <SidebarMenuItem>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+    <SidebarMenuItem suppressHydrationWarning>
+      <div suppressHydrationWarning>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
           <SidebarMenuButton
             tooltip={item.title}
             isActive={checkIsActive(href, item)}
@@ -299,7 +302,8 @@ const SidebarMenuCollapsedDropdown = ({
             );
           })}
         </DropdownMenuContent>
-      </DropdownMenu>
+        </DropdownMenu>
+      </div>
     </SidebarMenuItem>
   );
 };
