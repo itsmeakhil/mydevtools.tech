@@ -40,7 +40,6 @@ export default function TimestampConverterPage() {
 function TimestampConverter() {
   const [timestamp, setTimestamp] = useState('');
   const [dateInput, setDateInput] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -57,7 +56,6 @@ function TimestampConverter() {
     
     if (!timestamp.trim()) {
       setDateInput('');
-      setSelectedDate('');
       return;
     }
 
@@ -73,11 +71,9 @@ function TimestampConverter() {
       }
 
       setDateInput(date.toISOString().slice(0, 16));
-      setSelectedDate(date.toISOString().split('T')[0]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Conversion failed');
       setDateInput('');
-      setSelectedDate('');
     }
   };
 
@@ -86,7 +82,6 @@ function TimestampConverter() {
     
     if (!dateInput.trim()) {
       setTimestamp('');
-      setSelectedDate('');
       return;
     }
 
@@ -98,11 +93,9 @@ function TimestampConverter() {
 
       const ts = Math.floor(date.getTime() / 1000);
       setTimestamp(ts.toString());
-      setSelectedDate(date.toISOString().split('T')[0]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Conversion failed');
       setTimestamp('');
-      setSelectedDate('');
     }
   };
 
@@ -111,7 +104,7 @@ function TimestampConverter() {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
+    } catch {
       setError('Failed to copy to clipboard');
     }
   };

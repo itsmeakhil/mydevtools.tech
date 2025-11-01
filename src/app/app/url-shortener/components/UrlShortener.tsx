@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -215,9 +216,11 @@ export default function UrlShortener() {
                             </DialogDescription>
                           </DialogHeader>
                           <div className="flex items-center justify-center p-6 bg-muted rounded-lg">
-                            <img 
+                            <Image 
                               src={generateQRCode()} 
                               alt="QR Code" 
+                              width={250}
+                              height={250}
                               className="w-full max-w-[250px]"
                             />
                           </div>

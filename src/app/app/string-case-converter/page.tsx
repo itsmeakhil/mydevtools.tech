@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Copy, Type, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -77,7 +76,7 @@ function StringCaseConverter() {
       await navigator.clipboard.writeText(value);
       setCopied(type);
       setTimeout(() => setCopied(null), 2000);
-    } catch (err) {
+    } catch {
       // Silent fail
     }
   };

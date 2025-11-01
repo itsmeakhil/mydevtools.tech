@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import TailwindAdvancedEditor from "./tailwind/advanced-editor";
 import { useNotes } from "../lib/hooks";
 import type { JSONContent } from "novel";
@@ -136,7 +136,7 @@ const NotesContent = () => {
     };
     
     initializeNote();
-  }, [userLoading, user, loading, notes, shouldCreateNewNote, currentNote]);
+  }, [userLoading, user, loading, notes, shouldCreateNewNote, currentNote, handleCreateNewNote]);
 
   // When navigating away from the page, reset the flag
   useEffect(() => {
@@ -161,7 +161,7 @@ const NotesContent = () => {
   };
 
   // Separate function to handle persisting temporary notes
-  const persistTemporaryNoteIfNeeded = async () => {
+  const persistTemporaryNoteIfNeeded = useCallback(async () => {
     if (!currentNote || !user) return;
     
     // Only try to persist if it's a temporary note with a title
@@ -180,7 +180,7 @@ const NotesContent = () => {
         setSaveStatus("Failed to save");
       }
     }
-  };
+  }, [currentNote, user, persistNewNote]);
 
   // Modified handleContentChange to use the new persist function
   const handleContentChange = async (content: JSONContent) => {
@@ -244,9 +244,9 @@ const NotesContent = () => {
     }, 2000); // Wait 2 seconds after typing stops
     
     return () => clearTimeout(timer);
-  }, [currentNote, user, saveStatus, updateNote]);
+  }, [currentNote, user, saveStatus, updateNote, persistTemporaryNoteIfNeeded]);
 
-  const handleCreateNewNote = async () => {
+  const handleCreateNewNote = useCallback(async () => {
     try {
       // First save the current note if it exists and has a title
       if (currentNote && currentNote.id && currentNote.title.trim() !== '') {
@@ -273,7 +273,7 @@ const NotesContent = () => {
       console.error("Failed to create new note:", error);
       setSaveStatus("Failed to create note");
     }
-  };
+  }, [currentNote, createNewNote, updateNote, persistNewNote]);
 
   // ONLY show loading states if we should (first time load)
   if (shouldShowLoadingState()) {
