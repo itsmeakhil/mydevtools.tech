@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Copy, RefreshCw, Check } from 'lucide-react';
+import { Copy, RefreshCw, Check, Lock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 
@@ -112,7 +112,10 @@ function PasswordGenerator() {
     <Card className="border-2 shadow-lg">
       <CardHeader>
         <div className="text-center">
-          <CardTitle className="text-3xl md:text-4xl mb-2">
+          <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+            <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+              <Lock className="h-5 w-5 text-primary" />
+            </div>
             Password Generator
           </CardTitle>
           <CardDescription>

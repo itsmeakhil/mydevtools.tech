@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { LockKeyhole } from "lucide-react"
 
 type Algorithm = "AES" | "TripleDES" | "Rabbit" | "RC4"
 
@@ -118,14 +119,19 @@ export default function EncryptDecrypt() {
   return (
     <div className="h-auto p-2 flex justify-center">
       <div className="w-full max-w-5xl">
-        <Card className="w-full m-1">
+        <Card className="border-2 shadow-lg w-full m-1">
           <CardHeader>
-            <CardTitle className="text-3xl font-bold text-center">
-              Encrypt / decrypt text
-            </CardTitle>
-            <p className="text-center text-muted-foreground mt-2">
-              Encrypt clear text and decrypt ciphertext using crypto algorithms like AES, TripleDES, Rabbit or RC4.
-            </p>
+            <div className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+                <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+                  <LockKeyhole className="h-5 w-5 text-primary" />
+                </div>
+                Encrypt / decrypt text
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Encrypt clear text and decrypt ciphertext using crypto algorithms like AES, TripleDES, Rabbit or RC4.
+              </CardDescription>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid gap-6 md:grid-cols-2 mt-2">

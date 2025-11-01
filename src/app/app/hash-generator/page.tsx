@@ -3,11 +3,11 @@
 import { useState } from "react"
 import { createHash } from "crypto"
 import * as CryptoJS from 'crypto-js'
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ToolHeader } from "@/components/tools/tool-header"
 import { CopyButton } from "@/components/tools/copy-button"
+import { Fingerprint } from "lucide-react"
 
 type HashFunction = "MD5" | "SHA1" | "SHA256" | "SHA224" | "SHA512" | "SHA384" | "RIPEMD160" | "SHA3"
 type DigestEncoding = "hex" | "base64" | "binary"
@@ -35,12 +35,20 @@ export default function HashGenerator() {
   return (
     <div className="min-h-screen p-2 flex justify-center ">
     <div className="container mx-auto p-1 max-w-5xl">
-      <Card className="w-full">
-        <ToolHeader
-          title="Hash text"
-          description="Hash a text string using the function you need: MD5, SHA1, SHA256, SHA224, SHA512, SHA384, SHA3 or RIPEMD160"
-          toolId="1-0-4"
-        />
+      <Card className="border-2 shadow-lg w-full">
+        <CardHeader>
+          <div className="text-center">
+            <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+              <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+                <Fingerprint className="h-5 w-5 text-primary" />
+              </div>
+              Hash Text
+            </CardTitle>
+            <CardDescription className="mt-2">
+              Hash a text string using the function you need: MD5, SHA1, SHA256, SHA224, SHA512, SHA384, SHA3 or RIPEMD160
+            </CardDescription>
+          </div>
+        </CardHeader>
         <CardContent className="space-y-6">
 
           <div className="space-y-2">

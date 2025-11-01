@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Copy, RefreshCw, CheckCircle, XCircle } from "lucide-react"
+import { Copy, RefreshCw, CheckCircle, XCircle, Hash } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -84,12 +84,19 @@ export default function ULIDGenerator({ initialQuantity = 1 }: ULIDGeneratorProp
   }
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader className="justify-center items-center">
-        <CardTitle className="text-3xl font-bold tracking-tight">ULID Generator & Validator</CardTitle>
-        <CardDescription>
-          Generate and validate random Universally Unique Lexicographically Sortable Identifier (ULID).
-        </CardDescription>
+    <Card className="border-2 shadow-lg w-full max-w-4xl mx-auto">
+      <CardHeader>
+        <div className="text-center">
+          <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+            <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+              <Hash className="h-5 w-5 text-primary" />
+            </div>
+            ULID Generator & Validator
+          </CardTitle>
+          <CardDescription>
+            Generate and validate random Universally Unique Lexicographically Sortable Identifier (ULID).
+          </CardDescription>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         <Tabs defaultValue="generate" className="w-full">

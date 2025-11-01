@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Copy, Heart, Loader2 } from "lucide-react"
+import { Copy, Loader2, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useToast } from "@/hooks/use-toast"
@@ -19,7 +19,6 @@ export default function BcryptPage() {
   const [compareString, setCompareString] = useState("")
   const [compareHash, setCompareHash] = useState("")
   const [isMatch, setIsMatch] = useState<boolean | null>(null)
-  const [isFavorite, setIsFavorite] = useState(false)
   const [isHashing, setIsHashing] = useState(false)
   const [isComparing, setIsComparing] = useState(false)
 
@@ -101,23 +100,21 @@ export default function BcryptPage() {
   return (
     <div className="min-h-screen p-4 ">
       <div className="mx-auto max-w-5xl">
-        <Card className="w-full">
-          {/* <CardHeader>
-            <CardTitle>Bcrypt</CardTitle>
-          </CardHeader> */}
-          <CardContent className="space-y-4 pt-4">
-            <div className="flex items-center justify-between">
-              <div className="flex justify-center"></div>
-              <h1 className="text-4xl font-bold ">Bcrypt</h1>
-              <Button variant="ghost" size="icon" onClick={() => setIsFavorite(!isFavorite)} className="hover:text-primary">
-                <Heart className={isFavorite ? "fill-current" : ""} />
-              </Button>
+        <Card className="border-2 shadow-lg w-full">
+          <CardHeader>
+            <div className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+                <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+                  <Shield className="h-5 w-5 text-primary" />
+                </div>
+                Bcrypt
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Hash and compare text string using bcrypt. Bcrypt is a password-hashing function based on the Blowfish cipher.
+              </CardDescription>
             </div>
-
-            <p className="text-muted-foreground text-center">
-              Hash and compare text string using bcrypt. Bcrypt is a password-hashing function based on the Blowfish cipher.
-            </p>
-
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
                 <CardHeader>

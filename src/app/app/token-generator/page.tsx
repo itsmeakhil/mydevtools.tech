@@ -1,13 +1,12 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
-import { RefreshCw } from "lucide-react"
+import { RefreshCw, KeyRound } from "lucide-react"
 import { toast } from "sonner"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { Card, CardContent } from "@/components/ui/card"
-import { ToolHeader } from "@/components/tools/tool-header"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { CopyButton } from "@/components/tools/copy-button"
 
 interface CharacterSet {
@@ -63,12 +62,20 @@ export default function TokenGenerator() {
 
   return (
     <div className="p-2 flex justify-center">
-    <Card className="w-full max-w-4xl mx-auto">
-      <ToolHeader
-        title="Token generator"
-        description="Generate random string with the chars you want, uppercase or lowercase letters, numbers and/or symbols."
-        toolId="1-0-3"
-      />
+    <Card className="border-2 shadow-lg w-full max-w-4xl mx-auto">
+      <CardHeader>
+        <div className="text-center">
+          <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+            <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+              <KeyRound className="h-5 w-5 text-primary" />
+            </div>
+            Token Generator
+          </CardTitle>
+          <CardDescription className="mt-2">
+            Generate random string with the chars you want, uppercase or lowercase letters, numbers and/or symbols.
+          </CardDescription>
+        </div>
+      </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex items-center justify-between max-w-[250px] ml-16">
