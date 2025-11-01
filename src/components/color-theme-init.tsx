@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect } from "react"
 import { useColorTheme } from "@/hooks/use-color-theme"
 
 export function ColorThemeInit() {
