@@ -2,7 +2,6 @@
 import UrlShortener from "./components/UrlShortener";
 import Stats from "./components/Stats";
 import useAuth from "@/utils/useAuth";
-import { Card } from "@/components/ui/card";
 
 export default function UrlShortenerPage() {
   const { user, loading } = useAuth(true); // Enforce authentication
