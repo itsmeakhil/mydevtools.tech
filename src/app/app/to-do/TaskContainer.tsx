@@ -42,8 +42,8 @@ export const TaskContainer = () => {
   const completionRate = allTaskStats.total > 0 ? Math.round((allTaskStats.completed / allTaskStats.total) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 ml-0 mr-0 px-0 w-full">
+      <div className="space-y-6 px-4 md:px-6 lg:px-8 py-4 md:py-8">
         {/* Header Card */}
         <Card className="border-2 shadow-lg">
           <CardHeader className="pb-4">

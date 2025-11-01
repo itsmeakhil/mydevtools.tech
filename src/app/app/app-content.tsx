@@ -32,8 +32,8 @@ export function AppContent({ children }: { children: React.ReactNode }) {
           <div className="sticky top-0 z-20 bg-background">
             <NavBar />
           </div>
-          <div className="w-full h-full flex flex-col items-center z-10">
-            <div className="w-full max-w-5xl px-4">
+          <div className="w-full h-full flex flex-col z-10">
+            <div className="w-full">
               {children}
             </div>
           </div>
