@@ -29,9 +29,9 @@ export default function TaskForm({ onAddTask }: TaskFormProps) {
   return (
     <Card className={`transition-all duration-300 ${isFocused ? 'border-primary shadow-lg ring-2 ring-primary/20' : 'border-2'}`}>
       <div className="p-6">
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-start">
           {/* Icon */}
-          <div className="flex items-center justify-center p-2 bg-primary/10 rounded-lg border border-primary/20">
+          <div className="flex items-center justify-center p-2 bg-primary/10 rounded-lg border border-primary/20 shadow-sm min-w-[40px] h-[40px]">
             <Sparkles className="h-5 w-5 text-primary" />
           </div>
           

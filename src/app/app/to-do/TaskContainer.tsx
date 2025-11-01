@@ -58,13 +58,15 @@ export const TaskContainer = () => {
         {/* Header Card */}
         <Card className="border-2 shadow-lg">
           <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
+                <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
                   <ListTodo className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tight">My Tasks</h1>
+                  <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                    My Tasks
+                  </h1>
                   <p className="text-sm text-muted-foreground">
                     Stay organized and productive
                   </p>
@@ -77,30 +79,30 @@ export const TaskContainer = () => {
 
             {/* Statistics */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-              <div className="p-3 rounded-lg bg-muted/50 border">
+              <div className="p-3 rounded-lg bg-muted/50 border transition-all hover:shadow-md">
                 <div className="flex items-center gap-2 mb-1">
-                  <Circle className="h-4 w-4 text-muted-foreground" />
+                  <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   <span className="text-xs text-muted-foreground">Total</span>
                 </div>
                 <p className="text-2xl font-bold">{totalTasks}</p>
               </div>
-              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 transition-all hover:shadow-md">
                 <div className="flex items-center gap-2 mb-1">
-                  <Clock className="h-4 w-4 text-blue-500" />
+                  <Clock className="h-4 w-4 text-blue-500 flex-shrink-0" />
                   <span className="text-xs text-blue-700 dark:text-blue-400">Not Started</span>
                 </div>
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{notStartedTasks}</p>
               </div>
-              <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+              <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 transition-all hover:shadow-md">
                 <div className="flex items-center gap-2 mb-1">
-                  <TrendingUp className="h-4 w-4 text-orange-500" />
+                  <TrendingUp className="h-4 w-4 text-orange-500 flex-shrink-0" />
                   <span className="text-xs text-orange-700 dark:text-orange-400">Ongoing</span>
                 </div>
                 <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{ongoingTasks}</p>
               </div>
-              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 transition-all hover:shadow-md">
                 <div className="flex items-center gap-2 mb-1">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
                   <span className="text-xs text-green-700 dark:text-green-400">Completed</span>
                 </div>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">{completedTasks}</p>
@@ -113,7 +115,7 @@ export const TaskContainer = () => {
         <TaskForm onAddTask={addTask} />
 
         {/* Filter Buttons */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
           {[
             { value: "all" as FilterStatus, label: "All", icon: ListTodo },
             { value: "not-started" as FilterStatus, label: "Not Started", icon: Circle },
@@ -124,7 +126,7 @@ export const TaskContainer = () => {
               key={value}
               variant={filterStatus === value ? "default" : "outline"}
               onClick={() => setFilterStatus(value)}
-              className="gap-2"
+              className="gap-2 transition-all"
             >
               <Icon className="h-4 w-4" />
               {label}

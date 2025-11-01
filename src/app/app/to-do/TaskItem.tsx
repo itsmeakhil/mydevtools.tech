@@ -67,10 +67,10 @@ export default function TaskItem({
   const StatusIcon = statusConfig.icon;
 
   return (
-    <li className="group relative mb-3 p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md hover:scale-[1.01] bg-card">
+    <li className="group relative mb-3 p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md hover:scale-[1.01] bg-card hover:border-primary/20">
       <div className="flex items-center gap-4">
         {/* Status Icon */}
-        <div className={`p-2 rounded-lg bg-gradient-to-br from-background to-muted transition-transform group-hover:scale-110 ${statusConfig.className}`}>
+        <div className={`flex items-center justify-center p-2 rounded-lg bg-gradient-to-br from-background to-muted transition-transform group-hover:scale-110 ${statusConfig.className} min-w-[40px] h-[40px]`}>
           <StatusIcon className="h-5 w-5" />
         </div>
 
@@ -91,12 +91,6 @@ export default function TaskItem({
           </p>
         </div>
 
-        {/* Status Badge */}
-        <Badge variant={statusConfig.variant} className={`gap-1.5 ${statusConfig.className} hidden sm:flex`}>
-          <StatusIcon className="h-3.5 w-3.5" />
-          {statusConfig.label}
-        </Badge>
-
         {/* Status Dropdown */}
         <Select
           value={task.status}
@@ -104,7 +98,7 @@ export default function TaskItem({
             onUpdateStatus(task.id, newStatus as Task["status"])
           }
         >
-          <SelectTrigger className="w-[140px] hidden sm:flex border-2">
+          <SelectTrigger className="w-[140px] border-2">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
 
@@ -131,7 +125,7 @@ export default function TaskItem({
         </Select>
 
         {/* Delete Button */}
-        <div className="transition-opacity group-hover:opacity-100 opacity-70">
+        <div className="transition-opacity group-hover:opacity-100 opacity-70 flex items-center justify-center min-w-[24px]">
           <DeleteButton onDelete={() => onDeleteTask(task.id)} />
         </div>
       </div>
