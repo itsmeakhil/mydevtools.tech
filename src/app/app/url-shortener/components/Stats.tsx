@@ -96,7 +96,7 @@ function StatCard({
 }: { 
   title: string
   value: number
-  icon: any
+  icon: React.ComponentType<{ className?: string }>
   description: string
   color: string
   bgColor: string

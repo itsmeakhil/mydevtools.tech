@@ -6,7 +6,7 @@
 - [x] Password generator ✅
 - [x] Color converter (hex ↔ RGB ↔ HSL) ✅
 - [x] String case converter (camel, kebab, snake, etc.) ✅
-Medium priority
+##  Medium priority
 SQL formatter
 CSS formatter/minifier
 JavaScript formatter/minifier
@@ -22,7 +22,7 @@ Rate limiter calculator
 API endpoint tester
 Email validator
 Phone number formatter
-Improvements for current tools
+## Improvements for current tools
 Format converter
 Recent conversions history
 Save/bookmark

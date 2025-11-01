@@ -2,7 +2,6 @@
 "use client";
 
 import TaskItem from "./TaskItem";
-import TaskSkeleton from "./components/TaskSkeleton";
 import { FadeIn } from "@/components/ui/fade-in";
 import { Inbox, Loader2 } from "lucide-react";
 

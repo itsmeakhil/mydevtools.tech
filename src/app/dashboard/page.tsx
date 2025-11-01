@@ -65,7 +65,7 @@ const findItemById = (id: string): ToolItem | undefined => {
 
 const DashboardPage: React.FC = () => {
   const { user, loading } = useAuth(false); // Dashboard is public
-  const { favorites, isFavorite, toggleFavorite, isLoading: favoritesLoading } = useFavoriteTool();
+  const { favorites, isFavorite, toggleFavorite } = useFavoriteTool();
   const { getRecentlyUsedTools } = useToolUsage();
   const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -276,7 +276,7 @@ const DashboardPage: React.FC = () => {
               <span className="text-sm text-muted-foreground">Active filters:</span>
               {searchQuery && (
                 <Badge variant="secondary" className="gap-1">
-                  Search: "{searchQuery}"
+                  Search: &quot;{searchQuery}&quot;
                   <button
                     onClick={() => setSearchQuery('')}
                     className="ml-1 hover:text-foreground"
