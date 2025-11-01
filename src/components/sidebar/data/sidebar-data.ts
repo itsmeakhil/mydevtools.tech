@@ -40,6 +40,10 @@ import {
   IconJson,
   IconToml,
   IconSquareRoundedLetterY,
+  IconCode,
+  IconClock,
+  IconPalette,
+  IconLock,
   // IconNotes,
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
@@ -117,6 +121,12 @@ export const sidebarData: SidebarData = {
               description: 'Encrypt passwords securely with Bcrypt.',
               icon:IconShieldCode
 
+            },
+            {
+              title: 'Password Generator',
+              url: '/app/password-generator',
+              description: 'Generate strong, secure passwords with custom options.',
+              icon:IconLock
             },
           ],
         },
@@ -232,6 +242,30 @@ export const sidebarData: SidebarData = {
               url: '/app/json-diff',
               description: 'Compare and find differences between JSON objects.',
               icon:IconBraces
+            },
+            {
+              title: 'Base64 Encoder/Decoder',
+              url: '/app/base64-encoder',
+              description: 'Encode and decode text to/from Base64 format.',
+              icon:IconCode
+            },
+            {
+              title: 'JSON Formatter',
+              url: '/app/json-formatter',
+              description: 'Beautify, validate, and minify JSON data.',
+              icon:IconJson
+            },
+            {
+              title: 'Timestamp Converter',
+              url: '/app/timestamp-converter',
+              description: 'Convert between Unix timestamps and readable dates.',
+              icon:IconClock
+            },
+            {
+              title: 'Color Converter',
+              url: '/app/color-converter',
+              description: 'Convert colors between HEX, RGB, HSL, and CMYK.',
+              icon:IconPalette
             },
           ],
         },
@@ -354,6 +388,12 @@ export const sidebarData: SidebarData = {
               url: '/app/text-diff',
               description: 'Compare two texts and see the differences between them.',
               icon:IconLayersDifference
+            },
+            {
+              title: 'String Case Converter',
+              url: '/app/string-case-converter',
+              description: 'Convert text between camelCase, kebab-case, snake_case, and more.',
+              icon:IconAlignJustified
             },
           ],
         },
