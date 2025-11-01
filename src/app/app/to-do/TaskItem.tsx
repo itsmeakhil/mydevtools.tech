@@ -7,7 +7,6 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import DeleteButton from "../../../components/ui/DeleteButton";
 import { Circle, Clock, TrendingUp, CheckCircle2 } from "lucide-react";
 
