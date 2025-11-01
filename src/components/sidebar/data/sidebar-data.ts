@@ -76,6 +76,12 @@ export const sidebarData: SidebarData = {
           icon: IconUnlink,
           description: 'Shorten long URLs for easy sharing.'
         },
+        {
+          title: 'Markdown Preview',
+          url: '/app/markdown-preview',
+          icon: IconFileDescription,
+          description: 'Write and preview markdown in real-time with GitHub Flavored Markdown support.'
+        },
       ],
     },
     {
@@ -88,13 +94,13 @@ export const sidebarData: SidebarData = {
             {
               title: 'UUID Generator',
               url: '/app/uuid-generator',
-              description: 'Generate unique identifiers for your projects.',
+              description: 'Generate and validate unique identifiers for your projects.',
               icon: IconElevator
             },
             {
               title: 'ULID Generator',
               url: '/app/ulid-generator',
-              description: 'Create time-based unique identifiers.',
+              description: 'Generate and validate time-based unique identifiers.',
               icon: IconElevatorFilled
             },
             {

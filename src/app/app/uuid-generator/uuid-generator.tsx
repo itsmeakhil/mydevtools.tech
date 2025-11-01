@@ -8,7 +8,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { ToolHeader } from "@/components/tools/tool-header"
 import { CopyButton } from "@/components/tools/copy-button"
-import { v1, v3, v4, v5, v6, v7 } from "uuid"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tab"
+import { v1, v3, v4, v5, v6, v7, validate as validateUUID, version as getUUIDVersion } from "uuid"
+import { CheckCircle, XCircle } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
 type UUIDVersion = "NIL" | "v1" | "v3" | "v4" | "v5" | "v6" | "v7"
 type Namespace = "DNS" | "URL" | "OID" | "X500"
@@ -26,6 +29,11 @@ export function UUIDGenerator() {
   const [namespace, setNamespace] = useState<Namespace>("URL")
   const [name, setName] = useState("")
   const [uuids, setUuids] = useState<string[]>([])
+  
+  // Validator state
+  const [validateInput, setValidateInput] = useState("")
+  const [isValid, setIsValid] = useState<boolean | null>(null)
+  const [detectedVersion, setDetectedVersion] = useState<string | null>(null)
 
   const generateUUID = useCallback((version: UUIDVersion): string => {
     switch (version) {
@@ -62,15 +70,44 @@ export function UUIDGenerator() {
 
   const uuidText = uuids.join("\n")
 
+  const handleValidate = () => {
+    if (!validateInput.trim()) {
+      setIsValid(null)
+      setDetectedVersion(null)
+      return
+    }
+
+    const valid = validateUUID(validateInput)
+    setIsValid(valid)
+    
+    if (valid) {
+      try {
+        const ver = getUUIDVersion(validateInput)
+        setDetectedVersion(`v${ver}`)
+      } catch {
+        setDetectedVersion(null)
+      }
+    } else {
+      setDetectedVersion(null)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground p-4">
       <Card className="max-w-4xl mx-auto">
         <ToolHeader
-          title="UUIDs generator"
-          description="Generate Universally Unique Identifiers (UUIDs) of various versions."
+          title="UUID Generator & Validator"
+          description="Generate and validate Universally Unique Identifiers (UUIDs) of various versions."
           toolId="0-0"
         />
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
+          <Tabs defaultValue="generate" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="generate">Generate</TabsTrigger>
+              <TabsTrigger value="validate">Validate</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="generate" className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">UUID version</label>
             <div className="flex flex-wrap gap-2">
@@ -148,6 +185,55 @@ export function UUIDGenerator() {
               disabled={!uuidText}
             />
           </div>
+            </TabsContent>
+            
+            <TabsContent value="validate" className="space-y-4">
+              <div className="space-y-3">
+                <label className="text-sm font-medium">UUID to Validate</label>
+                <div className="flex gap-2">
+                  <Input
+                    value={validateInput}
+                    onChange={(e) => setValidateInput(e.target.value)}
+                    placeholder="Enter UUID to validate (e.g., 550e8400-e29b-41d4-a716-446655440000)"
+                    className="font-mono"
+                  />
+                  <Button onClick={handleValidate} size="default">
+                    Validate
+                  </Button>
+                </div>
+              </div>
+
+              {isValid !== null && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-4 rounded-lg border-2 bg-muted/50">
+                    {isValid ? (
+                      <>
+                        <CheckCircle className="h-6 w-6 text-green-600" />
+                        <div>
+                          <p className="font-semibold text-green-600">Valid UUID</p>
+                          {detectedVersion && (
+                            <p className="text-sm text-muted-foreground">
+                              Detected version: <Badge variant="secondary">{detectedVersion}</Badge>
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-6 w-6 text-red-600" />
+                        <div>
+                          <p className="font-semibold text-red-600">Invalid UUID</p>
+                          <p className="text-sm text-muted-foreground">
+                            The entered string is not a valid UUID format
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
