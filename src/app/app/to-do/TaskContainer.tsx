@@ -6,9 +6,9 @@ import TaskForm from "@/app/app/to-do/TaskForm";
 import TaskList from "@/app/app/to-do/TaskList";
 import PaginationDemo from "@/app/app/to-do/PaginationS";
 import { useTaskContext } from "@/app/app/to-do/context/TaskContext";
-import { Button } from "@/components/ui/button";
 import { ListTodo, CheckCircle2, Circle, Clock, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 type FilterStatus = "all" | "not-started" | "ongoing" | "completed";
 
@@ -20,6 +20,7 @@ export const TaskContainer = () => {
     isLoading,
     currentPage,
     totalPages,
+    allTaskStats,
     fetchNextPage,
     fetchPreviousPage,
     handlePageChange,
@@ -40,14 +41,10 @@ export const TaskContainer = () => {
     }
   );
 
-  // Calculate statistics
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(t => t.status === "completed").length;
-  const ongoingTasks = tasks.filter(t => t.status === "ongoing").length;
-  const notStartedTasks = tasks.filter(t => t.status === "not-started").length;
-  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  // Calculate statistics using all tasks stats
+  const completionRate = allTaskStats.total > 0 ? Math.round((allTaskStats.completed / allTaskStats.total) * 100) : 0;
 
-  // Apply filter
+  // Apply filter to current page tasks
   const filteredTasks = filterStatus === "all" 
     ? sortedTasks 
     : sortedTasks.filter(task => task.status === filterStatus);
@@ -84,28 +81,28 @@ export const TaskContainer = () => {
                   <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   <span className="text-xs text-muted-foreground">Total</span>
                 </div>
-                <p className="text-2xl font-bold">{totalTasks}</p>
+                <p className="text-2xl font-bold">{allTaskStats.total}</p>
               </div>
               <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 transition-all hover:shadow-md text-center">
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <Clock className="h-4 w-4 text-blue-500 flex-shrink-0" />
                   <span className="text-xs text-blue-700 dark:text-blue-400">Not Started</span>
                 </div>
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{notStartedTasks}</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{allTaskStats.notStarted}</p>
               </div>
               <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 transition-all hover:shadow-md text-center">
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <TrendingUp className="h-4 w-4 text-orange-500 flex-shrink-0" />
                   <span className="text-xs text-orange-700 dark:text-orange-400">Ongoing</span>
                 </div>
-                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{ongoingTasks}</p>
+                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{allTaskStats.ongoing}</p>
               </div>
               <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 transition-all hover:shadow-md text-center">
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
                   <span className="text-xs text-green-700 dark:text-green-400">Completed</span>
                 </div>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{completedTasks}</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{allTaskStats.completed}</p>
               </div>
             </div>
           </CardHeader>

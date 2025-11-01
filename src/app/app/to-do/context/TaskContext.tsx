@@ -31,6 +31,13 @@ interface TaskContextType {
   isLoading: boolean;
   currentPage: number;
   totalPages: number;
+  totalTaskCount: number;
+  allTaskStats: {
+    total: number;
+    completed: number;
+    ongoing: number;
+    notStarted: number;
+  };
   fetchNextPage: () => void;
   fetchPreviousPage: () => void;
   handlePageChange: (page: number) => void;
@@ -55,8 +62,15 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [firstDoc, setFirstDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [totalPages, setTotalPages] = useState(0);
+  const [totalTaskCount, setTotalTaskCount] = useState(0);
+  const [allTaskStats, setAllTaskStats] = useState({
+    total: 0,
+    completed: 0,
+    ongoing: 0,
+    notStarted: 0,
+  });
   const [pageCache, setPageCache] = useState<Map<number, QueryDocumentSnapshot<DocumentData>>>(new Map());
-  const tasksPerPage = 7;
+  const tasksPerPage = 10;
   const unsubscribers = useRef<(() => void)[]>([]);
 
   // Modify the cleanup function to be less aggressive
@@ -77,49 +91,8 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     }
   }, [cleanupListeners]);
 
-  // Modified total pages calculation
-  useEffect(() => {
-    if (!user || !user.uid) {
-      cleanupListeners();
-      return;
-    }
-
-    const unsubscribe = onSnapshot(
-      query(
-        collection(db, "tasks"),
-        where("created_by", "==", user.uid),
-        orderBy("createdAt", "desc")
-      ),
-      async (snapshot) => {
-        const actualCount = snapshot.size;
-        const calculatedPages = Math.max(1, Math.ceil(actualCount / tasksPerPage));
-
-        if (calculatedPages !== totalPages) {
-          setTotalPages(calculatedPages);
-          if (currentPage > calculatedPages) {
-            setCurrentPage(calculatedPages);
-            const lastPageQuery = query(
-              collection(db, "tasks"),
-              where("created_by", "==", user.uid),
-              orderBy("createdAt", "desc"),
-              limit(tasksPerPage)
-            );
-            const querySnapshot = await getDocs(lastPageQuery);
-            updateTasksFromSnapshot(querySnapshot);
-          }
-        }
-      },
-      handleFirestoreError
-    );
-
-    unsubscribers.current.push(unsubscribe);
-    return () => {
-      cleanupListeners();
-    };
-  }, [currentPage, totalPages, user, cleanupListeners, handleFirestoreError]);
-
   // Helper function to update tasks from snapshot
-  const updateTasksFromSnapshot = (querySnapshot: QuerySnapshot<DocumentData>) => {
+  const updateTasksFromSnapshot = useCallback((querySnapshot: QuerySnapshot<DocumentData>) => {
     const tasksArray: Task[] = [];
     querySnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
       const data = doc.data();
@@ -139,7 +112,67 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       setFirstDoc(querySnapshot.docs[0]);
       setLastDoc(querySnapshot.docs[querySnapshot.docs.length - 1]);
     }
-  };
+  }, []);
+
+  // Modified total pages calculation
+  useEffect(() => {
+    if (!user || !user.uid) {
+      cleanupListeners();
+      return;
+    }
+
+    const unsubscribe = onSnapshot(
+      query(
+        collection(db, "tasks"),
+        where("created_by", "==", user.uid)
+      ),
+      async (snapshot) => {
+        const actualCount = snapshot.size;
+        const calculatedPages = Math.max(1, Math.ceil(actualCount / tasksPerPage));
+        
+        setTotalTaskCount(actualCount);
+        
+        // Calculate stats from all tasks
+        const stats = {
+          total: actualCount,
+          completed: 0,
+          ongoing: 0,
+          notStarted: 0,
+        };
+        
+        snapshot.forEach((doc) => {
+          const status = doc.data().status;
+          if (status === "completed") stats.completed++;
+          else if (status === "ongoing") stats.ongoing++;
+          else if (status === "not-started") stats.notStarted++;
+        });
+        
+        setAllTaskStats(stats);
+
+        if (calculatedPages !== totalPages) {
+          setTotalPages(calculatedPages);
+          if (currentPage > calculatedPages) {
+            setCurrentPage(calculatedPages);
+            const lastPageQuery = query(
+              collection(db, "tasks"),
+              where("created_by", "==", user.uid),
+              orderBy("statusOrder"),
+              orderBy("createdAt", "desc"),
+              limit(tasksPerPage)
+            );
+            const querySnapshot = await getDocs(lastPageQuery);
+            updateTasksFromSnapshot(querySnapshot);
+          }
+        }
+      },
+      handleFirestoreError
+    );
+
+    unsubscribers.current.push(unsubscribe);
+    return () => {
+      cleanupListeners();
+    };
+  }, [currentPage, totalPages, user, cleanupListeners, handleFirestoreError, updateTasksFromSnapshot]);
 
   // Modified query creation helper function with proper typing
   const createTaskQuery = useCallback(
@@ -254,7 +287,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cleanupListeners();
     };
-  }, [user, createTaskQuery, refreshCurrentPage, cleanupListeners, handleFirestoreError]);
+  }, [user, createTaskQuery, refreshCurrentPage, cleanupListeners, handleFirestoreError, updateTasksFromSnapshot]);
 
   const fetchNextPage = useCallback(() => {
     if (currentPage >= totalPages || !lastDoc || !user || !user.uid) return;
@@ -473,7 +506,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => unsubscribe();
-  }, [user?.uid, currentPage, handleFirestoreError]);
+  }, [user?.uid, currentPage, handleFirestoreError, updateTasksFromSnapshot]);
 
   useEffect(() => {
     return () => {
@@ -488,6 +521,8 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         currentPage,
         totalPages,
+        totalTaskCount,
+        allTaskStats,
         fetchNextPage,
         fetchPreviousPage,
         handlePageChange,

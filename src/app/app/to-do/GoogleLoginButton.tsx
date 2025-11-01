@@ -4,7 +4,6 @@ import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../../../database/firebase';
 import { Button } from '../../../components/ui/button';
 import Image from 'next/image';
-// import { useRouter } from 'next/compat/router';
 import { useRouter } from 'next/navigation';
 
 const GoogleLoginButton = () => {
