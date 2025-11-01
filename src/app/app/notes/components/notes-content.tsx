@@ -51,6 +51,35 @@ const NotesContent = () => {
     return !initialLoadCompleteRef.current;
   };
 
+  const handleCreateNewNote = useCallback(async () => {
+    try {
+      // First save the current note if it exists and has a title
+      if (currentNote && currentNote.id && currentNote.title.trim() !== '') {
+        // Check if it's a temporary note or a real note
+        if (currentNote.id.startsWith('temp-')) {
+          await persistNewNote(currentNote.id, currentNote.title, currentNote.content);
+        } else {
+          await updateNote(currentNote.id, { 
+            title: currentNote.title,
+            content: currentNote.content 
+          });
+        }
+      }
+      
+      // Then create a new note (in memory only until titled)
+      const newNote = await createNewNote();
+      setCurrentNote({
+        id: newNote.id,
+        title: '',  // Start with empty title
+        content: newNote.content as JSONContent
+      });
+      setSaveStatus("Title required to save");
+    } catch (error) {
+      console.error("Failed to create new note:", error);
+      setSaveStatus("Failed to create note");
+    }
+  }, [currentNote, createNewNote, updateNote, persistNewNote]);
+
   // Handle new note creation from URL parameter
   useEffect(() => {
     const handleNewNoteFromUrl = async () => {
@@ -245,35 +274,6 @@ const NotesContent = () => {
     
     return () => clearTimeout(timer);
   }, [currentNote, user, saveStatus, updateNote, persistTemporaryNoteIfNeeded]);
-
-  const handleCreateNewNote = useCallback(async () => {
-    try {
-      // First save the current note if it exists and has a title
-      if (currentNote && currentNote.id && currentNote.title.trim() !== '') {
-        // Check if it's a temporary note or a real note
-        if (currentNote.id.startsWith('temp-')) {
-          await persistNewNote(currentNote.id, currentNote.title, currentNote.content);
-        } else {
-          await updateNote(currentNote.id, { 
-            title: currentNote.title,
-            content: currentNote.content 
-          });
-        }
-      }
-      
-      // Then create a new note (in memory only until titled)
-      const newNote = await createNewNote();
-      setCurrentNote({
-        id: newNote.id,
-        title: '',  // Start with empty title
-        content: newNote.content as JSONContent
-      });
-      setSaveStatus("Title required to save");
-    } catch (error) {
-      console.error("Failed to create new note:", error);
-      setSaveStatus("Failed to create note");
-    }
-  }, [currentNote, createNewNote, updateNote, persistNewNote]);
 
   // ONLY show loading states if we should (first time load)
   if (shouldShowLoadingState()) {
