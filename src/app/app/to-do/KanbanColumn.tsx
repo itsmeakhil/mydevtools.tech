@@ -16,19 +16,19 @@ interface KanbanColumnProps {
 
 const columnConfig = {
   "not-started": {
-    bgColor: "bg-blue-50 dark:bg-blue-950/20",
-    borderColor: "border-blue-200 dark:border-blue-800",
-    headerColor: "text-blue-700 dark:text-blue-300",
+    bgColor: "bg-background",
+    borderColor: "border-border",
+    headerColor: "text-foreground",
   },
   ongoing: {
-    bgColor: "bg-orange-50 dark:bg-orange-950/20",
-    borderColor: "border-orange-200 dark:border-orange-800",
-    headerColor: "text-orange-700 dark:text-orange-300",
+    bgColor: "bg-background",
+    borderColor: "border-border",
+    headerColor: "text-foreground",
   },
   completed: {
-    bgColor: "bg-green-50 dark:bg-green-950/20",
-    borderColor: "border-green-200 dark:border-green-800",
-    headerColor: "text-green-700 dark:text-green-300",
+    bgColor: "bg-background",
+    borderColor: "border-border",
+    headerColor: "text-foreground",
   },
 };
 
@@ -72,7 +72,7 @@ export default function KanbanColumn({
           {tasks.length === 0 ? (
             <div 
               className={`flex items-center justify-center h-32 text-muted-foreground text-sm rounded-lg border-2 border-dashed transition-all ${
-                isOver ? `${config.borderColor} bg-opacity-30` : "border-transparent"
+                isOver ? "border-primary bg-primary/10" : "border-transparent"
               }`}
             >
               {isOver ? "Drop task here" : "No tasks"}
