@@ -7,8 +7,6 @@ import { usePathname } from 'next/navigation';
 
 interface ToolWrapperProps {
   children: ReactNode;
-  title: string;
-  description?: string;
   toolId: string;
   className?: string;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '5xl' | 'full';
@@ -31,8 +29,6 @@ const maxWidthClasses = {
  */
 export function ToolWrapper({
   children,
-  title,
-  description,
   toolId,
   className = '',
   maxWidth = '4xl',

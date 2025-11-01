@@ -12,8 +12,8 @@ import { requiresAuth } from './tool-config';
 export function getAllToolsMetadata(): ToolMetadata[] {
   const tools: ToolMetadata[] = [];
 
-  sidebarData.navGroups.forEach((group, groupIndex) => {
-    group.items.forEach((item, itemIndex) => {
+  sidebarData.navGroups.forEach((group) => {
+    group.items.forEach((item) => {
       if (!item.items) {
         // Top-level item
         if (item.url) {
@@ -32,7 +32,7 @@ export function getAllToolsMetadata(): ToolMetadata[] {
         }
       } else {
         // Nested items
-        item.items.forEach((subItem, subIndex) => {
+        item.items.forEach((subItem) => {
           if (subItem.url) {
             const url = typeof subItem.url === 'string' ? subItem.url : subItem.url.toString();
             tools.push({

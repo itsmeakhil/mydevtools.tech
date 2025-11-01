@@ -326,7 +326,6 @@ export function NavBar() {
                                 ? "bg-primary/10 text-primary font-semibold ring-1 ring-primary"
                                 : "bg-muted/50 hover:bg-muted/70"
                             }`}
-                            aria-selected={selectedIndex === combinedIndex}
                           >
                             {result.icon && (
                               <result.icon className={`h-5 w-5 ${
@@ -378,7 +377,6 @@ export function NavBar() {
                                 ? "bg-primary/10 text-primary font-semibold ring-1 ring-primary"
                                 : "bg-muted/50 hover:bg-muted/70"
                             }`}
-                            aria-selected={selectedIndex === combinedIndex}
                           >
                             <div className="font-medium">{result.title}</div>
                           </a>

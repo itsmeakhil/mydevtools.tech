@@ -14,11 +14,7 @@ export const AUTH_REQUIRED_URLS = [
  */
 export function requiresAuth(url: string): boolean {
   // Check exact matches
-  if (AUTH_REQUIRED_URLS.includes(url as any)) {
-    return true;
-  }
-  
-  return false;
+  return AUTH_REQUIRED_URLS.some(authUrl => authUrl === url);
 }
 
 /**
