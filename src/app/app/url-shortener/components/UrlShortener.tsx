@@ -91,14 +91,14 @@ export default function UrlShortener() {
     <>
       {/* Main Form Card */}
       <Card className={`border-2 shadow-lg transition-all duration-300 ${isFocused ? 'ring-2 ring-primary/20' : ''}`}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <div className="p-2 bg-primary/10 rounded-lg">
+        <CardHeader className="text-center">
+          <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
-            Shorten Your URL
+            URL Shortener
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-center">
             Enter a long URL and get a short, shareable link instantly
           </CardDescription>
         </CardHeader>
