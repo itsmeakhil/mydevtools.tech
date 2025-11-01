@@ -1,15 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import TaskForm from "@/app/app/to-do/TaskForm";
 import TaskList from "@/app/app/to-do/TaskList";
+import KanbanBoard from "@/app/app/to-do/KanbanBoard";
 import PaginationDemo from "@/app/app/to-do/PaginationS";
 import { useTaskContext } from "@/app/app/to-do/context/TaskContext";
-import { ListTodo, CheckCircle2, Circle, Clock, TrendingUp } from "lucide-react";
+import { ListTodo, CheckCircle2, Circle, Clock, TrendingUp, LayoutGrid, List } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export const TaskContainer = () => {
+  const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
   const {
     tasks,
     isLoading,
@@ -26,7 +30,13 @@ export const TaskContainer = () => {
     deleteTask,
   } = useTaskContext();
 
-  const sortedTasks = [...tasks].sort(
+  // Filter tasks based on filterStatus for list view
+  // For kanban view, always show all tasks (filtering is handled by columns)
+  const filteredTasks = viewMode === "kanban" || filterStatus === "all"
+    ? tasks
+    : tasks.filter(task => task.status === filterStatus);
+
+  const sortedTasks = [...filteredTasks].sort(
     (a: { status: "ongoing" | "not-started" | "completed" }, 
      b: { status: "ongoing" | "not-started" | "completed" }) => {
       const statusOrder: { [key in "ongoing" | "not-started" | "completed"]: number } = {
@@ -103,53 +113,91 @@ export const TaskContainer = () => {
         {/* Task Form */}
         <TaskForm onAddTask={addTask} />
 
-        {/* Filter Buttons */}
-        <div className="flex flex-wrap gap-2 items-center">
-          {[
-            { value: "all" as const, label: "All", icon: ListTodo },
-            { value: "not-started" as const, label: "Not Started", icon: Circle },
-            { value: "ongoing" as const, label: "Ongoing", icon: TrendingUp },
-            { value: "completed" as const, label: "Completed", icon: CheckCircle2 },
-          ].map(({ value, label, icon: Icon }) => (
-            <Button
-              key={value}
-              variant={filterStatus === value ? "default" : "outline"}
-              onClick={() => setFilterStatus(value)}
-              className="gap-2 transition-all"
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </Button>
-          ))}
+        {/* View Mode Toggle and Filter Buttons */}
+        <div className="flex flex-wrap gap-4 items-center justify-between">
+          <div className="flex flex-wrap gap-2 items-center">
+            {[
+              { value: "all" as const, label: "All", icon: ListTodo },
+              { value: "not-started" as const, label: "Not Started", icon: Circle },
+              { value: "ongoing" as const, label: "Ongoing", icon: TrendingUp },
+              { value: "completed" as const, label: "Completed", icon: CheckCircle2 },
+            ].map(({ value, label, icon: Icon }) => (
+              <Button
+                key={value}
+                variant={filterStatus === value ? "default" : "outline"}
+                onClick={() => setFilterStatus(value)}
+                className="gap-2 transition-all"
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </Button>
+            ))}
+          </div>
+          
+          {/* View Toggle */}
+          <ToggleGroup
+            type="single"
+            value={viewMode}
+            onValueChange={(value) => {
+              if (value) setViewMode(value as "list" | "kanban");
+            }}
+            className="border rounded-md"
+          >
+            <ToggleGroupItem value="kanban" aria-label="Kanban view" className="gap-2">
+              <LayoutGrid className="h-4 w-4" />
+              <span className="hidden sm:inline">Kanban</span>
+            </ToggleGroupItem>
+            <ToggleGroupItem value="list" aria-label="List view" className="gap-2">
+              <List className="h-4 w-4" />
+              <span className="hidden sm:inline">List</span>
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
 
-        {/* Task List Card */}
-        <Card className="border-2 shadow-lg">
-          <CardContent className="p-6">
-            <div className="min-h-[400px]">
-              <TaskList
-                tasks={sortedTasks}
-                isLoading={isLoading}
-                onUpdateStatus={updateTaskStatus}
-                onDeleteTask={deleteTask}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <Card>
-            <CardContent className="p-4">
-              <PaginationDemo
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onNextPage={fetchNextPage}
-                onPreviousPage={fetchPreviousPage}
-                onPageChange={handlePageChange}
-              />
+        {/* Task View */}
+        {viewMode === "kanban" ? (
+          <Card className="border-2 shadow-lg">
+            <CardContent className="p-6">
+              <div className="min-h-[600px]">
+                <KanbanBoard
+                  tasks={sortedTasks}
+                  isLoading={isLoading}
+                  onUpdateStatus={updateTaskStatus}
+                  onDeleteTask={deleteTask}
+                />
+              </div>
             </CardContent>
           </Card>
+        ) : (
+          <>
+            <Card className="border-2 shadow-lg">
+              <CardContent className="p-6">
+                <div className="min-h-[400px]">
+                  <TaskList
+                    tasks={sortedTasks}
+                    isLoading={isLoading}
+                    onUpdateStatus={updateTaskStatus}
+                    onDeleteTask={deleteTask}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <Card>
+                <CardContent className="p-4">
+                  <PaginationDemo
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onNextPage={fetchNextPage}
+                    onPreviousPage={fetchPreviousPage}
+                    onPageChange={handlePageChange}
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </>
         )}
       </div>
     </div>
