@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import TaskForm from "@/app/app/to-do/TaskForm";
 import TaskList from "@/app/app/to-do/TaskList";
@@ -10,16 +9,14 @@ import { ListTodo, CheckCircle2, Circle, Clock, TrendingUp } from "lucide-react"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-type FilterStatus = "all" | "not-started" | "ongoing" | "completed";
-
 export const TaskContainer = () => {
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
-  
   const {
     tasks,
     isLoading,
     currentPage,
     totalPages,
+    filterStatus,
+    setFilterStatus,
     allTaskStats,
     fetchNextPage,
     fetchPreviousPage,
@@ -43,11 +40,6 @@ export const TaskContainer = () => {
 
   // Calculate statistics using all tasks stats
   const completionRate = allTaskStats.total > 0 ? Math.round((allTaskStats.completed / allTaskStats.total) * 100) : 0;
-
-  // Apply filter to current page tasks
-  const filteredTasks = filterStatus === "all" 
-    ? sortedTasks 
-    : sortedTasks.filter(task => task.status === filterStatus);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
@@ -114,10 +106,10 @@ export const TaskContainer = () => {
         {/* Filter Buttons */}
         <div className="flex flex-wrap gap-2 items-center">
           {[
-            { value: "all" as FilterStatus, label: "All", icon: ListTodo },
-            { value: "not-started" as FilterStatus, label: "Not Started", icon: Circle },
-            { value: "ongoing" as FilterStatus, label: "Ongoing", icon: TrendingUp },
-            { value: "completed" as FilterStatus, label: "Completed", icon: CheckCircle2 },
+            { value: "all" as const, label: "All", icon: ListTodo },
+            { value: "not-started" as const, label: "Not Started", icon: Circle },
+            { value: "ongoing" as const, label: "Ongoing", icon: TrendingUp },
+            { value: "completed" as const, label: "Completed", icon: CheckCircle2 },
           ].map(({ value, label, icon: Icon }) => (
             <Button
               key={value}
@@ -136,7 +128,7 @@ export const TaskContainer = () => {
           <CardContent className="p-6">
             <div className="min-h-[400px]">
               <TaskList
-                tasks={filteredTasks}
+                tasks={sortedTasks}
                 isLoading={isLoading}
                 onUpdateStatus={updateTaskStatus}
                 onDeleteTask={deleteTask}

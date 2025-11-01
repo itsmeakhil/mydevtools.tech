@@ -32,6 +32,8 @@ interface TaskContextType {
   currentPage: number;
   totalPages: number;
   totalTaskCount: number;
+  filterStatus: "all" | "not-started" | "ongoing" | "completed";
+  setFilterStatus: (status: "all" | "not-started" | "ongoing" | "completed") => void;
   allTaskStats: {
     total: number;
     completed: number;
@@ -63,6 +65,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const [firstDoc, setFirstDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [totalPages, setTotalPages] = useState(0);
   const [totalTaskCount, setTotalTaskCount] = useState(0);
+  const [filterStatus, setFilterStatus] = useState<"all" | "not-started" | "ongoing" | "completed">("all");
   const [allTaskStats, setAllTaskStats] = useState({
     total: 0,
     completed: 0,
@@ -179,10 +182,19 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     (baseQuery: boolean) => {
       if (!user?.uid) return null;
 
+      const constraints = [
+        where("created_by", "==", user.uid),
+      ];
+
+      // Add filter if not "all"
+      if (filterStatus !== "all") {
+        constraints.push(where("status", "==", filterStatus));
+      }
+
       if (baseQuery) {
         return query(
           collection(db, "tasks"),
-          where("created_by", "==", user.uid),
+          ...constraints,
           orderBy("statusOrder"),
           orderBy("createdAt", "desc"),
           limit(tasksPerPage)
@@ -190,12 +202,12 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       }
       return query(
         collection(db, "tasks"),
-        where("created_by", "==", user.uid),
+        ...constraints,
         orderBy("statusOrder"),
         orderBy("createdAt", "desc")
       );
     },
-    [user?.uid, tasksPerPage]
+    [user?.uid, tasksPerPage, filterStatus]
   );
 
   // Add this new function to refresh current page
@@ -204,9 +216,17 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     try {
+      const constraints = [
+        where("created_by", "==", user.uid),
+      ];
+
+      if (filterStatus !== "all") {
+        constraints.push(where("status", "==", filterStatus));
+      }
+
       const q = query(
         collection(db, "tasks"),
-        where("created_by", "==", user.uid),
+        ...constraints,
         orderBy("statusOrder"),
         orderBy("createdAt", "desc"),
         limit(currentPage * tasksPerPage)
@@ -244,9 +264,11 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         setLastDoc(pageDocs[pageDocs.length - 1]);
       }
 
-      const totalDocs = await getDocs(
-        query(collection(db, "tasks"), where("created_by", "==", user.uid))
+      const totalDocsQuery = query(
+        collection(db, "tasks"),
+        ...constraints
       );
+      const totalDocs = await getDocs(totalDocsQuery);
       setTotalPages(Math.max(1, Math.ceil(totalDocs.size / tasksPerPage)));
 
       const newCache = new Map<number, QueryDocumentSnapshot<DocumentData>>();
@@ -260,7 +282,13 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.uid, currentPage, tasksPerPage]);
+  }, [user?.uid, currentPage, tasksPerPage, filterStatus]);
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+    setPageCache(new Map());
+  }, [filterStatus]);
 
   // Initial page load
   useEffect(() => {
@@ -287,13 +315,22 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cleanupListeners();
     };
-  }, [user, createTaskQuery, refreshCurrentPage, cleanupListeners, handleFirestoreError, updateTasksFromSnapshot]);
+  }, [user, createTaskQuery, refreshCurrentPage, cleanupListeners, handleFirestoreError, updateTasksFromSnapshot, filterStatus]);
 
   const fetchNextPage = useCallback(() => {
     if (currentPage >= totalPages || !lastDoc || !user || !user.uid) return;
+    
+    const constraints = [
+      where("created_by", "==", user.uid),
+    ];
+
+    if (filterStatus !== "all") {
+      constraints.push(where("status", "==", filterStatus));
+    }
+
     const q = query(
       collection(db, "tasks"),
-      where("created_by", "==", user.uid),
+      ...constraints,
       orderBy("statusOrder"),
       orderBy("createdAt", "desc"),
       startAfter(lastDoc),
@@ -317,13 +354,22 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     );
 
     unsubscribers.current.push(unsubscribe);
-  }, [currentPage, totalPages, lastDoc, user, handleFirestoreError]);
+  }, [currentPage, totalPages, lastDoc, user, handleFirestoreError, filterStatus, updateTasksFromSnapshot]);
 
   const fetchPreviousPage = useCallback(() => {
     if (currentPage <= 1 || !firstDoc || !user || !user.uid) return;
+    
+    const constraints = [
+      where("created_by", "==", user.uid),
+    ];
+
+    if (filterStatus !== "all") {
+      constraints.push(where("status", "==", filterStatus));
+    }
+
     const q = query(
       collection(db, "tasks"),
-      where("created_by", "==", user.uid),
+      ...constraints,
       orderBy("statusOrder"),
       orderBy("createdAt", "desc"),
       endBefore(firstDoc),
@@ -347,7 +393,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     );
 
     unsubscribers.current.push(unsubscribe);
-  }, [currentPage, firstDoc, user, handleFirestoreError]);
+  }, [currentPage, firstDoc, user, handleFirestoreError, filterStatus, updateTasksFromSnapshot]);
 
   const handlePageChange = async (page: number) => {
     if (page === currentPage || page > totalPages || page < 1 || !user || !user.uid) return;
@@ -361,11 +407,19 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    const constraints = [
+      where("created_by", "==", user.uid),
+    ];
+
+    if (filterStatus !== "all") {
+      constraints.push(where("status", "==", filterStatus));
+    }
+
     const cachedDoc = pageCache.get(page);
     if (cachedDoc) {
       const q = query(
         collection(db, "tasks"),
-        where("created_by", "==", user.uid),
+        ...constraints,
         orderBy("statusOrder"),
         orderBy("createdAt", "desc"),
         startAfter(cachedDoc),
@@ -381,7 +435,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
     const q = query(
       collection(db, "tasks"),
-      where("created_by", "==", user.uid),
+      ...constraints,
       orderBy("statusOrder"),
       orderBy("createdAt", "desc"),
       limit(page * tasksPerPage)
@@ -487,9 +541,17 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user?.uid) return;
 
+    const constraints = [
+      where("created_by", "==", user.uid),
+    ];
+
+    if (filterStatus !== "all") {
+      constraints.push(where("status", "==", filterStatus));
+    }
+
     const q = query(
       collection(db, "tasks"),
-      where("created_by", "==", user.uid),
+      ...constraints,
       orderBy("statusOrder"),
       orderBy("createdAt", "desc"),
       limit(tasksPerPage)
@@ -506,7 +568,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => unsubscribe();
-  }, [user?.uid, currentPage, handleFirestoreError, updateTasksFromSnapshot]);
+  }, [user?.uid, currentPage, handleFirestoreError, updateTasksFromSnapshot, filterStatus]);
 
   useEffect(() => {
     return () => {
@@ -522,6 +584,8 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         currentPage,
         totalPages,
         totalTaskCount,
+        filterStatus,
+        setFilterStatus,
         allTaskStats,
         fetchNextPage,
         fetchPreviousPage,
