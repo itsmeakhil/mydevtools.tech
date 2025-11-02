@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent } from "@/components/ui/card"
-import { Heart } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { BarChart3 } from "lucide-react"
 
 
 
@@ -18,7 +17,6 @@ export default function TextStatistics() {
   })
  
   const [mounted, setMounted] = useState(false)
-  const [favorite, setFavorite] = useState(false)
 
   // Calculate statistics whenever text changes
   useEffect(() => {
@@ -45,25 +43,27 @@ export default function TextStatistics() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center m-10 p-4 transition-colors bg-background">
-      <Card className="w-full max-w-3xl shadow-lg">
-        <CardContent className="p-6">
-          <div className="flex justify-between items-center mb-2">
-            <h1 className="text-4xl font-bold text-foreground">Text statistics</h1>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="icon" onClick={() => setFavorite(!favorite)} className="rounded-full">
-                <Heart className={`h-5 w-5 ${favorite ? "fill-primary" : ""}`} />
-              </Button>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <Card className="border-2 shadow-lg">
+          <CardHeader>
+            <div className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+                <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                </div>
+                Text Statistics
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Get information about a text, the number of characters, the number of words, its size in bytes, ...
+              </CardDescription>
             </div>
-          </div>
-
-          <p className="text-muted-foreground mb-6">
-            Get information about a text, the number of characters, the number of words, its size in bytes, ...
-          </p>
+          </CardHeader>
+          <CardContent className="space-y-6">
 
           <Textarea
             placeholder="Your text..."
-            className="min-h-32 mb-6 border-primary focus-visible:ring-primary"
+            className="min-h-32 border-primary focus-visible:ring-primary"
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
@@ -86,8 +86,9 @@ export default function TextStatistics() {
               <p className="text-2xl font-medium">{stats.bytes} Bytes</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

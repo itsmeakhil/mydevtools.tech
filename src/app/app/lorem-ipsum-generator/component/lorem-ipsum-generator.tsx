@@ -1,14 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Heart } from 'lucide-react'
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { FileText } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { cn } from "@/lib/utils"
 
 
 
@@ -24,7 +23,6 @@ interface SliderWithTooltipProps {
 }
 
 export default function LoremIpsumGenerator() {
-  const [isFavorite, setIsFavorite] = useState(false)
   const [paragraphs, setParagraphs] = useState(1)
   const [sentencesPerParagraph, setSentencesPerParagraph] = useState(3)
   const [wordsPerSentence, setWordsPerSentence] = useState(8)
@@ -192,27 +190,24 @@ export default function LoremIpsumGenerator() {
   
 
   return (
-    <div className="flex justify-center items-center p-4 min-h-[600px]">
-      <Card className="w-full max-w-2xl shadow-lg">
-        <CardHeader className="relative pb-2">
-          <div className="absolute right-6 top-6">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsFavorite(!isFavorite)}
-              className="text-muted-foreground hover:text-primary"
-            >
-              <Heart className={cn("h-6 w-6", isFavorite ? "fill-primary text-primary" : "")} />
-              <span className="sr-only">Toggle favorite</span>
-            </Button>
-          </div>
-          <h1 className="text-3xl font-bold text-center">Lorem ipsum generator</h1>
-          <p className="text-center text-muted-foreground mt-2">
-            Lorem ipsum is a placeholder text commonly used to demonstrate the visual form of a document
-            or a typeface without relying on meaningful content
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-6 pt-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <Card className="border-2 shadow-lg">
+          <CardHeader>
+            <div className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+                <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+                  <FileText className="h-5 w-5 text-primary" />
+                </div>
+                Lorem Ipsum Generator
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Lorem ipsum is a placeholder text commonly used to demonstrate the visual form of a document
+                or a typeface without relying on meaningful content
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
           <div className="space-y-5 bg-muted/30 p-6 rounded-lg">
             <div className="space-y-6">
               <div className="flex justify-between items-center">
@@ -291,8 +286,9 @@ export default function LoremIpsumGenerator() {
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
