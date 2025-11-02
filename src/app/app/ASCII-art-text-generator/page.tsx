@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from 'next-themes';
-import { CopyIcon, HeartIcon, SearchIcon, CheckIcon } from 'lucide-react';
+import { CopyIcon, SearchIcon, CheckIcon, Type } from 'lucide-react';
 import figlet from 'figlet';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 // Font options moved outside component to avoid recreation on each render
 const FONT_OPTIONS: string[] = [
@@ -47,7 +48,6 @@ const AsciiArtGenerator = () => {
   const [fontStyle, setFontStyle] = useState<string>('Weird');
   const [width, setWidth] = useState(33);
   const [asciiOutput, setAsciiOutput] = useState('');
-  const [isFavorite, setIsFavorite] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -161,20 +161,23 @@ const AsciiArtGenerator = () => {
 
   // Main component render
   return (
-    <div className={`max-w-4xl mx-auto p-6 min-h-screen ${getThemeClasses('bg-gray-900 text-white', 'bg-gray-100 text-gray-900')}`}>
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className={`text-4xl font-bold ${getThemeClasses('text-white', 'text-gray-900')}`}>
-          ASCII Art Text Generator
-        </h1>
-        <div className={`border-t ${getThemeClasses('border-gray-600', 'border-gray-300')} w-1/3 mx-auto my-4`}></div>
-        <p className={getThemeClasses('text-gray-400', 'text-gray-600')}>
-          Create ASCII art text with many fonts and styles.
-        </p>
-      </div>
-
-      {/* Main content */}
-      <div className={`${getThemeClasses('bg-gray-800', 'bg-white')} rounded-lg p-6 shadow-lg`}>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <Card className="border-2 shadow-lg">
+          <CardHeader>
+            <div className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+                <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+                  <Type className="h-5 w-5 text-primary" />
+                </div>
+                ASCII Art Text Generator
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Create ASCII art text with many fonts and styles.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
         {/* Input Section */}
         <div className="mb-6">
           <label htmlFor="textInput" className="block mb-2">Your text:</label>
@@ -284,12 +287,6 @@ const AsciiArtGenerator = () => {
         <div className="mb-6 relative">
           <div className="flex justify-between items-center mb-2">
             <label>ASCII Art text:</label>
-            <button
-              onClick={() => setIsFavorite(!isFavorite)}
-              className={`${getThemeClasses('text-gray-400 hover:text-white', 'text-gray-600 hover:text-gray-900')} focus:outline-none`}
-            >
-              <HeartIcon className={`h-6 w-6 ${isFavorite ? 'text-red-500 fill-red-500' : ''}`} />
-            </button>
           </div>
 
           {/* Loading state */}
@@ -332,6 +329,8 @@ const AsciiArtGenerator = () => {
             </div>
           )}
         </div>
+        </CardContent>
+        </Card>
       </div>
     </div>
   );

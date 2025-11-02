@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useTheme } from "next-themes";
+import { Smile } from "lucide-react";
 import localEmojis from "./emojis.json"; // Import the local emoji data
 
 // Emoji interface definition
@@ -103,135 +105,94 @@ export default function EmojiPicker() {
   }
 
   return (
-    <div
-      className={`min-h-screen p-4 ${
-        theme === "dark" ? "bg-black text-white" : "bg-white text-black"
-      }`}
-    >
-      <div className="w-full max-w-7xl mx-auto space-y-6">
-        <h1
-          className={`text-2xl font-bold text-center mb-6 ${
-            theme === "dark" ? "text-gray-300" : "text-gray-700"
-          }`}
-        >
-          Emoji Picker
-        </h1>
-        <p
-          className={`text-center ${
-            theme === "dark" ? "text-white" : "text-black"
-          }`}
-        >
-          Copy and paste emojis easily and get the unicode and code points value
-          of each emoji.
-        </p>
-
-        <div className="relative mb-8">
-          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className={theme === "dark" ? "text-gray-400" : "text-gray-600"}
-            >
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-          </div>
-          <Input
-            placeholder="Search by name, unicode (\\u{...}) or code point (0x...)"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className={`pl-10 py-2 ${
-              theme === "dark"
-                ? "bg-gray-800 border-black-500 focus:ring-black-500 focus:border-black-500 text-white"
-                : "bg-gray-100 border-gray-300 focus:ring-gray-400 focus:border-gray-400 text-black"
-            } w-full rounded-md`}
-          />
-        </div>
-
-        <h2 className="text-xl font-bold mb-4">
-          {search.trim() !== "" ? "Search results" : "All emojis"}
-        </h2>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {filteredEmojis.map((emoji, index) => (
-            <div
-              key={`${emoji.codePoint}-${index}`} // Unique key
-              className={`p-2 rounded-lg flex flex-col items-center text-center ${
-                theme === "dark" ? "bg-gray-700" : "bg-gray-100"
-              }`}
-            >
-              <div className="flex flex-col items-center gap-1">
-                <span
-                  className="text-3xl cursor-pointer mb-1"
-                  onClick={() => copyToClipboard(emoji.character)}
-                  title="Click to copy emoji"
-                >
-                  {emoji.character}
-                </span>
-                <p
-                  className={`text-xs font-medium truncate w-full ${
-                    theme === "dark" ? "text-gray-300" : "text-gray-700"
-                  }`}
-                >
-                  {(emoji.unicodeName || "Emoji")
-                    .split(" ")
-                    .slice(0, 3)
-                    .join(" ")}
-                  {(emoji.unicodeName || "").split(" ").length > 3 ? "..." : ""}
-                </p>
-              </div>
-              <div
-                className={`text-xs font-mono mt-1 ${
-                  theme === "dark" ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
-                <div className="flex justify-center">
-                  <span
-                    className={`cursor-pointer ${
-                      theme === "dark" ? "hover:text-white" : "hover:text-black"
-                    }`}
-                    onClick={() =>
-                      copyToClipboard(formatCodeDisplay(emoji.codePoint))
-                    }
-                    title="Click to copy code point"
-                  >
-                    {formatCodeDisplay(emoji.codePoint)}
-                  </span>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <Card className="border-2 shadow-lg">
+          <CardHeader>
+            <div className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+                <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+                  <Smile className="h-5 w-5 text-primary" />
                 </div>
-                <div className="flex justify-center">
-                  <span
-                    className={`cursor-pointer ${
-                      theme === "dark" ? "hover:text-white" : "hover:text-black"
-                    }`}
-                    onClick={() =>
-                      copyToClipboard(formatUnicodeDisplay(emoji.codePoint))
-                    }
-                    title="Click to copy unicode"
+                Emoji Picker
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Copy and paste emojis easily and get the unicode and code points value
+                of each emoji.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <Input
+                placeholder="Search by name, unicode (\\u{...}) or code point (0x...)"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full"
+              />
+
+              <h2 className="text-xl font-bold">
+                {search.trim() !== "" ? "Search results" : "All emojis"}
+              </h2>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {filteredEmojis.map((emoji, index) => (
+                  <div
+                    key={`${emoji.codePoint}-${index}`}
+                    className="p-2 rounded-lg flex flex-col items-center text-center bg-muted hover:bg-muted/80 transition-colors"
                   >
-                    {formatUnicodeDisplay(emoji.codePoint)}
-                  </span>
-                </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <span
+                        className="text-3xl cursor-pointer mb-1"
+                        onClick={() => copyToClipboard(emoji.character)}
+                        title="Click to copy emoji"
+                      >
+                        {emoji.character}
+                      </span>
+                      <p className="text-xs font-medium truncate w-full text-muted-foreground">
+                        {(emoji.unicodeName || "Emoji")
+                          .split(" ")
+                          .slice(0, 3)
+                          .join(" ")}
+                        {(emoji.unicodeName || "").split(" ").length > 3 ? "..." : ""}
+                      </p>
+                    </div>
+                    <div className="text-xs font-mono mt-1 text-muted-foreground">
+                      <div className="flex justify-center">
+                        <span
+                          className="cursor-pointer hover:text-primary"
+                          onClick={() =>
+                            copyToClipboard(formatCodeDisplay(emoji.codePoint))
+                          }
+                          title="Click to copy code point"
+                        >
+                          {formatCodeDisplay(emoji.codePoint)}
+                        </span>
+                      </div>
+                      <div className="flex justify-center">
+                        <span
+                          className="cursor-pointer hover:text-primary"
+                          onClick={() =>
+                            copyToClipboard(formatUnicodeDisplay(emoji.codePoint))
+                          }
+                          title="Click to copy unicode"
+                        >
+                          {formatUnicodeDisplay(emoji.codePoint)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
 
-        {filteredEmojis.length === 0 && (
-          <div
-            className={`text-center py-10 ${
-              theme === "dark" ? "text-gray-400" : "text-gray-600"
-            }`}
-          >
-            No emojis found matching &quot;{search}&quot;
-          </div>
-        )}
+            {filteredEmojis.length === 0 && (
+              <div className="text-center py-10 text-muted-foreground">
+                No emojis found matching &quot;{search}&quot;
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {copiedText && (
           <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-md shadow-lg z-50">
