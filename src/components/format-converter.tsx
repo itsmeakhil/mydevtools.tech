@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Copy } from "lucide-react"
+import { Copy, Repeat2 } from "lucide-react"
 // import { useTheme } from "next-themes"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -56,8 +56,13 @@ export function FormatConverter({ type, config }: FormatConverterProps) {
     <Card className="border-2 shadow-lg w-full">
       <CardHeader className="pb-8">
         <div className="text-center">
-          <CardTitle className="text-2xl font-bold text-primary">{config.title}</CardTitle>
-          <CardDescription>{config.description}</CardDescription>
+          <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+            <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+              <Repeat2 className="h-5 w-5 text-primary" />
+            </div>
+            {config.title}
+          </CardTitle>
+          <CardDescription className="mt-2">{config.description}</CardDescription>
         </div>
       </CardHeader>
       <CardContent>

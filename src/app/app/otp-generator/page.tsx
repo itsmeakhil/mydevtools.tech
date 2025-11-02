@@ -13,24 +13,7 @@ import { authenticator } from "otplib"
 export default function OTPGenerator() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-8">
-        {/* Hero Section */}
-        <Card className="border-2 shadow-lg bg-gradient-to-br from-primary/5 via-primary/5 to-muted/10">
-          <div className="p-8 md:p-12 text-center space-y-4">
-            <div className="flex items-center justify-center mb-4">
-              <div className="p-3 bg-primary/10 rounded-full">
-                <ShieldCheck className="h-8 w-8 text-primary" />
-              </div>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              OTP Code Generator
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Generate and validate time-based OTP (one time password) for multi-factor authentication.
-            </p>
-          </div>
-        </Card>
-
+      <div className="max-w-5xl mx-auto space-y-6">
         {/* Main Generator */}
         <OTPGeneratorMain />
       </div>
@@ -152,124 +135,126 @@ function OTPGeneratorMain() {
     <Card className="border-2 shadow-lg">
       <CardHeader>
         <div className="text-center">
-          <CardTitle className="text-3xl md:text-4xl mb-2">
-            Live OTP Codes
+          <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+            <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+            </div>
+            OTP Code Generator
           </CardTitle>
-          <CardDescription>
-            Time-based codes that update every 30 seconds
+          <CardDescription className="mt-2">
+            Generate and validate time-based OTP (one time password) for multi-factor authentication.
           </CardDescription>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-          {/* Secret Fields */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Secret</label>
-              <div className="flex gap-2">
-                <Input value={secret} readOnly />
-                <Button variant="outline" size="icon" onClick={() => copyToClipboard(secret, "Secret")}>
-                  <Copy className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="icon" onClick={regenerateSecret}>
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-              </div>
+        {/* Secret Fields */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Secret</label>
+            <div className="flex gap-2">
+              <Input value={secret} readOnly />
+              <Button variant="outline" size="icon" onClick={() => copyToClipboard(secret, "Secret")}>
+                <Copy className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="icon" onClick={regenerateSecret}>
+                <RotateCcw className="h-4 w-4" />
+              </Button>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Secret in hexadecimal</label>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Secret in hexadecimal</label>
+            <div className="flex gap-2">
+              <Input value={hexSecret} readOnly />
+              <Button variant="outline" size="icon" onClick={() => copyToClipboard(hexSecret, "Hexadecimal secret")}>
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* OTP Display */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <div className="text-sm font-medium mb-2">Previous</div>
+              <div className="bg-muted p-3 rounded-md">{otps.previous}</div>
+            </div>
+            <div>
+              <div className="text-sm font-medium mb-2">Current OTP</div>
+              <div className="bg-primary/10 p-3 rounded-md text-xl font-bold">{otps.current}</div>
+            </div>
+            <div>
+              <div className="text-sm font-medium mb-2">Next</div>
+              <div className="bg-muted p-3 rounded-md">{otps.next}</div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Next in {timeLeft}s</span>
+              <span>Epoch</span>
+            </div>
+            <div className="flex gap-2">
+              <Progress value={progress} className="flex-1 transition-all duration-300" />
               <div className="flex gap-2">
-                <Input value={hexSecret} readOnly />
-                <Button variant="outline" size="icon" onClick={() => copyToClipboard(hexSecret, "Hexadecimal secret")}>
+                <Input value={epoch} readOnly className="w-32" />
+                <Button variant="outline" size="icon" onClick={() => copyToClipboard(epoch, "Epoch")}>
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* OTP Display */}
+        {/* QR Code and Details Section */}
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* QR Code */}
+          <div className="flex justify-center items-start">
+            <QRCodeSVG
+              value={`otpauth://totp/Example:user@example.com?secret=${secret}&issuer=Example`}
+              size={200}
+              level="H"
+              includeMargin={true}
+            />
+          </div>
+
+          {/* Details Section */}
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-sm font-medium mb-2">Previous</div>
-                <div className="bg-muted p-3 rounded-md">{otps.previous}</div>
-              </div>
-              <div>
-                <div className="text-sm font-medium mb-2">Current OTP</div>
-                <div className="bg-primary/10 p-3 rounded-md text-xl font-bold">{otps.current}</div>
-              </div>
-              <div>
-                <div className="text-sm font-medium mb-2">Next</div>
-                <div className="bg-muted p-3 rounded-md">{otps.next}</div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Next in {timeLeft}s</span>
-                <span>Epoch</span>
-              </div>
-              <div className="flex gap-2">
-                <Progress value={progress} className="flex-1 transition-all duration-300" />
+            {/* Iteration Details */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Count:</label>
                 <div className="flex gap-2">
-                  <Input value={epoch} readOnly className="w-32" />
-                  <Button variant="outline" size="icon" onClick={() => copyToClipboard(epoch, "Epoch")}>
+                  <Input value={iteration} readOnly />
+                  <Button variant="outline" size="icon" onClick={() => copyToClipboard(iteration, "Count")}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Padded hex:</label>
+                <div className="flex gap-2">
+                  <Input value={paddedHex} readOnly />
+                  <Button variant="outline" size="icon" onClick={() => copyToClipboard(paddedHex, "Padded hex")}>
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
             </div>
+
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() =>
+                window.open(`otpauth://totp/Example:user@example.com?secret=${secret}&issuer=Example`, "_blank")
+              }
+            >
+              Open Key URL in new tab
+            </Button>
           </div>
-
-          {/* QR Code and Details Section */}
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* QR Code */}
-            <div className="flex justify-center items-start">
-              <QRCodeSVG
-                value={`otpauth://totp/Example:user@example.com?secret=${secret}&issuer=Example`}
-                size={200}
-                level="H"
-                includeMargin={true}
-              />
-            </div>
-
-            {/* Details Section */}
-            <div className="space-y-4">
-              {/* Iteration Details */}
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Count:</label>
-                  <div className="flex gap-2">
-                    <Input value={iteration} readOnly />
-                    <Button variant="outline" size="icon" onClick={() => copyToClipboard(iteration, "Count")}>
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Padded hex:</label>
-                  <div className="flex gap-2">
-                    <Input value={paddedHex} readOnly />
-                    <Button variant="outline" size="icon" onClick={() => copyToClipboard(paddedHex, "Padded hex")}>
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() =>
-                  window.open(`otpauth://totp/Example:user@example.com?secret=${secret}&issuer=Example`, "_blank")
-                }
-              >
-                Open Key URL in new tab
-              </Button>
-            </div>
-          </div>
-
-        </CardContent>
-      </Card>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 

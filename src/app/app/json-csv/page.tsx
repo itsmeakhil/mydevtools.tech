@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { Heart } from "lucide-react"
-import { Card } from "@/components/ui/card"
+import { FileSpreadsheet } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
@@ -12,7 +12,6 @@ export default function JsonToCsvConverter() {
   const [jsonInput, setJsonInput] = React.useState("")
   const [previewData, setPreviewData] = React.useState<JsonData[]>([])
   const [headers, setHeaders] = React.useState<string[]>([])
-  const [isFavorite, setIsFavorite] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
   const processJson = (jsonString: string) => {
@@ -67,29 +66,24 @@ export default function JsonToCsvConverter() {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-7xl">
-      <Card className="p-6 relative border shadow-sm">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute right-4 top-4"
-          onClick={() => setIsFavorite(!isFavorite)}
-        >
-          <Heart className={`h-5 w-5 ${isFavorite ? "fill-primary" : ""}`} />
-        </Button>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <Card className="border-2 shadow-lg">
+          <CardHeader>
+            <div className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+                <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+                  <FileSpreadsheet className="h-5 w-5 text-primary" />
+                </div>
+                Convert JSON to CSV
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Convert JSON data to CSV format with a live preview.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
 
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Convert JSON to CSV</h1>
-          <p className="text-muted-foreground">
-            Click your JSON below to edit. Please{" "}
-            <a href="#" className="text-blue-500 hover:underline">
-              report bugs and send feedback
-            </a>{" "}
-            on GitHub.
-          </p>
-        </div>
-
-        <div className="space-y-6">
           <div className="min-h-[400px] font-mono text-sm p-4 bg-muted rounded-lg relative">
             <textarea
               className={`w-full h-full absolute inset-0 p-4 bg-transparent resize-none focus:outline-none ${
@@ -142,8 +136,9 @@ export default function JsonToCsvConverter() {
               </div>
             </>
           )}
-        </div>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

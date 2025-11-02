@@ -1,9 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Heart } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Monitor } from "lucide-react"
 
 interface DeviceInfo {
   screen: {
@@ -39,7 +38,6 @@ export default function DeviceInformation() {
       userAgent: "Loading...",
     },
   })
-  const [isFavorited, setIsFavorited] = useState(false)
 
   useEffect(() => {
     const updateDeviceInfo = () => {
@@ -72,28 +70,24 @@ export default function DeviceInformation() {
   }, [])
 
   return (
-    <div className="container mx-auto p-4 mt-3">
-      <div className="max-w-5xl mx-auto border border-border rounded-lg shadow-md overflow-hidden">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex-1 text-center">
-              <h1 className="text-3xl font-bold tracking-tight">Device information</h1>
-              <p className="text-muted-foreground">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <Card className="border-2 shadow-lg">
+          <CardHeader>
+            <div className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+                <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+                  <Monitor className="h-5 w-5 text-primary" />
+                </div>
+                Device Information
+              </CardTitle>
+              <CardDescription className="mt-2">
                 Get information about your current device (screen size, pixel-ratio, user agent, ...)
-              </p>
+              </CardDescription>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsFavorited(!isFavorited)}
-              className="h-8 w-8 ml-4 flex-shrink-0"
-            >
-              <Heart className={`h-5 w-5 ${isFavorited ? "fill-current text-red-500" : "text-muted-foreground"}`} />
-              <span className="sr-only">Toggle favorite</span>
-            </Button>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>Screen</CardTitle>
@@ -155,8 +149,9 @@ export default function DeviceInformation() {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

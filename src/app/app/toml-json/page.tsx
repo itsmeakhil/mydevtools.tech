@@ -8,8 +8,8 @@ export const metadata = {
 
 export default function TomlToJsonPage() {
   return (
-    <div className="grid justify-items-center min-h-auto align-items: normal mt-4">
-      <div className="w-full max-w-8xl px-8">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
         <FormatConverter type="toml-json" config={conversionConfigs["toml-json"]} />
       </div>
     </div>
