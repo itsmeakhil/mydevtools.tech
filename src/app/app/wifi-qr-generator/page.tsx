@@ -2,12 +2,11 @@
 
 import * as React from "react"
 import Image from "next/image"
-import { Heart } from "lucide-react"
+import { Wifi } from "lucide-react"
 import QRCode from "qrcode"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
@@ -22,7 +21,6 @@ export default function WifiQRGenerator() {
   })
   const [qrCode, setQrCode] = React.useState<string>("")
   const [showPassword, setShowPassword] = React.useState(false)
-  const [isFavorite, setIsFavorite] = React.useState(false)
 
   const generateQRCode = React.useCallback(async () => {
     try {
@@ -46,25 +44,24 @@ export default function WifiQRGenerator() {
   }, [formData, generateQRCode])
 
   return (
-    <div className="h-auto pt-6 flex items-center justify-center bg-background min-w-4xl">
-      <Card className="w-full max-w-4xl p-6 space-y-6 shadow-sm">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute right-4 top-4"
-          onClick={() => setIsFavorite(!isFavorite)}
-        >
-          <Heart className={isFavorite ? "fill-primary" : ""} />
-        </Button>
-
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-semibold">WiFi QR Code generator</h1>
-          <p className="text-muted-foreground">
-            Generate and download QR codes for quick connections to WiFi networks.
-          </p>
-        </div>
-
-        <div className="grid gap-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <Card className="border-2 shadow-lg">
+          <CardHeader>
+            <div className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+                <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+                  <Wifi className="h-5 w-5 text-primary" />
+                </div>
+                WiFi QR Code Generator
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Generate and download QR codes for quick connections to WiFi networks.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="encryption">Encryption method</Label>
             <Select
@@ -142,13 +139,15 @@ export default function WifiQRGenerator() {
               onChange={(e) => setFormData({ ...formData, bgColor: e.target.value })}
             />
           </div>
-        </div>
-        {qrCode && (
-          <div className="flex justify-center">
-            <Image src={qrCode || "/placeholder.svg"} alt="WiFi QR Code" width={192} height={192} />
-          </div>
-        )}
-      </Card>
+            </div>
+            {qrCode && (
+              <div className="flex justify-center">
+                <Image src={qrCode || "/placeholder.svg"} alt="WiFi QR Code" width={192} height={192} />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
