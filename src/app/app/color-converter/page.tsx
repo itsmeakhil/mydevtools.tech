@@ -11,24 +11,7 @@ import { Copy, Palette, Check } from 'lucide-react';
 export default function ColorConverterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-8">
-        {/* Hero Section */}
-        <Card className="border-2 shadow-lg bg-gradient-to-br from-primary/5 via-primary/5 to-muted/10">
-          <div className="p-8 md:p-12 text-center space-y-4">
-            <div className="flex items-center justify-center mb-4">
-              <div className="p-3 bg-primary/10 rounded-full">
-                <Palette className="h-8 w-8 text-primary" />
-              </div>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Color Converter
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Convert colors between HEX, RGB, HSL, and more formats with live preview.
-            </p>
-          </div>
-        </Card>
-
+      <div className="max-w-5xl mx-auto space-y-6">
         {/* Main Converter */}
         <ColorConverter />
       </div>
@@ -160,13 +143,15 @@ function ColorConverter() {
   return (
     <Card className="border-2 shadow-lg">
       <CardHeader>
-        <div>
-          <CardTitle className="flex items-center gap-2">
-            <Palette className="h-5 w-5 text-primary" />
-            Color Format Converter
+        <div className="text-center">
+          <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+            <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+              <Palette className="h-5 w-5 text-primary" />
+            </div>
+            Color Converter
           </CardTitle>
           <CardDescription className="mt-2">
-            Enter a hex color to convert to other formats
+            Convert colors between HEX, RGB, HSL, and more formats with live preview.
           </CardDescription>
         </div>
       </CardHeader>

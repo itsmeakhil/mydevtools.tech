@@ -12,24 +12,7 @@ import { Badge } from '@/components/ui/badge';
 export default function TimestampConverterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* Hero Section */}
-        <Card className="border-2 shadow-lg bg-gradient-to-br from-primary/5 via-primary/5 to-muted/10">
-          <div className="p-8 md:p-12 text-center space-y-4">
-            <div className="flex items-center justify-center mb-4">
-              <div className="p-3 bg-primary/10 rounded-full">
-                <Clock className="h-8 w-8 text-primary" />
-              </div>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Timestamp Converter
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Convert between Unix timestamps and human-readable dates in multiple formats.
-            </p>
-          </div>
-        </Card>
-
+      <div className="max-w-5xl mx-auto space-y-6">
         {/* Main Converter */}
         <TimestampConverter />
       </div>
@@ -127,20 +110,16 @@ function TimestampConverter() {
   return (
     <Card className="border-2 shadow-lg">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
-              Convert Timestamps
-            </CardTitle>
-            <CardDescription className="mt-2">
-              Convert between Unix timestamps and readable dates
-            </CardDescription>
-          </div>
-          <Button variant="outline" size="sm" onClick={setCurrentTimestamp}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Now
-          </Button>
+        <div className="text-center">
+          <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+            <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+              <Clock className="h-5 w-5 text-primary" />
+            </div>
+            Timestamp Converter
+          </CardTitle>
+          <CardDescription className="mt-2">
+            Convert between Unix timestamps and human-readable dates in multiple formats.
+          </CardDescription>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">

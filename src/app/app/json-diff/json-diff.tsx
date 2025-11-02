@@ -1,9 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { Heart } from "lucide-react"
+import { GitCompare } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -18,7 +18,6 @@ interface DiffResult {
 }
 
 export default function JsonDiff() {
-  const [isFavorite, setIsFavorite] = React.useState(false)
   const [showDifferences, setShowDifferences] = React.useState(false)
   const [firstJson, setFirstJson] = React.useState("")
   const [secondJson, setSecondJson] = React.useState("")
@@ -205,59 +204,58 @@ export default function JsonDiff() {
   }, [firstJson, secondJson, compareObjects, generateDiffOutput])
 
   return (
-    <div className="container mx-auto p-4 relative -z-10">
-      <Card className="relative overflow-hidden rounded-xl border shadow-sm dark:bg-gray-900 z-0">
-        <div className="p-6">
-          {/* Header Section */}
-          <div className="relative mb-6">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-0 top-0"
-              onClick={() => setIsFavorite(!isFavorite)}
-            >
-              <Heart className={isFavorite ? "fill-current text-red-500" : ""} />
-            </Button>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <Card className="border-2 shadow-lg">
+          <CardHeader>
             <div className="text-center">
-              <h1 className="mb-2 text-3xl font-bold">JSON diff</h1>
-              <p className="text-muted-foreground">Compare two JSON objects and get the differences between them.</p>
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+                <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+                  <GitCompare className="h-5 w-5 text-primary" />
+                </div>
+                JSON Diff
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Compare two JSON objects and get the differences between them.
+              </CardDescription>
             </div>
-          </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
 
-          {/* JSON Input Section */}
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="firstJson">Your first JSON</Label>
-              <Textarea
-                id="firstJson"
-                className="min-h-[300px] font-mono"
-                placeholder="Paste your first JSON here..."
-                value={firstJson}
-                onChange={(e) => setFirstJson(e.target.value)}
-              />
+            {/* JSON Input Section */}
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="firstJson">Your first JSON</Label>
+                <Textarea
+                  id="firstJson"
+                  className="min-h-[300px] font-mono"
+                  placeholder="Paste your first JSON here..."
+                  value={firstJson}
+                  onChange={(e) => setFirstJson(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="secondJson">Your JSON to compare</Label>
+                <Textarea
+                  id="secondJson"
+                  className="min-h-[300px] font-mono"
+                  placeholder="Paste your second JSON here..."
+                  value={secondJson}
+                  onChange={(e) => setSecondJson(e.target.value)}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="secondJson">Your JSON to compare</Label>
-              <Textarea
-                id="secondJson"
-                className="min-h-[300px] font-mono"
-                placeholder="Paste your second JSON here..."
-                value={secondJson}
-                onChange={(e) => setSecondJson(e.target.value)}
-              />
+
+            {/* Controls Section */}
+            <div className="flex items-center justify-end space-x-2">
+              <Label htmlFor="show-differences" className="text-sm">
+                Only show differences
+              </Label>
+              <Switch id="show-differences" checked={showDifferences} onCheckedChange={setShowDifferences} />
             </div>
-          </div>
 
-          {/* Controls Section */}
-          <div className="mt-6 flex items-center justify-end space-x-2">
-            <Label htmlFor="show-differences" className="text-sm">
-              Only show differences
-            </Label>
-            <Switch id="show-differences" checked={showDifferences} onCheckedChange={setShowDifferences} />
-          </div>
-
-          {/* Diff Output Section */}
-          <div className="mt-6 rounded-lg border bg-card p-4">
+            {/* Diff Output Section */}
+            <div className="rounded-lg border bg-card p-4">
             {error ? (
               <div className="text-destructive">{error}</div>
             ) : (
@@ -269,9 +267,10 @@ export default function JsonDiff() {
                 />
               </pre>
             )}
-          </div>
-        </div>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

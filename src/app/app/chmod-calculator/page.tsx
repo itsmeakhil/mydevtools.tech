@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
-import { Heart } from "lucide-react"
+import { FileTerminal } from "lucide-react"
 
 interface Permission {
   read: boolean
@@ -60,78 +60,84 @@ export default function ChmodCalculator() {
   }
 
   return (
-    <div className="p-4 bg-background mt-3">
-      <Card className="w-full max-w-3xl p-6 space-y-6 relative shadow-sm mx-auto">
-        <Button variant="ghost" size="icon" className="absolute right-4 top-4">
-          <Heart className="h-5 w-5" />
-        </Button>
-
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Chmod calculator</h1>
-          <p className="text-muted-foreground">
-            Compute your chmod permissions and commands with this online chmod calculator.
-          </p>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="text-left">
-                <th className="p-2 w-1/4"></th>
-                <th className="p-2">Owner (u)</th>
-                <th className="p-2">Group (g)</th>
-                <th className="p-2">Public (o)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { label: "Read (4)", type: "read" },
-                { label: "Write (2)", type: "write" },
-                { label: "Execute (1)", type: "execute" },
-              ].map(({ label, type }) => (
-                <tr key={type} className="border-t">
-                  <td className="p-2 font-medium">{label}</td>
-                  {(["owner", "group", "public"] as const).map((userType) => (
-                    <td key={`${userType}-${type}`} className="p-2">
-                      <Checkbox
-                        checked={permissions[userType][type as keyof Permission]}
-                        onCheckedChange={(checked) =>
-                          handlePermissionChange(userType, type as keyof Permission, checked as boolean)
-                        }
-                      />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex flex-col items-center gap-2">
-            <div className="text-4xl font-mono text-primary">{getChmodString()}</div>
-            <div className="text-2xl font-mono text-primary">{getSymbolicNotation()}</div>
-          </div>
-
-          <div className="relative">
-            <div className="flex items-center gap-2 bg-muted p-3 rounded-lg">
-              <code className="flex-1">chmod {getChmodString()} path</code>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="shrink-0"
-                onClick={() => {
-                  navigator.clipboard.writeText(`chmod ${getChmodString()} path`)
-                  setCopied(true)
-                  setTimeout(() => setCopied(false), 2000)
-                }}
-              >
-                {copied ? "Copied!" : "Copy"}
-              </Button>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <Card className="border-2 shadow-lg">
+          <CardHeader>
+            <div className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+                <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+                  <FileTerminal className="h-5 w-5 text-primary" />
+                </div>
+                Chmod Calculator
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Compute your chmod permissions and commands with this online chmod calculator.
+              </CardDescription>
             </div>
-          </div>
-        </div>
-      </Card>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left">
+                    <th className="p-2 w-1/4"></th>
+                    <th className="p-2">Owner (u)</th>
+                    <th className="p-2">Group (g)</th>
+                    <th className="p-2">Public (o)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { label: "Read (4)", type: "read" },
+                    { label: "Write (2)", type: "write" },
+                    { label: "Execute (1)", type: "execute" },
+                  ].map(({ label, type }) => (
+                    <tr key={type} className="border-t">
+                      <td className="p-2 font-medium">{label}</td>
+                      {(["owner", "group", "public"] as const).map((userType) => (
+                        <td key={`${userType}-${type}`} className="p-2">
+                          <Checkbox
+                            checked={permissions[userType][type as keyof Permission]}
+                            onCheckedChange={(checked) =>
+                              handlePermissionChange(userType, type as keyof Permission, checked as boolean)
+                            }
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex flex-col items-center gap-2">
+                <div className="text-4xl font-mono text-primary">{getChmodString()}</div>
+                <div className="text-2xl font-mono text-primary">{getSymbolicNotation()}</div>
+              </div>
+
+              <div className="relative">
+                <div className="flex items-center gap-2 bg-muted p-3 rounded-lg">
+                  <code className="flex-1">chmod {getChmodString()} path</code>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="shrink-0"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`chmod ${getChmodString()} path`)
+                      setCopied(true)
+                      setTimeout(() => setCopied(false), 2000)
+                    }}
+                  >
+                    {copied ? "Copied!" : "Copy"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
