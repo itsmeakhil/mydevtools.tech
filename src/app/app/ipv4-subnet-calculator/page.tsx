@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { Heart } from "lucide-react"
-import { Card } from "@/components/ui/card"
+import { Network } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -117,22 +117,24 @@ export default function SubnetCalculator() {
     }
 
   return (
-    <Card className="max-w-4xl mx-auto p-6 shadow-sm border rounded-xl my-4">
-      <div className="flex justify-end mb-1">
-        <Button variant="ghost" size="icon">
-          <Heart className="h-5 w-5" />
-        </Button>
-      </div>
-
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2">IPv4 subnet calculator</h1>
-        <p className="text-muted-foreground">
-          Parse your IPv4 CIDR blocks and get all the info you need about your subnet.
-        </p>
-      </div>
-
-      <div className="space-y-6">
-        <div>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <Card className="border-2 shadow-lg">
+          <CardHeader>
+            <div className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+                <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+                  <Network className="h-5 w-5 text-primary" />
+                </div>
+                IPv4 Subnet Calculator
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Parse your IPv4 CIDR blocks and get all the info you need about your subnet.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
           <Label htmlFor="ipAddress">An IPv4 address with or without mask</Label>
           <Input
             id="ipAddress"
@@ -143,27 +145,29 @@ export default function SubnetCalculator() {
             }}
             className="mt-1"
           />
-        </div>
+            </div>
 
-        <div className="space-y-4 bg-muted/50 p-4 rounded-lg">
+            <div className="space-y-4 bg-muted/50 p-4 rounded-lg">
           {subnetInfo && Object.entries(subnetInfo).map(([key, value]) => (
             <div key={key} className="grid grid-cols-2 gap-4">
               <div className="font-medium capitalize">{key.replace(/([A-Z])/g, " $1").trim()}</div>
               <div className="font-mono">{value}</div>
             </div>
           ))}
-        </div>
+            </div>
 
-        <div className="flex justify-between mt-6">
-          <Button variant="secondary" onClick={handlePreviousBlock}>
-            ← Previous block
-          </Button>
-          <Button variant="secondary" onClick={handleNextBlock}>
-            Next block →
-          </Button>
-        </div>
+            <div className="flex justify-between">
+              <Button variant="secondary" onClick={handlePreviousBlock}>
+                ← Previous block
+              </Button>
+              <Button variant="secondary" onClick={handleNextBlock}>
+                Next block →
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    </Card>
+    </div>
   )
 }
 

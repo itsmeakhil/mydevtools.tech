@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Heart } from 'lucide-react';
+import { FileDiff } from 'lucide-react';
 
 interface DiffResult {
   type: 'add' | 'remove' | 'equal';
@@ -73,20 +72,24 @@ const TextDiffComponent = () => {
   };
 
   return (
-    <div className="flex flex-col w-full max-w-4xl mx-auto">
-      <Card className="mb-4">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-2xl font-bold">Text diff</CardTitle>
-          <Button variant="ghost" size="icon">
-            <Heart className="h-5 w-5" />
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            Compare two texts and see the differences between them.
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <Card className="border-2 shadow-lg">
+          <CardHeader>
+            <div className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+                <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+                  <FileDiff className="h-5 w-5 text-primary" />
+                </div>
+                Text Diff
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Compare two texts and see the differences between them.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Textarea 
               value={text1} 
               onChange={handleText1Change}
@@ -99,9 +102,9 @@ const TextDiffComponent = () => {
               placeholder="Enter second text"
               className="min-h-32"
             />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div className="border rounded-md overflow-hidden">
               <div className="font-mono text-sm overflow-x-auto">
                 {diffResult1.map((item, index) => (
@@ -141,9 +144,10 @@ const TextDiffComponent = () => {
                 ))}
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Heart } from "lucide-react";
+import { Network } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -19,7 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
 
 interface IPRange {
   startAddress: string;
@@ -34,7 +32,6 @@ export default function IPv4RangeExpander() {
   const [startAddress, setStartAddress] = useState<string>("192.168.1.1");
   const [endAddress, setEndAddress] = useState<string>("192.168.6.255");
   const [ipRange, setIpRange] = useState<IPRange | null>(null);
-  const [isFavorite, setIsFavorite] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const validateIPAddress = (ip: string): boolean => {
@@ -111,46 +108,42 @@ export default function IPv4RangeExpander() {
   }, [calculateIPRange]);
 
   return (
-    <div className="flex justify-center items-center p-4 w-full">
-      <Card className="w-full max-w-3xl border shadow-sm">
-        <CardHeader className="relative">
-          <div className="absolute right-6 top-6">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsFavorite(!isFavorite)}
-              aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
-            >
-              <Heart className={cn("h-6 w-6", isFavorite ? "fill-primary text-primary" : "text-muted-foreground")} />
-            </Button>
-          </div>
-          <div className="text-center">
-            <CardTitle className="text-3xl font-bold">IPv4 Range Expander</CardTitle>
-            <CardDescription className="mt-2 max-w-xl mx-auto">
-              Given a start and an end IPv4 address, this tool calculates a valid IPv4 subnet along with its CIDR notation.
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <Card className="border-2 shadow-lg">
+          <CardHeader>
+            <div className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+                <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+                  <Network className="h-5 w-5 text-primary" />
+                </div>
+                IPv4 Range Expander
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Given a start and an end IPv4 address, this tool calculates a valid IPv4 subnet along with its CIDR notation.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
               <label htmlFor="start-address" className="text-sm font-medium">
                 Start Address
               </label>
               <Input id="start-address" value={startAddress} onChange={(e) => setStartAddress(e.target.value)} placeholder="e.g. 192.168.1.1" />
-            </div>
-            <div className="space-y-2">
+              </div>
+              <div className="space-y-2">
               <label htmlFor="end-address" className="text-sm font-medium">
                 End Address
               </label>
               <Input id="end-address" value={endAddress} onChange={(e) => setEndAddress(e.target.value)} placeholder="e.g. 192.168.6.255" />
+              </div>
             </div>
-          </div>
 
-          {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+            {error && <div className="text-red-500 text-sm text-center">{error}</div>}
 
-          {ipRange && !error && (
-            <div className="rounded-md border overflow-hidden">
+            {ipRange && !error && (
+              <div className="rounded-md border overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -184,10 +177,11 @@ export default function IPv4RangeExpander() {
                   </TableRow>
                 </TableBody>
               </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -1,16 +1,15 @@
 "use client"
 
 import * as React from "react"
-import { Heart } from "lucide-react"
+import { Globe } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { toast } from "sonner"
 
 export default function IPv4Converter() {
   const [ipAddress, setIpAddress] = React.useState("192.168.1.1")
-  const [isFavorite, setIsFavorite] = React.useState(false)
 
   // Convert IP address to different formats
   const convertIP = (ip: string) => {
@@ -46,23 +45,23 @@ export default function IPv4Converter() {
   }
 
   return (
-    <div className="container max-w-4xl mx-auto p-4">
-      <Card className="border shadow-sm">
-        <CardHeader className="relative pb-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-4 top-4"
-            onClick={() => setIsFavorite(!isFavorite)}
-          >
-            <Heart className={`h-5 w-5 ${isFavorite ? "fill-current text-red-500" : ""}`} />
-          </Button>
-          <h1 className="text-3xl font-bold text-center">IPv4 address converter</h1>
-          <p className="text-muted-foreground text-center mt-2">
-            Convert an IP address into decimal, binary, hexadecimal, or even an IPv6 representation of it.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <Card className="border-2 shadow-lg">
+          <CardHeader>
+            <div className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+                <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+                  <Globe className="h-5 w-5 text-primary" />
+                </div>
+                IPv4 Address Converter
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Convert an IP address into decimal, binary, hexadecimal, or even an IPv6 representation of it.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="ipv4">The IPv4 address:</Label>
             <Input
@@ -102,8 +101,9 @@ export default function IPv4Converter() {
               </div>
             </div>
           ))}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
