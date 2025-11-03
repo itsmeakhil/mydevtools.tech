@@ -13,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Copy, Send, Trash2, Plus, Clock, Save, X, 
   ChevronRight, ChevronLeft, FolderPlus, Search,
-  Loader2, CheckCircle2, AlertCircle
+  Loader2, CheckCircle2, AlertCircle, Pencil
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import useAuth from '@/utils/useAuth';
@@ -149,6 +149,12 @@ function ApiGrid() {
   const [showNewCollectionInput, setShowNewCollectionInput] = useState(false);
   const [deleteCollectionId, setDeleteCollectionId] = useState<string | null>(null);
   const [deleteRequestInfo, setDeleteRequestInfo] = useState<{ collectionId: string; requestId: string; requestName: string } | null>(null);
+  const [editCollectionId, setEditCollectionId] = useState<string | null>(null);
+  const [editCollectionName, setEditCollectionName] = useState('');
+  const [editCollectionNameError, setEditCollectionNameError] = useState('');
+  const [editRequestInfo, setEditRequestInfo] = useState<{ collectionId: string; requestId: string; requestName: string } | null>(null);
+  const [editRequestName, setEditRequestName] = useState('');
+  const [editRequestNameError, setEditRequestNameError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
 
@@ -683,6 +689,132 @@ function ApiGrid() {
     setDeleteRequestInfo(null);
   };
 
+  // Edit collection name
+  const handleEditCollection = (collectionId: string) => {
+    const collection = collections.find(c => c.id === collectionId);
+    if (!collection) return;
+    setEditCollectionId(collectionId);
+    setEditCollectionName(collection.name);
+    setEditCollectionNameError('');
+  };
+
+  const confirmEditCollection = () => {
+    if (!editCollectionId || !user?.uid) return;
+
+    const trimmedName = editCollectionName.trim();
+    if (!trimmedName) {
+      setEditCollectionNameError('Collection name cannot be empty');
+      return;
+    }
+
+    // Check if name already exists (excluding current collection)
+    const nameExists = collections.some(
+      c => c.id !== editCollectionId && c.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+
+    if (nameExists) {
+      setEditCollectionNameError('A collection with this name already exists');
+      return;
+    }
+
+    // Update collection name
+    const updatedCollections = collections.map(collection => {
+      if (collection.id === editCollectionId) {
+        return {
+          ...collection,
+          name: trimmedName,
+        };
+      }
+      return collection;
+    });
+    setCollections(updatedCollections);
+
+    toast({
+      title: 'Collection Updated',
+      description: `Collection renamed to "${trimmedName}"`,
+    });
+
+    setEditCollectionId(null);
+    setEditCollectionName('');
+    setEditCollectionNameError('');
+  };
+
+  // Edit request name
+  const handleEditRequest = (collectionId: string, requestId: string) => {
+    const collection = collections.find(c => c.id === collectionId);
+    if (!collection) return;
+    const request = collection.requests.find(r => r.id === requestId);
+    if (!request) return;
+    setEditRequestInfo({ collectionId, requestId, requestName: request.name });
+    setEditRequestName(request.name);
+    setEditRequestNameError('');
+  };
+
+  const confirmEditRequest = () => {
+    if (!editRequestInfo || !user?.uid) return;
+
+    const { collectionId, requestId } = editRequestInfo;
+    const trimmedName = editRequestName.trim();
+    
+    if (!trimmedName) {
+      setEditRequestNameError('Request name cannot be empty');
+      return;
+    }
+
+    // Check if name already exists in the same collection (excluding current request)
+    const collection = collections.find(c => c.id === collectionId);
+    if (collection) {
+      const nameExists = collection.requests.some(
+        r => r.id !== requestId && r.name.toLowerCase() === trimmedName.toLowerCase()
+      );
+
+      if (nameExists) {
+        setEditRequestNameError('A request with this name already exists in this collection');
+        return;
+      }
+    }
+
+    // Update request name in collection
+    const updatedCollections = collections.map(collection => {
+      if (collection.id === collectionId) {
+        return {
+          ...collection,
+          requests: collection.requests.map(req =>
+            req.id === requestId ? { ...req, name: trimmedName } : req
+          ),
+        };
+      }
+      return collection;
+    });
+    setCollections(updatedCollections);
+
+    // Update in savedRequests
+    const updatedSavedRequests = savedRequests.map(req =>
+      req.id === requestId ? { ...req, name: trimmedName } : req
+    );
+    setSavedRequests(updatedSavedRequests);
+
+    // Update in active tabs if this request is currently loaded
+    setRequestTabs(tabs =>
+      tabs.map(tab => {
+        const savedReq = savedRequests.find(r => r.id === requestId);
+        if (savedReq && tab.name === savedReq.name) {
+          return { ...tab, name: trimmedName };
+        }
+        return tab;
+      })
+    );
+
+    toast({
+      title: 'Request Updated',
+      description: `Request renamed to "${trimmedName}"`,
+    });
+
+    setEditRequestInfo(null);
+    setEditRequestName('');
+    setEditRequestNameError('');
+  };
+
   const getStatusColor = (status: number) => {
     if (status >= 200 && status < 300) return 'bg-green-500/20 text-green-600 dark:text-green-400';
     if (status >= 300 && status < 400) return 'bg-blue-500/20 text-blue-600 dark:text-blue-400';
@@ -714,6 +846,230 @@ function ApiGrid() {
       req.method.toLowerCase().includes(searchQuery.toLowerCase())
     )
   })).filter(col => col.requests.length > 0 || col.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  // Parse cURL command
+  const parseCurlCommand = (curlString: string): Partial<RequestTab> | null => {
+    // Normalize: remove newlines, collapse whitespace, handle escaped quotes
+    const normalized = curlString
+      .replace(/\\\n/g, ' ') // Remove line continuation
+      .replace(/\n/g, ' ') // Replace newlines with spaces
+      .replace(/\s+/g, ' ') // Collapse multiple spaces
+      .trim();
+
+    // Check if it looks like a cURL command
+    const isCurl = normalized.toLowerCase().startsWith('curl') || 
+                   normalized.includes(' -X ') || 
+                   normalized.includes(' --request ') ||
+                   normalized.includes(' -H ') || 
+                   normalized.includes(' --header ') ||
+                   normalized.includes(' -d ') ||
+                   normalized.includes(' --data');
+
+    if (!isCurl) {
+      return null;
+    }
+
+    try {
+      // Remove 'curl' prefix
+      let cleaned = normalized.replace(/^curl\s*/i, '').trim();
+      
+      let method: HttpMethod = 'GET';
+      let url = '';
+      const headers: KeyValuePair[] = [];
+      let body = '';
+      let bodyType: BodyType = 'json';
+      let authType: AuthType = 'none';
+      const authData: SavedRequest['authData'] = {};
+
+      // Extract method (-X or --request)
+      const methodMatch = cleaned.match(/-X\s+(\w+)|--request\s+(\w+)/i);
+      if (methodMatch) {
+        const m = (methodMatch[1] || methodMatch[2]).toUpperCase() as HttpMethod;
+        if (['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'].includes(m)) {
+          method = m;
+        }
+      }
+
+      // Extract headers (-H or --header) - handle both single and double quotes, and unquoted
+      const headerPatterns = [
+        /-H\s+['"]([^'"]+)['"]/gi,
+        /--header\s+['"]([^'"]+)['"]/gi,
+        /-H\s+([^\s]+:[^\s]+)/gi,
+        /--header\s+([^\s]+:[^\s]+)/gi,
+      ];
+
+      for (const pattern of headerPatterns) {
+        let headerMatch;
+        while ((headerMatch = pattern.exec(cleaned)) !== null) {
+          const headerValue = headerMatch[1].trim();
+          const colonIndex = headerValue.indexOf(':');
+          if (colonIndex > 0) {
+            const key = headerValue.substring(0, colonIndex).trim();
+            const value = headerValue.substring(colonIndex + 1).trim().replace(/^['"]|['"]$/g, '');
+            
+            // Skip if already added
+            if (headers.some(h => h.key.toLowerCase() === key.toLowerCase())) {
+              continue;
+            }
+
+            headers.push({
+              id: Date.now().toString() + Math.random(),
+              key: key,
+              value: value,
+              enabled: true,
+            });
+
+            // Check for Authorization header to set auth
+            if (key.toLowerCase() === 'authorization') {
+              if (value.startsWith('Bearer ')) {
+                authType = 'bearer';
+                authData.token = value.replace(/^Bearer\s+/i, '');
+              } else if (value.startsWith('Basic ')) {
+                authType = 'basic';
+                try {
+                  const decoded = atob(value.replace(/^Basic\s+/i, ''));
+                  const [username, password] = decoded.split(':');
+                  authData.username = username || '';
+                  authData.password = password || '';
+                } catch (e) {
+                  // If decoding fails, just store the token
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Extract body data (-d, --data, --data-raw, --data-binary)
+      // Handle quoted and unquoted data
+      const bodyMatches = [
+        cleaned.match(/--data-raw\s+(['"])(.*?)\1/i),
+        cleaned.match(/--data-binary\s+(['"])(.*?)\1/i),
+        cleaned.match(/--data\s+(['"])(.*?)\1/i),
+        cleaned.match(/-d\s+(['"])(.*?)\1/i),
+        cleaned.match(/--data-raw\s+([^\s]+)/i),
+        cleaned.match(/--data-binary\s+([^\s]+)/i),
+        cleaned.match(/--data\s+([^\s]+)/i),
+        cleaned.match(/-d\s+([^\s]+)/i),
+      ].filter(match => match !== null);
+
+      if (bodyMatches.length > 0) {
+        const bodyMatch = bodyMatches[0];
+        if (bodyMatch) {
+          body = bodyMatch[2] || bodyMatch[1] || '';
+          // Remove surrounding quotes if present
+          body = body.replace(/^['"]|['"]$/g, '');
+          
+          // Check Content-Type to determine body type
+          const contentTypeHeader = headers.find(h => h.key.toLowerCase() === 'content-type');
+          if (contentTypeHeader) {
+            const contentType = contentTypeHeader.value.toLowerCase();
+            if (contentType.includes('application/json')) {
+              bodyType = 'json';
+            } else if (contentType.includes('application/x-www-form-urlencoded')) {
+              bodyType = 'x-www-form-urlencoded';
+            } else if (contentType.includes('multipart/form-data')) {
+              bodyType = 'form-data';
+            } else {
+              bodyType = 'text';
+            }
+          } else {
+            // Try to detect JSON
+            try {
+              const trimmedBody = body.trim();
+              if (trimmedBody.startsWith('{') || trimmedBody.startsWith('[')) {
+                JSON.parse(trimmedBody);
+                bodyType = 'json';
+              } else {
+                bodyType = 'text';
+              }
+            } catch {
+              bodyType = 'text';
+            }
+          }
+
+          // Update method to POST if body is present and method is still GET
+          if (method === 'GET' && body) {
+            method = 'POST';
+          }
+        }
+      }
+
+      // Extract URL - find URLs that aren't part of headers or data
+      // Look for http:// or https:// patterns
+      const urlPatterns = [
+        /https?:\/\/[^\s'"]+/gi,
+        /['"]?(https?:\/\/[^'"]+)['"]?/gi,
+      ];
+
+      for (const pattern of urlPatterns) {
+        const urlMatches = cleaned.matchAll(pattern);
+        for (const match of urlMatches) {
+          const potentialUrl = match[0].replace(/^['"]|['"]$/g, '');
+          // Skip if it's in a header or data field
+          const beforeMatch = cleaned.substring(0, match.index || 0);
+          if (!beforeMatch.includes('-H') && 
+              !beforeMatch.includes('--header') && 
+              !beforeMatch.includes('-d') && 
+              !beforeMatch.includes('--data')) {
+            url = potentialUrl;
+            break;
+          }
+        }
+        if (url) break;
+      }
+
+      // If still no URL, try to find any URL-like string
+      if (!url) {
+        const fallbackUrl = cleaned.match(/['"]?(https?:\/\/[^\s'"]+)['"]?/i);
+        if (fallbackUrl) {
+          url = fallbackUrl[1] || fallbackUrl[0];
+        }
+      }
+
+      // If no headers were parsed, keep default headers
+      const finalHeaders = headers.length > 0 ? headers : defaultHeaders;
+
+      // Only return if we have at least a URL
+      if (!url) {
+        return null;
+      }
+
+      return {
+        method,
+        url,
+        headers: finalHeaders,
+        body,
+        bodyType,
+        authType,
+        authData,
+      };
+    } catch (error) {
+      console.error('Error parsing cURL:', error);
+      return null;
+    }
+  };
+
+  // Handle paste in URL field
+  const handleUrlPaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pastedText = e.clipboardData.getData('text');
+    const parsed = parseCurlCommand(pastedText);
+    
+    if (parsed) {
+      e.preventDefault();
+      
+      // Update the active tab with parsed data
+      updateActiveTab({
+        ...parsed,
+        isModified: true,
+      });
+
+      toast({
+        title: 'cURL Parsed',
+        description: 'Request has been populated from cURL command',
+      });
+    }
+  };
 
   return (
     <div className="relative flex h-screen w-full overflow-hidden">
@@ -767,10 +1123,22 @@ function ApiGrid() {
                 <div key={col.id} className="border rounded-lg overflow-hidden bg-card shadow-sm hover:shadow-md transition-shadow">
                   <div className="px-3.5 py-2.5 bg-muted/50 text-sm font-semibold flex items-center justify-between group/collection border-b">
                     <span className="truncate text-foreground">{col.name}</span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <Badge variant="secondary" className="text-xs font-medium px-2">
                         {col.requests.length}
                       </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover/collection:opacity-100 hover:text-primary transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditCollection(col.id);
+                        }}
+                        title="Edit collection name"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -809,7 +1177,19 @@ function ApiGrid() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 opacity-0 group-hover/request:opacity-100 hover:text-destructive shrink-0"
+                            className="h-6 w-6 opacity-0 group-hover/request:opacity-100 hover:text-primary shrink-0 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditRequest(col.id, req.id);
+                            }}
+                            title="Edit request name"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover/request:opacity-100 hover:text-destructive shrink-0 transition-opacity"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteRequest(col.id, req.id, req.name);
@@ -941,9 +1321,10 @@ function ApiGrid() {
                 </SelectContent>
               </Select>
               <Input
-                placeholder="https://api.example.com/endpoint"
+                placeholder="https://api.example.com/endpoint or paste cURL command"
                 value={activeTab.url}
                 onChange={(e) => updateActiveTab({ url: e.target.value })}
+                onPaste={handleUrlPaste}
                 className="font-mono flex-1 h-10"
               />
               <Button 
@@ -1570,6 +1951,102 @@ function ApiGrid() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Collection Dialog */}
+      <Dialog open={editCollectionId !== null} onOpenChange={(open) => !open && setEditCollectionId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Collection Name</DialogTitle>
+            <DialogDescription>
+              Enter a new name for the collection. The name must be unique.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-collection-name">Collection Name</Label>
+              <Input
+                id="edit-collection-name"
+                placeholder="My Collection"
+                value={editCollectionName}
+                onChange={(e) => {
+                  setEditCollectionName(e.target.value);
+                  setEditCollectionNameError('');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    confirmEditCollection();
+                  }
+                }}
+                autoFocus
+              />
+              {editCollectionNameError && (
+                <p className="text-sm text-destructive">{editCollectionNameError}</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditCollectionId(null);
+                setEditCollectionName('');
+                setEditCollectionNameError('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={confirmEditCollection}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Request Dialog */}
+      <Dialog open={editRequestInfo !== null} onOpenChange={(open) => !open && setEditRequestInfo(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Request Name</DialogTitle>
+            <DialogDescription>
+              Enter a new name for the request. The name must be unique within the collection.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-request-name">Request Name</Label>
+              <Input
+                id="edit-request-name"
+                placeholder="My Request"
+                value={editRequestName}
+                onChange={(e) => {
+                  setEditRequestName(e.target.value);
+                  setEditRequestNameError('');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    confirmEditRequest();
+                  }
+                }}
+                autoFocus
+              />
+              {editRequestNameError && (
+                <p className="text-sm text-destructive">{editRequestNameError}</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditRequestInfo(null);
+                setEditRequestName('');
+                setEditRequestNameError('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={confirmEditRequest}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
