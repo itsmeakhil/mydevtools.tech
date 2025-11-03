@@ -17,6 +17,26 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import useAuth from '@/utils/useAuth';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { db } from '@/database/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
 type AuthType = 'none' | 'bearer' | 'basic' | 'apiKey';
@@ -115,62 +135,127 @@ function ApiGrid() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [savedRequests, setSavedRequests] = useState<SavedRequest[]>([]);
+  const [isLoadingCollections, setIsLoadingCollections] = useState(false);
+  const [collectionsInitialized, setCollectionsInitialized] = useState(false);
+  const [showCreateCollectionDialog, setShowCreateCollectionDialog] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState('');
+  const [collectionNameError, setCollectionNameError] = useState('');
+  const [showSaveRequestDialog, setShowSaveRequestDialog] = useState(false);
+  const [saveCollectionId, setSaveCollectionId] = useState<string>('');
+  const [saveCollectionName, setSaveCollectionName] = useState('');
+  const [saveRequestName, setSaveRequestName] = useState('');
+  const [saveRequestErrors, setSaveRequestErrors] = useState<{ collection?: string; request?: string }>({});
+  const [showNewCollectionInput, setShowNewCollectionInput] = useState(false);
+  const [deleteCollectionId, setDeleteCollectionId] = useState<string | null>(null);
+  const [deleteRequestInfo, setDeleteRequestInfo] = useState<{ collectionId: string; requestId: string; requestName: string } | null>(null);
   const { toast } = useToast();
 
   const activeTab = requestTabs.find(t => t.id === activeTabId) || requestTabs[0];
 
-  // Load saved data from localStorage
+  // Load collections from Firebase when user logs in
   useEffect(() => {
-    const saved = localStorage.getItem('api-grid-saved-requests');
-    const savedCollections = localStorage.getItem('api-grid-collections');
-    if (saved) {
-      try {
-        setSavedRequests(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to load saved requests:', e);
+    const loadCollections = async () => {
+      if (!user?.uid) {
+        // Clear collections when user logs out
+        setCollections([]);
+        setSavedRequests([]);
+        setCollectionsInitialized(false);
+        return;
       }
-    }
-    if (savedCollections) {
+
+      setIsLoadingCollections(true);
       try {
-        setCollections(JSON.parse(savedCollections));
-      } catch (e) {
-        console.error('Failed to load collections:', e);
+        const userCollectionsRef = doc(db, 'users', user.uid, 'apiGrid', 'collections');
+        const collectionsDoc = await getDoc(userCollectionsRef);
+
+        if (collectionsDoc.exists()) {
+          const data = collectionsDoc.data();
+          setCollections(data.collections || []);
+          // Flatten all requests from collections for savedRequests
+          const allRequests: SavedRequest[] = [];
+          (data.collections || []).forEach((col: Collection) => {
+            allRequests.push(...col.requests);
+          });
+          setSavedRequests(allRequests);
+        } else {
+          // Initialize empty collections document
+          await setDoc(userCollectionsRef, { collections: [] });
+          setCollections([]);
+          setSavedRequests([]);
+        }
+        setCollectionsInitialized(true);
+      } catch (error) {
+        console.error('Error loading collections:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load collections',
+          variant: 'destructive',
+        });
+        setCollectionsInitialized(true);
+      } finally {
+        setIsLoadingCollections(false);
       }
-    }
-  }, []);
+    };
 
-  // Save to localStorage
-  useEffect(() => {
-    localStorage.setItem('api-grid-saved-requests', JSON.stringify(savedRequests));
-  }, [savedRequests]);
+    loadCollections();
+  }, [user?.uid, toast]);
 
+  // Save collections to Firebase whenever they change (for authenticated users)
   useEffect(() => {
-    localStorage.setItem('api-grid-collections', JSON.stringify(collections));
-  }, [collections]);
+    const saveCollections = async () => {
+      if (!user?.uid || isLoadingCollections || !collectionsInitialized) {
+        return;
+      }
+
+      try {
+        const userCollectionsRef = doc(db, 'users', user.uid, 'apiGrid', 'collections');
+        await setDoc(userCollectionsRef, { collections }, { merge: true });
+      } catch (error) {
+        console.error('Error saving collections:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to save collections',
+          variant: 'destructive',
+        });
+      }
+    };
+
+    saveCollections();
+  }, [collections, user?.uid, isLoadingCollections, collectionsInitialized, toast]);
 
   // Collections helpers
   const findCollectionByName = (name: string): Collection | undefined => {
     return collections.find(c => c.name.toLowerCase() === name.trim().toLowerCase());
   };
 
-  const createCollection = (name: string): Collection | null => {
+  const createCollection = async (name: string): Promise<Collection | null> => {
     if (!user?.uid) {
       window.location.href = '/login';
       return null;
     }
     const trimmed = name.trim();
     if (!trimmed) {
-      toast({ title: 'Invalid name', description: 'Collection name cannot be empty', variant: 'destructive' });
+      setCollectionNameError('Collection name cannot be empty');
       return null;
     }
     if (findCollectionByName(trimmed)) {
-      toast({ title: 'Already exists', description: 'A collection with this name already exists', variant: 'destructive' });
+      setCollectionNameError('A collection with this name already exists');
       return null;
     }
+    setCollectionNameError('');
     const newCollection: Collection = { id: Date.now().toString(), name: trimmed, requests: [] };
     setCollections(prev => [...prev, newCollection]);
     toast({ title: 'Collection created', description: `Created collection "${trimmed}"` });
     return newCollection;
+  };
+
+  const handleCreateCollection = async () => {
+    const result = await createCollection(newCollectionName);
+    if (result) {
+      setShowCreateCollectionDialog(false);
+      setNewCollectionName('');
+      setCollectionNameError('');
+    }
   };
 
   const ensureUniqueRequestName = (collection: Collection, requestName: string): boolean => {
@@ -409,46 +494,72 @@ function ApiGrid() {
     }
   };
 
-  const saveRequest = () => {
-    if (!user?.uid) {
-      window.location.href = '/login';
-      return;
+  const handleSaveRequest = async () => {
+    const errors: { collection?: string; request?: string } = {};
+    
+    let targetCollection: Collection | null = null;
+
+    // Handle collection selection
+    if (showNewCollectionInput) {
+      // Creating new collection
+      const trimmedCollectionName = saveCollectionName.trim();
+      if (!trimmedCollectionName) {
+        errors.collection = 'Collection name cannot be empty';
+      } else {
+        // Check if collection name already exists
+        if (findCollectionByName(trimmedCollectionName)) {
+          errors.collection = 'A collection with this name already exists';
+        } else {
+          const created = await createCollection(trimmedCollectionName);
+          if (!created) {
+            errors.collection = 'Failed to create collection';
+          } else {
+            targetCollection = created;
+            setSaveCollectionId(created.id);
+            setShowNewCollectionInput(false);
+          }
+        }
+      }
+    } else {
+      // Using existing collection
+      if (!saveCollectionId) {
+        errors.collection = 'Please select a collection';
+      } else {
+        targetCollection = collections.find(c => c.id === saveCollectionId) || null;
+        if (!targetCollection) {
+          errors.collection = 'Selected collection not found';
+        }
+      }
     }
-    // Ask for target collection (by name)
-    let collectionName = window.prompt('Save to collection (enter name, will be created if not exists):', 'Default');
-    if (collectionName === null) return; // cancelled
-    collectionName = collectionName.trim();
-    if (!collectionName) {
-      toast({ title: 'Invalid name', description: 'Collection name cannot be empty', variant: 'destructive' });
+
+    const trimmedRequestName = saveRequestName.trim();
+    if (!trimmedRequestName) {
+      errors.request = 'Request name cannot be empty';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setSaveRequestErrors(errors);
       return;
     }
 
-    // Ask for request name (defaults to tab name)
-    let requestName = window.prompt('Request name (must be unique in this collection):', activeTab.name || 'Untitled Request');
-    if (requestName === null) return; // cancelled
-    requestName = requestName.trim();
-    if (!requestName) {
-      toast({ title: 'Invalid name', description: 'Request name cannot be empty', variant: 'destructive' });
-      return;
-    }
-
-    // Ensure collection exists
-    let targetCollection = findCollectionByName(collectionName);
     if (!targetCollection) {
-      const created = createCollection(collectionName);
-      if (!created) return; // creation failed
-      targetCollection = created;
+      errors.collection = 'Collection is required';
+      setSaveRequestErrors(errors);
+      return;
     }
 
     // Enforce unique request name within the collection
-    if (!ensureUniqueRequestName(targetCollection, requestName)) {
-      toast({ title: 'Duplicate request name', description: 'Pick a different name for this collection', variant: 'destructive' });
+    if (!ensureUniqueRequestName(targetCollection, trimmedRequestName)) {
+      errors.request = 'A request with this name already exists in this collection';
+      setSaveRequestErrors(errors);
       return;
     }
 
+    setSaveRequestErrors({});
+
     const savedRequest: SavedRequest = {
       id: Date.now().toString(),
-      name: requestName,
+      name: trimmedRequestName,
       method: activeTab.method,
       url: activeTab.url,
       headers: activeTab.headers,
@@ -468,7 +579,30 @@ function ApiGrid() {
     setSavedRequests([...savedRequests, savedRequest]);
 
     updateActiveTab({ name: savedRequest.name, isModified: false });
-    toast({ title: 'Request Saved', description: `Saved to ${collectionName}` });
+    setShowSaveRequestDialog(false);
+    setSaveCollectionId('');
+    setSaveCollectionName('');
+    setSaveRequestName('');
+    setShowNewCollectionInput(false);
+    toast({ title: 'Request Saved', description: `Saved to ${targetCollection.name}` });
+  };
+
+  const openSaveRequestDialog = () => {
+    if (!user?.uid) {
+      window.location.href = '/login';
+      return;
+    }
+    // Set default collection to first one if available
+    if (collections.length > 0) {
+      setSaveCollectionId(collections[0].id);
+    } else {
+      setSaveCollectionId('');
+    }
+    setSaveCollectionName('');
+    setSaveRequestName(activeTab.name || 'Untitled Request');
+    setSaveRequestErrors({});
+    setShowNewCollectionInput(false);
+    setShowSaveRequestDialog(true);
   };
 
   const loadRequest = (savedRequest: SavedRequest) => {
@@ -489,6 +623,64 @@ function ApiGrid() {
     setActiveTabId(newTab.id);
   };
 
+  const handleDeleteCollection = (collectionId: string) => {
+    setDeleteCollectionId(collectionId);
+  };
+
+  const confirmDeleteCollection = () => {
+    if (!deleteCollectionId || !user?.uid) return;
+
+    const collection = collections.find(c => c.id === deleteCollectionId);
+    if (!collection) return;
+
+    // Remove collection from state
+    const updatedCollections = collections.filter(c => c.id !== deleteCollectionId);
+    setCollections(updatedCollections);
+
+    // Remove all requests from this collection from savedRequests
+    const updatedSavedRequests = savedRequests.filter(req => req.collectionId !== deleteCollectionId);
+    setSavedRequests(updatedSavedRequests);
+
+    setDeleteCollectionId(null);
+    toast({
+      title: 'Collection Deleted',
+      description: `Collection "${collection.name}" has been deleted`,
+    });
+  };
+
+  const handleDeleteRequest = (collectionId: string, requestId: string, requestName: string) => {
+    setDeleteRequestInfo({ collectionId, requestId, requestName });
+  };
+
+  const confirmDeleteRequest = () => {
+    if (!deleteRequestInfo || !user?.uid) return;
+
+    const { collectionId, requestId } = deleteRequestInfo;
+
+    // Remove request from collection
+    const updatedCollections = collections.map(collection => {
+      if (collection.id === collectionId) {
+        return {
+          ...collection,
+          requests: collection.requests.filter(req => req.id !== requestId),
+        };
+      }
+      return collection;
+    });
+    setCollections(updatedCollections);
+
+    // Remove from savedRequests
+    const updatedSavedRequests = savedRequests.filter(req => req.id !== requestId);
+    setSavedRequests(updatedSavedRequests);
+
+    toast({
+      title: 'Request Deleted',
+      description: `Request "${deleteRequestInfo.requestName}" has been deleted`,
+    });
+
+    setDeleteRequestInfo(null);
+  };
+
   const getStatusColor = (status: number) => {
     if (status >= 200 && status < 300) return 'bg-green-500/20 text-green-600 dark:text-green-400';
     if (status >= 300 && status < 400) return 'bg-blue-500/20 text-blue-600 dark:text-blue-400';
@@ -498,7 +690,7 @@ function ApiGrid() {
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="relative flex h-screen w-full overflow-hidden">
       {/* Sidebar */}
       {sidebarOpen && (
         <div className="w-64 border-r bg-muted/30 flex flex-col">
@@ -519,8 +711,9 @@ function ApiGrid() {
                   window.location.href = '/login';
                   return;
                 }
-                const name = window.prompt('New collection name');
-                if (name !== null) createCollection(name);
+                setNewCollectionName('');
+                setCollectionNameError('');
+                setShowCreateCollectionDialog(true);
               }}
             >
               <FolderPlus className="h-4 w-4 mr-2" />
@@ -529,11 +722,31 @@ function ApiGrid() {
           </div>
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-3">
-              {collections.map((col) => (
+              {isLoadingCollections ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  Loading collections...
+                </div>
+              ) : (
+                <>
+                  {collections.map((col) => (
                 <div key={col.id} className="border rounded-md overflow-hidden">
-                  <div className="px-3 py-2 bg-muted/50 text-sm font-medium flex items-center justify-between">
+                  <div className="px-3 py-2 bg-muted/50 text-sm font-medium flex items-center justify-between group">
                     <span className="truncate">{col.name}</span>
-                    <Badge variant="secondary">{col.requests.length}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">{col.requests.length}</Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteCollection(col.id);
+                        }}
+                        title="Delete collection"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
                   <div className="max-h-64 overflow-auto">
                     {col.requests.length === 0 ? (
@@ -542,38 +755,69 @@ function ApiGrid() {
                       col.requests.map((req) => (
                         <div
                           key={req.id}
-                          className="p-2 hover:bg-muted cursor-pointer flex items-center gap-2"
-                          onClick={() => loadRequest(req)}
+                          className="p-2 hover:bg-muted flex items-center gap-2 group/request"
                         >
-                          <Badge variant="outline" className="font-mono text-[10px]">
-                            {req.method}
-                          </Badge>
-                          <span className="text-sm truncate">{req.name}</span>
+                          <div
+                            className="flex items-center gap-2 flex-1 cursor-pointer min-w-0"
+                            onClick={() => loadRequest(req)}
+                          >
+                            <Badge variant="outline" className="font-mono text-[10px]">
+                              {req.method}
+                            </Badge>
+                            <span className="text-sm truncate">{req.name}</span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover/request:opacity-100 hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteRequest(col.id, req.id, req.name);
+                            }}
+                            title="Delete request"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                         </div>
                       ))
                     )}
                   </div>
                 </div>
-              ))}
-              {collections.length === 0 && (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  No collections yet. Create one to get started.
-                </div>
+                  ))}
+                  {collections.length === 0 && !isLoadingCollections && (
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                      No collections yet. Create one to get started.
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </ScrollArea>
         </div>
       )}
 
+      {/* Collapsed Sidebar Button - Always visible when sidebar is closed */}
       {!sidebarOpen && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute left-0 top-1/2 z-10 border-r rounded-r-lg"
+        <div className="fixed left-0 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-left">
+          <Button
+            variant="default"
+            size="icon"
+            className="h-14 w-10 rounded-l-none rounded-r-xl shadow-2xl border-2 border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-transform"
+            onClick={() => setSidebarOpen(true)}
+            title="Show Collections"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </Button>
+        </div>
+      )}
+
+      {/* Alternative: Thin vertical bar when collapsed */}
+      {!sidebarOpen && (
+        <div 
+          className="fixed left-0 top-0 bottom-0 w-1 bg-primary/30 hover:bg-primary z-40 cursor-pointer transition-colors"
           onClick={() => setSidebarOpen(true)}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+          title="Click to show Collections"
+        />
       )}
 
       {/* Main Content */}
@@ -644,7 +888,7 @@ function ApiGrid() {
                 <Send className="h-4 w-4 mr-2" />
                 Send
               </Button>
-              <Button variant="outline" onClick={saveRequest}>
+              <Button variant="outline" onClick={openSaveRequestDialog}>
                 <Save className="h-4 w-4 mr-2" />
                 Save
               </Button>
@@ -1015,6 +1259,231 @@ function ApiGrid() {
           </div>
         </div>
       </div>
+
+      {/* Create Collection Dialog */}
+      <Dialog open={showCreateCollectionDialog} onOpenChange={setShowCreateCollectionDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Collection</DialogTitle>
+            <DialogDescription>
+              Enter a name for your new collection. The name must be unique.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="collection-name">Collection Name</Label>
+              <Input
+                id="collection-name"
+                placeholder="My Collection"
+                value={newCollectionName}
+                onChange={(e) => {
+                  setNewCollectionName(e.target.value);
+                  setCollectionNameError('');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleCreateCollection();
+                  }
+                }}
+              />
+              {collectionNameError && (
+                <p className="text-sm text-destructive">{collectionNameError}</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCreateCollectionDialog(false);
+                setNewCollectionName('');
+                setCollectionNameError('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleCreateCollection}>Create</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Save Request Dialog */}
+      <Dialog open={showSaveRequestDialog} onOpenChange={setShowSaveRequestDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Request</DialogTitle>
+            <DialogDescription>
+              Save this request to a collection. The collection will be created if it doesn't exist.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="save-collection-select">Collection</Label>
+              {!showNewCollectionInput ? (
+                <>
+                  <div className="flex gap-2">
+                    <Select
+                      value={saveCollectionId}
+                      onValueChange={(value) => {
+                        setSaveCollectionId(value);
+                        setSaveRequestErrors({ ...saveRequestErrors, collection: undefined });
+                      }}
+                    >
+                      <SelectTrigger id="save-collection-select" className="flex-1">
+                        <SelectValue placeholder="Select a collection" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {collections.map((col) => (
+                          <SelectItem key={col.id} value={col.id}>
+                            {col.name} ({col.requests.length} requests)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowNewCollectionInput(true);
+                        setSaveCollectionId('');
+                        setSaveCollectionName('');
+                        setSaveRequestErrors({ ...saveRequestErrors, collection: undefined });
+                      }}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {collections.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      No collections yet. Click the + button to create one.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <Input
+                      id="save-collection-name"
+                      placeholder="New collection name"
+                      value={saveCollectionName}
+                      onChange={(e) => {
+                        setSaveCollectionName(e.target.value);
+                        setSaveRequestErrors({ ...saveRequestErrors, collection: undefined });
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowNewCollectionInput(false);
+                        setSaveCollectionName('');
+                        if (collections.length > 0) {
+                          setSaveCollectionId(collections[0].id);
+                        }
+                        setSaveRequestErrors({ ...saveRequestErrors, collection: undefined });
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </>
+              )}
+              {saveRequestErrors.collection && (
+                <p className="text-sm text-destructive">{saveRequestErrors.collection}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="save-request-name">Request Name</Label>
+              <Input
+                id="save-request-name"
+                placeholder="Untitled Request"
+                value={saveRequestName}
+                onChange={(e) => {
+                  setSaveRequestName(e.target.value);
+                  setSaveRequestErrors({ ...saveRequestErrors, request: undefined });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.ctrlKey) {
+                    handleSaveRequest();
+                  }
+                }}
+              />
+              {saveRequestErrors.request && (
+                <p className="text-sm text-destructive">{saveRequestErrors.request}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                The request name must be unique within the selected collection.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowSaveRequestDialog(false);
+                setSaveCollectionId('');
+                setSaveCollectionName('');
+                setSaveRequestName('');
+                setSaveRequestErrors({});
+                setShowNewCollectionInput(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSaveRequest}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Collection Confirmation Dialog */}
+      <AlertDialog open={deleteCollectionId !== null} onOpenChange={(open) => !open && setDeleteCollectionId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Collection</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the collection "{collections.find(c => c.id === deleteCollectionId)?.name}"? 
+              This will permanently delete the collection and all {collections.find(c => c.id === deleteCollectionId)?.requests.length || 0} request(s) in it. 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteCollection}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Request Confirmation Dialog */}
+      <AlertDialog open={deleteRequestInfo !== null} onOpenChange={(open) => !open && setDeleteRequestInfo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Request</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the request "{deleteRequestInfo?.requestName}"? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteRequest}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
