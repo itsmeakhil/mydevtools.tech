@@ -28,12 +28,12 @@ export default function TaskForm({ onAddTask, inputRef }: TaskFormProps) {
   };
 
   return (
-    <Card className={`transition-all duration-300 ${isFocused ? 'border-primary shadow-lg ring-2 ring-primary/20' : 'border-2'}`}>
-      <div className="p-6">
-        <div className="flex gap-3 items-start">
-          {/* Icon */}
-          <div className="flex items-center justify-center p-2 bg-primary/10 rounded-lg border border-primary/20 shadow-sm min-w-[40px] h-[40px]">
-            <Sparkles className="h-5 w-5 text-primary" />
+    <Card className={`transition-all duration-200 ${isFocused ? 'border-primary shadow-md ring-1 ring-primary/20' : 'border'}`}>
+      <div className="p-3 md:p-4">
+        <div className="flex gap-2 items-center">
+          {/* Icon - Smaller */}
+          <div className="flex items-center justify-center p-1.5 bg-primary/10 rounded-md min-w-[32px] h-[32px]">
+            <Sparkles className="h-4 w-4 text-primary" />
           </div>
           
           {/* Input Field */}
@@ -43,28 +43,28 @@ export default function TaskForm({ onAddTask, inputRef }: TaskFormProps) {
               type="text"
               value={newTask}
               onChange={(e) => setNewTask(e.target.value)}
-              placeholder="What needs to be done? (Press N to focus)"
-              className="text-lg h-12 border-2 focus-visible:ring-0 focus-visible:ring-offset-0"
+              placeholder="What needs to be done?"
+              className="h-9 border text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
               onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
             />
-            <p className="text-xs text-muted-foreground mt-1.5 ml-1">
-              Press Enter to add
-            </p>
           </div>
 
           {/* Add Task Button */}
           <Button
             onClick={handleAddTask}
-            size="lg"
-            className="gap-2 h-12 px-6 shadow-md hover:shadow-lg transition-all duration-200"
+            size="sm"
+            className="gap-1.5 h-9 px-4"
             disabled={newTask.trim() === ""}
           >
-            <Plus className="h-5 w-5" />
-            Add
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Add</span>
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground mt-1.5 ml-[44px]">
+          Press Enter to add
+        </p>
       </div>
     </Card>
   );
