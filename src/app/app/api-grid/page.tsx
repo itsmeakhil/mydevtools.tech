@@ -689,19 +689,33 @@ function ApiGrid() {
     return 'bg-gray-500/20 text-gray-600 dark:text-gray-400';
   };
 
+  // HTTP Method colors matching Swagger/OpenAPI style
+  const getMethodColor = (method: HttpMethod) => {
+    const colors: Record<HttpMethod, string> = {
+      GET: 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30',
+      POST: 'bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30',
+      PUT: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30',
+      PATCH: 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30',
+      DELETE: 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30',
+      HEAD: 'bg-gray-500/15 text-gray-600 dark:text-gray-400 border-gray-500/30',
+      OPTIONS: 'bg-gray-500/15 text-gray-600 dark:text-gray-400 border-gray-500/30',
+    };
+    return colors[method] || colors.GET;
+  };
+
   return (
     <div className="relative flex h-screen w-full overflow-hidden">
       {/* Sidebar */}
       {sidebarOpen && (
         <div className="w-64 border-r bg-muted/30 flex flex-col">
-          <div className="p-4 border-b">
+          <div className="p-4 border-b bg-background/50">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Collections</h2>
-              <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
+              <h2 className="font-semibold text-base">Collections</h2>
+              <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)} className="h-8 w-8">
                 <ChevronLeft className="h-4 w-4" />
               </Button>
             </div>
-            <Input placeholder="Search..." className="mb-2" />
+            <Input placeholder="Search..." className="mb-3 h-9" />
             <Button
               variant="outline"
               size="sm"
@@ -729,15 +743,17 @@ function ApiGrid() {
               ) : (
                 <>
                   {collections.map((col) => (
-                <div key={col.id} className="border rounded-md overflow-hidden">
-                  <div className="px-3 py-2 bg-muted/50 text-sm font-medium flex items-center justify-between group">
-                    <span className="truncate">{col.name}</span>
+                <div key={col.id} className="border rounded-lg overflow-hidden bg-card shadow-sm">
+                  <div className="px-3.5 py-2.5 bg-muted/40 text-sm font-semibold flex items-center justify-between group/collection border-b">
+                    <span className="truncate text-foreground">{col.name}</span>
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary">{col.requests.length}</Badge>
+                      <Badge variant="secondary" className="text-xs font-medium">
+                        {col.requests.length}
+                      </Badge>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:text-destructive"
+                        className="h-6 w-6 opacity-0 group-hover/collection:opacity-100 hover:text-destructive transition-opacity"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteCollection(col.id);
@@ -748,28 +764,29 @@ function ApiGrid() {
                       </Button>
                     </div>
                   </div>
-                  <div className="max-h-64 overflow-auto">
+                  <div className="max-h-64 overflow-auto p-1.5">
                     {col.requests.length === 0 ? (
                       <div className="p-3 text-xs text-muted-foreground">Empty collection</div>
                     ) : (
                       col.requests.map((req) => (
                         <div
                           key={req.id}
-                          className="p-2 hover:bg-muted flex items-center gap-2 group/request"
+                          className="p-2.5 hover:bg-muted/70 transition-colors rounded-md flex items-center gap-2.5 group/request cursor-pointer"
+                          onClick={() => loadRequest(req)}
                         >
-                          <div
-                            className="flex items-center gap-2 flex-1 cursor-pointer min-w-0"
-                            onClick={() => loadRequest(req)}
+                          <Badge 
+                            variant="outline" 
+                            className={`font-mono text-[10px] font-semibold px-2 py-0.5 border ${getMethodColor(req.method)}`}
                           >
-                            <Badge variant="outline" className="font-mono text-[10px]">
-                              {req.method}
-                            </Badge>
-                            <span className="text-sm truncate">{req.name}</span>
-                          </div>
+                            {req.method}
+                          </Badge>
+                          <span className="text-sm truncate flex-1 text-foreground/90 group-hover/request:text-foreground">
+                            {req.name}
+                          </span>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 opacity-0 group-hover/request:opacity-100 hover:text-destructive"
+                            className="h-6 w-6 opacity-0 group-hover/request:opacity-100 hover:text-destructive shrink-0"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteRequest(col.id, req.id, req.name);
@@ -828,21 +845,26 @@ function ApiGrid() {
             {requestTabs.map((tab) => (
               <div
                 key={tab.id}
-                className={`group flex items-center gap-2 px-4 py-2 border-r cursor-pointer min-w-[200px] ${
-                  activeTabId === tab.id ? 'bg-background border-b-2 border-b-primary' : 'hover:bg-muted/50'
+                className={`group flex items-center gap-2.5 px-4 py-2.5 border-r cursor-pointer min-w-[200px] transition-colors ${
+                  activeTabId === tab.id 
+                    ? 'bg-background border-b-2 border-b-primary shadow-sm' 
+                    : 'hover:bg-muted/50'
                 }`}
                 onClick={() => setActiveTabId(tab.id)}
               >
-                <Badge variant="outline" className="font-mono text-xs">
+                <Badge 
+                  variant="outline" 
+                  className={`font-mono text-xs font-semibold px-2 py-0.5 border ${getMethodColor(tab.method)}`}
+                >
                   {tab.method}
                 </Badge>
-                <span className="text-sm truncate flex-1">{tab.name}</span>
-                {tab.isModified && <span className="w-1.5 h-1.5 bg-primary rounded-full" />}
+                <span className="text-sm truncate flex-1 font-medium">{tab.name}</span>
+                {tab.isModified && <span className="w-1.5 h-1.5 bg-primary rounded-full shrink-0" />}
                 {requestTabs.length > 1 && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-5 w-5 opacity-0 group-hover:opacity-100"
+                    className="h-5 w-5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive shrink-0"
                     onClick={(e) => {
                       e.stopPropagation();
                       closeTab(tab.id);
@@ -860,35 +882,43 @@ function ApiGrid() {
         </div>
 
         {/* Request Builder */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto bg-background">
           <div className="max-w-7xl mx-auto p-6 space-y-6">
             {/* URL Bar */}
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-3 items-center">
               <Select value={activeTab.method} onValueChange={(value) => updateActiveTab({ method: value as HttpMethod })}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className={`w-36 font-mono font-semibold ${getMethodColor(activeTab.method)}`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="GET">GET</SelectItem>
-                  <SelectItem value="POST">POST</SelectItem>
-                  <SelectItem value="PUT">PUT</SelectItem>
-                  <SelectItem value="DELETE">DELETE</SelectItem>
-                  <SelectItem value="PATCH">PATCH</SelectItem>
-                  <SelectItem value="HEAD">HEAD</SelectItem>
-                  <SelectItem value="OPTIONS">OPTIONS</SelectItem>
+                  <SelectItem value="GET" className="font-mono font-semibold">GET</SelectItem>
+                  <SelectItem value="POST" className="font-mono font-semibold">POST</SelectItem>
+                  <SelectItem value="PUT" className="font-mono font-semibold">PUT</SelectItem>
+                  <SelectItem value="DELETE" className="font-mono font-semibold">DELETE</SelectItem>
+                  <SelectItem value="PATCH" className="font-mono font-semibold">PATCH</SelectItem>
+                  <SelectItem value="HEAD" className="font-mono font-semibold">HEAD</SelectItem>
+                  <SelectItem value="OPTIONS" className="font-mono font-semibold">OPTIONS</SelectItem>
                 </SelectContent>
               </Select>
               <Input
                 placeholder="https://api.example.com/endpoint"
                 value={activeTab.url}
                 onChange={(e) => updateActiveTab({ url: e.target.value })}
-                className="font-mono flex-1"
+                className="font-mono flex-1 h-10"
               />
-              <Button onClick={handleSendRequest} disabled={isLoading || !activeTab.url.trim()}>
+              <Button 
+                onClick={handleSendRequest} 
+                disabled={isLoading || !activeTab.url.trim()}
+                className="h-10"
+              >
                 <Send className="h-4 w-4 mr-2" />
                 Send
               </Button>
-              <Button variant="outline" onClick={openSaveRequestDialog}>
+              <Button 
+                variant="outline" 
+                onClick={openSaveRequestDialog}
+                className="h-10"
+              >
                 <Save className="h-4 w-4 mr-2" />
                 Save
               </Button>
@@ -896,31 +926,31 @@ function ApiGrid() {
 
             {/* Request Tabs */}
             <Tabs defaultValue="params" className="w-full">
-              <TabsList>
-                <TabsTrigger value="params">
+              <TabsList className="h-11">
+                <TabsTrigger value="params" className="text-sm font-medium">
                   Params
                   {activeTab.params.filter(p => p.enabled).length > 0 && (
-                    <Badge variant="secondary" className="ml-2">
+                    <Badge variant="secondary" className="ml-2 text-xs">
                       {activeTab.params.filter(p => p.enabled).length}
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="body">
+                <TabsTrigger value="body" className="text-sm font-medium">
                   Body
                 </TabsTrigger>
-                <TabsTrigger value="headers">
+                <TabsTrigger value="headers" className="text-sm font-medium">
                   Headers
                   {activeTab.headers.filter(h => h.enabled).length > 0 && (
-                    <Badge variant="secondary" className="ml-2">
+                    <Badge variant="secondary" className="ml-2 text-xs">
                       {activeTab.headers.filter(h => h.enabled).length}
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="auth">Authorization</TabsTrigger>
+                <TabsTrigger value="auth" className="text-sm font-medium">Authorization</TabsTrigger>
               </TabsList>
 
               <TabsContent value="params" className="mt-4">
-                <div className="border rounded-lg">
+                <div className="border rounded-lg overflow-hidden shadow-sm">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1018,7 +1048,7 @@ function ApiGrid() {
               </TabsContent>
 
               <TabsContent value="headers" className="mt-4">
-                <div className="border rounded-lg">
+                <div className="border rounded-lg overflow-hidden shadow-sm">
                   <Table>
                     <TableHeader>
                       <TableRow>
