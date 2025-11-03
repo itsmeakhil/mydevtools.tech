@@ -82,6 +82,12 @@ export const sidebarData: SidebarData = {
           icon: IconFileDescription,
           description: 'Write and preview markdown in real-time with GitHub Flavored Markdown support.'
         },
+        {
+          title: 'ApiGrid',
+          url: '/app/api-grid',
+          icon: IconWorldWww,
+          description: 'Test and debug APIs with ease. Send HTTP requests and view responses in real-time.'
+        },
       ],
     },
     {
