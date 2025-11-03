@@ -15,6 +15,7 @@ import {
   ChevronRight, ChevronLeft, FolderPlus 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import useAuth from '@/utils/useAuth';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
@@ -92,6 +93,7 @@ export default function ApiGridPage() {
 }
 
 function ApiGrid() {
+  const { user } = useAuth(false);
   const [requestTabs, setRequestTabs] = useState<RequestTab[]>([
     {
       id: '1',
@@ -139,16 +141,42 @@ function ApiGrid() {
 
   // Save to localStorage
   useEffect(() => {
-    if (savedRequests.length > 0) {
-      localStorage.setItem('api-grid-saved-requests', JSON.stringify(savedRequests));
-    }
+    localStorage.setItem('api-grid-saved-requests', JSON.stringify(savedRequests));
   }, [savedRequests]);
 
   useEffect(() => {
-    if (collections.length > 0) {
-      localStorage.setItem('api-grid-collections', JSON.stringify(collections));
-    }
+    localStorage.setItem('api-grid-collections', JSON.stringify(collections));
   }, [collections]);
+
+  // Collections helpers
+  const findCollectionByName = (name: string): Collection | undefined => {
+    return collections.find(c => c.name.toLowerCase() === name.trim().toLowerCase());
+  };
+
+  const createCollection = (name: string): Collection | null => {
+    if (!user?.uid) {
+      window.location.href = '/login';
+      return null;
+    }
+    const trimmed = name.trim();
+    if (!trimmed) {
+      toast({ title: 'Invalid name', description: 'Collection name cannot be empty', variant: 'destructive' });
+      return null;
+    }
+    if (findCollectionByName(trimmed)) {
+      toast({ title: 'Already exists', description: 'A collection with this name already exists', variant: 'destructive' });
+      return null;
+    }
+    const newCollection: Collection = { id: Date.now().toString(), name: trimmed, requests: [] };
+    setCollections(prev => [...prev, newCollection]);
+    toast({ title: 'Collection created', description: `Created collection "${trimmed}"` });
+    return newCollection;
+  };
+
+  const ensureUniqueRequestName = (collection: Collection, requestName: string): boolean => {
+    const exists = collection.requests.some(r => r.name.trim().toLowerCase() === requestName.trim().toLowerCase());
+    return !exists;
+  };
 
   const updateActiveTab = (updates: Partial<RequestTab>) => {
     setRequestTabs(tabs =>
@@ -382,9 +410,45 @@ function ApiGrid() {
   };
 
   const saveRequest = () => {
+    if (!user?.uid) {
+      window.location.href = '/login';
+      return;
+    }
+    // Ask for target collection (by name)
+    let collectionName = window.prompt('Save to collection (enter name, will be created if not exists):', 'Default');
+    if (collectionName === null) return; // cancelled
+    collectionName = collectionName.trim();
+    if (!collectionName) {
+      toast({ title: 'Invalid name', description: 'Collection name cannot be empty', variant: 'destructive' });
+      return;
+    }
+
+    // Ask for request name (defaults to tab name)
+    let requestName = window.prompt('Request name (must be unique in this collection):', activeTab.name || 'Untitled Request');
+    if (requestName === null) return; // cancelled
+    requestName = requestName.trim();
+    if (!requestName) {
+      toast({ title: 'Invalid name', description: 'Request name cannot be empty', variant: 'destructive' });
+      return;
+    }
+
+    // Ensure collection exists
+    let targetCollection = findCollectionByName(collectionName);
+    if (!targetCollection) {
+      const created = createCollection(collectionName);
+      if (!created) return; // creation failed
+      targetCollection = created;
+    }
+
+    // Enforce unique request name within the collection
+    if (!ensureUniqueRequestName(targetCollection, requestName)) {
+      toast({ title: 'Duplicate request name', description: 'Pick a different name for this collection', variant: 'destructive' });
+      return;
+    }
+
     const savedRequest: SavedRequest = {
       id: Date.now().toString(),
-      name: activeTab.name,
+      name: requestName,
       method: activeTab.method,
       url: activeTab.url,
       headers: activeTab.headers,
@@ -393,15 +457,18 @@ function ApiGrid() {
       bodyType: activeTab.bodyType,
       authType: activeTab.authType,
       authData: activeTab.authData,
+      collectionId: targetCollection.id,
       timestamp: Date.now(),
     };
     
+    // Persist in collections
+    setCollections(prev => prev.map(c => c.id === targetCollection!.id ? { ...c, requests: [savedRequest, ...c.requests] } : c));
+
+    // Optional flat list for quick access/search
     setSavedRequests([...savedRequests, savedRequest]);
+
     updateActiveTab({ name: savedRequest.name, isModified: false });
-    toast({
-      title: 'Request Saved',
-      description: 'Request has been saved successfully',
-    });
+    toast({ title: 'Request Saved', description: `Saved to ${collectionName}` });
   };
 
   const loadRequest = (savedRequest: SavedRequest) => {
@@ -443,30 +510,54 @@ function ApiGrid() {
               </Button>
             </div>
             <Input placeholder="Search..." className="mb-2" />
-            <Button variant="outline" size="sm" className="w-full">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => {
+                if (!user?.uid) {
+                  window.location.href = '/login';
+                  return;
+                }
+                const name = window.prompt('New collection name');
+                if (name !== null) createCollection(name);
+              }}
+            >
               <FolderPlus className="h-4 w-4 mr-2" />
               New Collection
             </Button>
           </div>
           <ScrollArea className="flex-1">
-            <div className="p-2 space-y-1">
-              {savedRequests.map((req) => (
-                <div
-                  key={req.id}
-                  className="p-2 hover:bg-muted rounded cursor-pointer flex items-center justify-between group"
-                  onClick={() => loadRequest(req)}
-                >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <Badge variant="outline" className="font-mono text-xs">
-                      {req.method}
-                    </Badge>
-                    <span className="text-sm truncate">{req.name}</span>
+            <div className="p-2 space-y-3">
+              {collections.map((col) => (
+                <div key={col.id} className="border rounded-md overflow-hidden">
+                  <div className="px-3 py-2 bg-muted/50 text-sm font-medium flex items-center justify-between">
+                    <span className="truncate">{col.name}</span>
+                    <Badge variant="secondary">{col.requests.length}</Badge>
+                  </div>
+                  <div className="max-h-64 overflow-auto">
+                    {col.requests.length === 0 ? (
+                      <div className="p-3 text-xs text-muted-foreground">Empty collection</div>
+                    ) : (
+                      col.requests.map((req) => (
+                        <div
+                          key={req.id}
+                          className="p-2 hover:bg-muted cursor-pointer flex items-center gap-2"
+                          onClick={() => loadRequest(req)}
+                        >
+                          <Badge variant="outline" className="font-mono text-[10px]">
+                            {req.method}
+                          </Badge>
+                          <span className="text-sm truncate">{req.name}</span>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               ))}
-              {savedRequests.length === 0 && (
+              {collections.length === 0 && (
                 <div className="p-4 text-center text-sm text-muted-foreground">
-                  No saved requests. Save a request to see it here.
+                  No collections yet. Create one to get started.
                 </div>
               )}
             </div>
