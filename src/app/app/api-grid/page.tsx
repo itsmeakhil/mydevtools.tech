@@ -12,7 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Copy, Send, Trash2, Plus, Clock, Save, X, 
-  ChevronRight, ChevronLeft, FolderPlus 
+  ChevronRight, ChevronLeft, FolderPlus, Search,
+  Loader2, CheckCircle2, AlertCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import useAuth from '@/utils/useAuth';
@@ -148,6 +149,7 @@ function ApiGrid() {
   const [showNewCollectionInput, setShowNewCollectionInput] = useState(false);
   const [deleteCollectionId, setDeleteCollectionId] = useState<string | null>(null);
   const [deleteRequestInfo, setDeleteRequestInfo] = useState<{ collectionId: string; requestId: string; requestName: string } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
 
   const activeTab = requestTabs.find(t => t.id === activeTabId) || requestTabs[0];
@@ -703,19 +705,37 @@ function ApiGrid() {
     return colors[method] || colors.GET;
   };
 
+  // Filter collections and requests based on search
+  const filteredCollections = collections.map(col => ({
+    ...col,
+    requests: col.requests.filter(req => 
+      req.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      req.url.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      req.method.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  })).filter(col => col.requests.length > 0 || col.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
   return (
     <div className="relative flex h-screen w-full overflow-hidden">
       {/* Sidebar */}
       {sidebarOpen && (
-        <div className="w-64 border-r bg-muted/30 flex flex-col">
-          <div className="p-4 border-b bg-background/50">
+        <div className="w-72 border-r bg-muted/20 flex flex-col backdrop-blur-sm">
+          <div className="p-4 border-b bg-background/80 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-base">Collections</h2>
               <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)} className="h-8 w-8">
                 <ChevronLeft className="h-4 w-4" />
               </Button>
             </div>
-            <Input placeholder="Search..." className="mb-3 h-9" />
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Search requests..." 
+                className="h-9 pl-9 bg-background/50" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -735,19 +755,20 @@ function ApiGrid() {
             </Button>
           </div>
           <ScrollArea className="flex-1">
-            <div className="p-2 space-y-3">
+            <div className="p-3 space-y-3">
               {isLoadingCollections ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  Loading collections...
+                <div className="p-8 text-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Loading collections...</p>
                 </div>
               ) : (
                 <>
-                  {collections.map((col) => (
-                <div key={col.id} className="border rounded-lg overflow-hidden bg-card shadow-sm">
-                  <div className="px-3.5 py-2.5 bg-muted/40 text-sm font-semibold flex items-center justify-between group/collection border-b">
+                  {filteredCollections.map((col) => (
+                <div key={col.id} className="border rounded-lg overflow-hidden bg-card shadow-sm hover:shadow-md transition-shadow">
+                  <div className="px-3.5 py-2.5 bg-muted/50 text-sm font-semibold flex items-center justify-between group/collection border-b">
                     <span className="truncate text-foreground">{col.name}</span>
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs font-medium">
+                      <Badge variant="secondary" className="text-xs font-medium px-2">
                         {col.requests.length}
                       </Badge>
                       <Button
@@ -766,7 +787,9 @@ function ApiGrid() {
                   </div>
                   <div className="max-h-64 overflow-auto p-1.5">
                     {col.requests.length === 0 ? (
-                      <div className="p-3 text-xs text-muted-foreground">Empty collection</div>
+                      <div className="p-4 text-center">
+                        <p className="text-xs text-muted-foreground">Empty collection</p>
+                      </div>
                     ) : (
                       col.requests.map((req) => (
                         <div
@@ -801,9 +824,26 @@ function ApiGrid() {
                   </div>
                 </div>
                   ))}
-                  {collections.length === 0 && !isLoadingCollections && (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
-                      No collections yet. Create one to get started.
+                  {filteredCollections.length === 0 && !isLoadingCollections && (
+                    <div className="p-8 text-center">
+                      {searchQuery ? (
+                        <>
+                          <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                          <p className="text-sm text-muted-foreground mb-1">No results found</p>
+                          <p className="text-xs text-muted-foreground">Try adjusting your search query</p>
+                        </>
+                      ) : collections.length === 0 ? (
+                        <>
+                          <FolderPlus className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                          <p className="text-sm text-muted-foreground mb-1">No collections yet</p>
+                          <p className="text-xs text-muted-foreground">Create one to get started</p>
+                        </>
+                      ) : (
+                        <>
+                          <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                          <p className="text-sm text-muted-foreground">No matching requests found</p>
+                        </>
+                      )}
                     </div>
                   )}
                 </>
@@ -882,10 +922,10 @@ function ApiGrid() {
         </div>
 
         {/* Request Builder */}
-        <div className="flex-1 overflow-auto bg-background">
+        <div className="flex-1 overflow-auto bg-gradient-to-b from-background to-muted/20">
           <div className="max-w-7xl mx-auto p-6 space-y-6">
             {/* URL Bar */}
-            <div className="flex gap-3 items-center">
+            <div className="flex gap-3 items-center bg-card p-4 rounded-lg border shadow-sm">
               <Select value={activeTab.method} onValueChange={(value) => updateActiveTab({ method: value as HttpMethod })}>
                 <SelectTrigger className={`w-36 font-mono font-semibold ${getMethodColor(activeTab.method)}`}>
                   <SelectValue />
@@ -909,10 +949,14 @@ function ApiGrid() {
               <Button 
                 onClick={handleSendRequest} 
                 disabled={isLoading || !activeTab.url.trim()}
-                className="h-10"
+                className="h-10 shadow-sm hover:shadow-md transition-shadow"
               >
-                <Send className="h-4 w-4 mr-2" />
-                Send
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4 mr-2" />
+                )}
+                {isLoading ? 'Sending...' : 'Send'}
               </Button>
               <Button 
                 variant="outline" 
@@ -926,27 +970,29 @@ function ApiGrid() {
 
             {/* Request Tabs */}
             <Tabs defaultValue="params" className="w-full">
-              <TabsList className="h-11">
-                <TabsTrigger value="params" className="text-sm font-medium">
+              <TabsList className="h-11 bg-muted/50">
+                <TabsTrigger value="params" className="text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm">
                   Params
                   {activeTab.params.filter(p => p.enabled).length > 0 && (
-                    <Badge variant="secondary" className="ml-2 text-xs">
+                    <Badge variant="secondary" className="ml-2 text-xs px-1.5 py-0">
                       {activeTab.params.filter(p => p.enabled).length}
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="body" className="text-sm font-medium">
+                <TabsTrigger value="body" className="text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm">
                   Body
                 </TabsTrigger>
-                <TabsTrigger value="headers" className="text-sm font-medium">
+                <TabsTrigger value="headers" className="text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm">
                   Headers
                   {activeTab.headers.filter(h => h.enabled).length > 0 && (
-                    <Badge variant="secondary" className="ml-2 text-xs">
+                    <Badge variant="secondary" className="ml-2 text-xs px-1.5 py-0">
                       {activeTab.headers.filter(h => h.enabled).length}
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="auth" className="text-sm font-medium">Authorization</TabsTrigger>
+                <TabsTrigger value="auth" className="text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  Authorization
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="params" className="mt-4">
@@ -1014,16 +1060,16 @@ function ApiGrid() {
 
               <TabsContent value="body" className="mt-4">
                 {['POST', 'PUT', 'PATCH'].includes(activeTab.method) ? (
-                  <div className="space-y-4">
+                  <div className="space-y-4 bg-card p-4 rounded-lg border shadow-sm">
                     <div className="flex items-center justify-between">
-                      <Label>Body Type</Label>
+                      <Label className="text-sm font-semibold">Body Type</Label>
                       <Tabs value={activeTab.bodyType} onValueChange={(value) => updateActiveTab({ bodyType: value as BodyType })}>
-                        <TabsList>
-                          <TabsTrigger value="json">JSON</TabsTrigger>
-                          <TabsTrigger value="text">Text</TabsTrigger>
-                          <TabsTrigger value="form-data">Form Data</TabsTrigger>
-                          <TabsTrigger value="x-www-form-urlencoded">URL Encoded</TabsTrigger>
-                          <TabsTrigger value="raw">Raw</TabsTrigger>
+                        <TabsList className="bg-muted/50">
+                          <TabsTrigger value="json" className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs">JSON</TabsTrigger>
+                          <TabsTrigger value="text" className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs">Text</TabsTrigger>
+                          <TabsTrigger value="form-data" className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs">Form Data</TabsTrigger>
+                          <TabsTrigger value="x-www-form-urlencoded" className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs">URL Encoded</TabsTrigger>
+                          <TabsTrigger value="raw" className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs">Raw</TabsTrigger>
                         </TabsList>
                       </Tabs>
                     </div>
@@ -1037,12 +1083,13 @@ function ApiGrid() {
                       }
                       value={activeTab.body}
                       onChange={(e) => updateActiveTab({ body: e.target.value })}
-                      className="font-mono min-h-[300px] text-sm"
+                      className="font-mono min-h-[300px] text-sm bg-background/50 border-2 focus-visible:ring-2"
                     />
                   </div>
                 ) : (
-                  <div className="text-center text-muted-foreground py-12">
-                    This request method doesn't support a body
+                  <div className="text-center text-muted-foreground py-16 bg-card p-8 rounded-lg border">
+                    <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">This request method doesn't support a body</p>
                   </div>
                 )}
               </TabsContent>
@@ -1230,21 +1277,27 @@ function ApiGrid() {
 
             {/* Response Section */}
             {response && (
-              <div className="space-y-4 border-t pt-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+              <div className="space-y-4 border-t pt-6 mt-8">
+                <div className="flex items-center justify-between bg-card p-4 rounded-lg border shadow-sm">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <Label className="text-lg font-semibold">Response</Label>
-                    <Badge className={getStatusColor(response.status)}>
+                    <Badge className={`${getStatusColor(response.status)} px-3 py-1 font-semibold`}>
+                      {response.status >= 200 && response.status < 300 ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 inline" />
+                      ) : response.status >= 400 ? (
+                        <AlertCircle className="w-3.5 h-3.5 mr-1.5 inline" />
+                      ) : null}
                       {response.status} {response.statusText}
                     </Badge>
-                    <Badge variant="outline" className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {response.time}ms
+                    <Badge variant="outline" className="flex items-center gap-1.5 px-3 py-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span className="font-medium">{response.time}ms</span>
                     </Badge>
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
+                    className="shadow-sm hover:shadow-md transition-shadow"
                     onClick={() => {
                       navigator.clipboard.writeText(response.body);
                       toast({
@@ -1259,24 +1312,27 @@ function ApiGrid() {
                 </div>
 
                 <Tabs defaultValue="body">
-                  <TabsList>
-                    <TabsTrigger value="body">Body</TabsTrigger>
-                    <TabsTrigger value="headers">Headers</TabsTrigger>
+                  <TabsList className="bg-muted/50">
+                    <TabsTrigger value="body" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">Body</TabsTrigger>
+                    <TabsTrigger value="headers" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">Headers</TabsTrigger>
                   </TabsList>
                   <TabsContent value="body" className="mt-4">
-                    <div className="border rounded-lg p-4 bg-muted/30 min-h-[300px] max-h-[600px] overflow-auto">
+                    <div className="border rounded-lg p-4 bg-muted/20 backdrop-blur-sm min-h-[300px] max-h-[600px] overflow-auto shadow-inner">
                       {response.status === 0 ? (
-                        <div className="text-red-500 font-mono text-sm">{response.body}</div>
+                        <div className="text-red-500 dark:text-red-400 font-mono text-sm flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                          <span>{response.body}</span>
+                        </div>
                       ) : (
-                        <pre className="font-mono text-sm whitespace-pre-wrap break-words">
+                        <pre className="font-mono text-sm whitespace-pre-wrap break-words leading-relaxed text-foreground/90">
                           {response.body}
                         </pre>
                       )}
                     </div>
                   </TabsContent>
                   <TabsContent value="headers" className="mt-4">
-                    <div className="border rounded-lg p-4 bg-muted/30 min-h-[300px] max-h-[600px] overflow-auto">
-                      <pre className="font-mono text-sm whitespace-pre-wrap break-words">
+                    <div className="border rounded-lg p-4 bg-muted/20 backdrop-blur-sm min-h-[300px] max-h-[600px] overflow-auto shadow-inner">
+                      <pre className="font-mono text-sm whitespace-pre-wrap break-words leading-relaxed text-foreground/90">
                         {Object.entries(response.headers)
                           .map(([key, value]) => `${key}: ${value}`)
                           .join('\n')}
