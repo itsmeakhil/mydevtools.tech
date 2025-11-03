@@ -1073,190 +1073,6 @@ function ApiGrid() {
 
   return (
     <div className="relative flex h-screen w-full overflow-hidden">
-      {/* Sidebar */}
-      {sidebarOpen && (
-        <div className="w-72 border-r bg-muted/20 flex flex-col backdrop-blur-sm">
-          <div className="p-4 border-b bg-background/80 backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-base">Collections</h2>
-              <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)} className="h-8 w-8">
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search requests..." 
-                className="h-9 pl-9 bg-background/50" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={() => {
-                if (!user?.uid) {
-                  window.location.href = '/login';
-                  return;
-                }
-                setNewCollectionName('');
-                setCollectionNameError('');
-                setShowCreateCollectionDialog(true);
-              }}
-            >
-              <FolderPlus className="h-4 w-4 mr-2" />
-              New Collection
-            </Button>
-          </div>
-          <ScrollArea className="flex-1">
-            <div className="p-3 space-y-3">
-              {isLoadingCollections ? (
-                <div className="p-8 text-center">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Loading collections...</p>
-                </div>
-              ) : (
-                <>
-                  {filteredCollections.map((col) => (
-                <div key={col.id} className="border rounded-lg overflow-hidden bg-card shadow-sm hover:shadow-md transition-shadow">
-                  <div className="px-3.5 py-2.5 bg-muted/50 text-sm font-semibold flex items-center justify-between group/collection border-b">
-                    <span className="truncate text-foreground">{col.name}</span>
-                    <div className="flex items-center gap-1">
-                      <Badge variant="secondary" className="text-xs font-medium px-2">
-                        {col.requests.length}
-                      </Badge>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 opacity-0 group-hover/collection:opacity-100 hover:text-primary transition-opacity"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditCollection(col.id);
-                        }}
-                        title="Edit collection name"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 opacity-0 group-hover/collection:opacity-100 hover:text-destructive transition-opacity"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteCollection(col.id);
-                        }}
-                        title="Delete collection"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="max-h-64 overflow-auto p-1.5">
-                    {col.requests.length === 0 ? (
-                      <div className="p-4 text-center">
-                        <p className="text-xs text-muted-foreground">Empty collection</p>
-                      </div>
-                    ) : (
-                      col.requests.map((req) => (
-                        <div
-                          key={req.id}
-                          className="p-2.5 hover:bg-muted/70 transition-colors rounded-md flex items-center gap-2.5 group/request cursor-pointer"
-                          onClick={() => loadRequest(req)}
-                        >
-                          <Badge 
-                            variant="outline" 
-                            className={`font-mono text-[10px] font-semibold px-2 py-0.5 border ${getMethodColor(req.method)}`}
-                          >
-                            {req.method}
-                          </Badge>
-                          <span className="text-sm truncate flex-1 text-foreground/90 group-hover/request:text-foreground">
-                            {req.name}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover/request:opacity-100 hover:text-primary shrink-0 transition-opacity"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditRequest(col.id, req.id);
-                            }}
-                            title="Edit request name"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover/request:opacity-100 hover:text-destructive shrink-0 transition-opacity"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteRequest(col.id, req.id, req.name);
-                            }}
-                            title="Delete request"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-                  ))}
-                  {filteredCollections.length === 0 && !isLoadingCollections && (
-                    <div className="p-8 text-center">
-                      {searchQuery ? (
-                        <>
-                          <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
-                          <p className="text-sm text-muted-foreground mb-1">No results found</p>
-                          <p className="text-xs text-muted-foreground">Try adjusting your search query</p>
-                        </>
-                      ) : collections.length === 0 ? (
-                        <>
-                          <FolderPlus className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
-                          <p className="text-sm text-muted-foreground mb-1">No collections yet</p>
-                          <p className="text-xs text-muted-foreground">Create one to get started</p>
-                        </>
-                      ) : (
-                        <>
-                          <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
-                          <p className="text-sm text-muted-foreground">No matching requests found</p>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </ScrollArea>
-        </div>
-      )}
-
-      {/* Collapsed Sidebar Button - Always visible when sidebar is closed */}
-      {!sidebarOpen && (
-        <div className="fixed left-0 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-left">
-          <Button
-            variant="default"
-            size="icon"
-            className="h-14 w-10 rounded-l-none rounded-r-xl shadow-2xl border-2 border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-transform"
-            onClick={() => setSidebarOpen(true)}
-            title="Show Collections"
-          >
-            <ChevronRight className="h-6 w-6" />
-          </Button>
-        </div>
-      )}
-
-      {/* Alternative: Thin vertical bar when collapsed */}
-      {!sidebarOpen && (
-        <div 
-          className="fixed left-0 top-0 bottom-0 w-1 bg-primary/30 hover:bg-primary z-40 cursor-pointer transition-colors"
-          onClick={() => setSidebarOpen(true)}
-          title="Click to show Collections"
-        />
-      )}
-
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Request Tabs */}
@@ -1349,7 +1165,7 @@ function ApiGrid() {
               </Button>
             </div>
 
-            {/* Request Tabs */}
+            {/* Request Tabs - Params, Body, Headers, Auth */}
             <Tabs defaultValue="params" className="w-full">
               <TabsList className="h-11 bg-muted/50">
                 <TabsTrigger value="params" className="text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm">
@@ -1726,6 +1542,190 @@ function ApiGrid() {
           </div>
         </div>
       </div>
+
+      {/* Collapsed Sidebar Button - Always visible when sidebar is closed */}
+      {!sidebarOpen && (
+        <div className="fixed right-0 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-right">
+          <Button
+            variant="default"
+            size="icon"
+            className="h-14 w-10 rounded-r-none rounded-l-xl shadow-2xl border-2 border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-transform"
+            onClick={() => setSidebarOpen(true)}
+            title="Show Collections"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
+        </div>
+      )}
+
+      {/* Alternative: Thin vertical bar when collapsed */}
+      {!sidebarOpen && (
+        <div 
+          className="fixed right-0 top-0 bottom-0 w-1 bg-primary/30 hover:bg-primary z-40 cursor-pointer transition-colors"
+          onClick={() => setSidebarOpen(true)}
+          title="Click to show Collections"
+        />
+      )}
+
+      {/* Sidebar */}
+      {sidebarOpen && (
+        <div className="w-72 border-l bg-muted/20 flex flex-col backdrop-blur-sm">
+          <div className="p-4 border-b bg-background/80 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-base">Collections</h2>
+              <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)} className="h-8 w-8">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Search requests..." 
+                className="h-9 pl-9 bg-background/50" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => {
+                if (!user?.uid) {
+                  window.location.href = '/login';
+                  return;
+                }
+                setNewCollectionName('');
+                setCollectionNameError('');
+                setShowCreateCollectionDialog(true);
+              }}
+            >
+              <FolderPlus className="h-4 w-4 mr-2" />
+              New Collection
+            </Button>
+          </div>
+          <ScrollArea className="flex-1">
+            <div className="p-3 space-y-3">
+              {isLoadingCollections ? (
+                <div className="p-8 text-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Loading collections...</p>
+                </div>
+              ) : (
+                <>
+                  {filteredCollections.map((col) => (
+                <div key={col.id} className="border rounded-lg overflow-hidden bg-card shadow-sm hover:shadow-md transition-shadow">
+                  <div className="px-3.5 py-2.5 bg-muted/50 text-sm font-semibold flex items-center justify-between group/collection border-b">
+                    <span className="truncate text-foreground">{col.name}</span>
+                    <div className="flex items-center gap-1">
+                      <Badge variant="secondary" className="text-xs font-medium px-2">
+                        {col.requests.length}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover/collection:opacity-100 hover:text-primary transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditCollection(col.id);
+                        }}
+                        title="Edit collection name"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover/collection:opacity-100 hover:text-destructive transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteCollection(col.id);
+                        }}
+                        title="Delete collection"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="max-h-64 overflow-auto p-1.5">
+                    {col.requests.length === 0 ? (
+                      <div className="p-4 text-center">
+                        <p className="text-xs text-muted-foreground">Empty collection</p>
+                      </div>
+                    ) : (
+                      col.requests.map((req) => (
+                        <div
+                          key={req.id}
+                          className="p-2.5 hover:bg-muted/70 transition-colors rounded-md flex items-center gap-2.5 group/request cursor-pointer"
+                          onClick={() => loadRequest(req)}
+                        >
+                          <Badge 
+                            variant="outline" 
+                            className={`font-mono text-[10px] font-semibold px-2 py-0.5 border ${getMethodColor(req.method)}`}
+                          >
+                            {req.method}
+                          </Badge>
+                          <span className="text-sm truncate flex-1 text-foreground/90 group-hover/request:text-foreground">
+                            {req.name}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover/request:opacity-100 hover:text-primary shrink-0 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditRequest(col.id, req.id);
+                            }}
+                            title="Edit request name"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover/request:opacity-100 hover:text-destructive shrink-0 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteRequest(col.id, req.id, req.name);
+                            }}
+                            title="Delete request"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+                  ))}
+                  {filteredCollections.length === 0 && !isLoadingCollections && (
+                    <div className="p-8 text-center">
+                      {searchQuery ? (
+                        <>
+                          <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                          <p className="text-sm text-muted-foreground mb-1">No results found</p>
+                          <p className="text-xs text-muted-foreground">Try adjusting your search query</p>
+                        </>
+                      ) : collections.length === 0 ? (
+                        <>
+                          <FolderPlus className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                          <p className="text-sm text-muted-foreground mb-1">No collections yet</p>
+                          <p className="text-xs text-muted-foreground">Create one to get started</p>
+                        </>
+                      ) : (
+                        <>
+                          <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                          <p className="text-sm text-muted-foreground">No matching requests found</p>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
 
       {/* Create Collection Dialog */}
       <Dialog open={showCreateCollectionDialog} onOpenChange={setShowCreateCollectionDialog}>
