@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Copy, Clock, Calendar, Check, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useDebouncedCallback } from 'use-debounce';
 
 export default function TimestampConverterPage() {
   return (
@@ -26,6 +27,7 @@ function TimestampConverter() {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [conversionDirection, setConversionDirection] = useState<'timestamp-to-date' | 'date-to-timestamp' | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -34,8 +36,9 @@ function TimestampConverter() {
     return () => clearInterval(timer);
   }, []);
 
-  const handleTimestampConvert = () => {
+  const convertTimestampToDate = useCallback(() => {
     setError(null);
+    setConversionDirection('timestamp-to-date');
     
     if (!timestamp.trim()) {
       setDateInput('');
@@ -43,25 +46,46 @@ function TimestampConverter() {
     }
 
     try {
-      const ts = parseInt(timestamp);
+      const ts = parseInt(timestamp.trim());
+      
+      // Check if it's a valid number
       if (isNaN(ts)) {
-        throw new Error('Invalid timestamp number');
+        throw new Error('Timestamp must be a valid number. Enter seconds since Unix epoch (e.g., 1704067200).');
+      }
+      
+      // Check if it's in a reasonable range (between 1970 and 2100)
+      const minTimestamp = 0;
+      const maxTimestamp = 4102444800; // Jan 1, 2100
+      
+      if (ts < minTimestamp) {
+        throw new Error(`Timestamp too small. Unix timestamps start from 0 (January 1, 1970).`);
+      }
+      
+      if (ts > maxTimestamp) {
+        throw new Error(`Timestamp too large. Did you mean milliseconds? Divide by 1000 if so.`);
+      }
+      
+      // Check if it might be milliseconds (if > reasonable seconds value)
+      if (ts > 9999999999) {
+        throw new Error(`Timestamp appears to be in milliseconds. Unix timestamps should be in seconds. Try dividing by 1000.`);
       }
       
       const date = new Date(ts * 1000); // Convert to milliseconds
       if (isNaN(date.getTime())) {
-        throw new Error('Invalid timestamp value');
+        throw new Error('Invalid timestamp: resulted in an invalid date.');
       }
 
       setDateInput(date.toISOString().slice(0, 16));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Conversion failed');
+      const errorMessage = err instanceof Error ? err.message : 'Conversion failed';
+      setError(errorMessage);
       setDateInput('');
     }
-  };
+  }, [timestamp]);
 
-  const handleDateConvert = () => {
+  const convertDateToTimestamp = useCallback(() => {
     setError(null);
+    setConversionDirection('date-to-timestamp');
     
     if (!dateInput.trim()) {
       setTimestamp('');
@@ -70,16 +94,58 @@ function TimestampConverter() {
 
     try {
       const date = new Date(dateInput);
+      
       if (isNaN(date.getTime())) {
-        throw new Error('Invalid date value');
+        throw new Error('Invalid date format. Please use a valid date and time.');
+      }
+      
+      // Check if date is in reasonable range
+      const minDate = new Date('1970-01-01');
+      const maxDate = new Date('2100-01-01');
+      
+      if (date < minDate) {
+        throw new Error('Date is before Unix epoch (January 1, 1970).');
+      }
+      
+      if (date > maxDate) {
+        throw new Error('Date is too far in the future.');
       }
 
       const ts = Math.floor(date.getTime() / 1000);
       setTimestamp(ts.toString());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Conversion failed');
+      const errorMessage = err instanceof Error ? err.message : 'Conversion failed';
+      setError(errorMessage);
       setTimestamp('');
     }
+  }, [dateInput]);
+
+  // Debounced auto-conversion
+  const debouncedTimestampConvert = useDebouncedCallback(convertTimestampToDate, 300);
+  const debouncedDateConvert = useDebouncedCallback(convertDateToTimestamp, 300);
+
+  // Auto-convert when inputs change
+  useEffect(() => {
+    if (timestamp.trim() && conversionDirection !== 'date-to-timestamp') {
+      debouncedTimestampConvert();
+    }
+  }, [timestamp, debouncedTimestampConvert, conversionDirection]);
+
+  useEffect(() => {
+    if (dateInput.trim() && conversionDirection !== 'timestamp-to-date') {
+      debouncedDateConvert();
+    }
+  }, [dateInput, debouncedDateConvert, conversionDirection]);
+
+  // Manual conversion handlers
+  const handleTimestampConvert = () => {
+    debouncedTimestampConvert.cancel();
+    convertTimestampToDate();
+  };
+
+  const handleDateConvert = () => {
+    debouncedDateConvert.cancel();
+    convertDateToTimestamp();
   };
 
   const handleCopy = async (text: string) => {
@@ -95,7 +161,7 @@ function TimestampConverter() {
   const setCurrentTimestamp = () => {
     const now = Math.floor(Date.now() / 1000);
     setTimestamp(now.toString());
-    handleTimestampConvert();
+    // Auto-convert will trigger via useEffect
   };
 
   const formats = timestamp
@@ -146,9 +212,9 @@ function TimestampConverter() {
         {/* Timestamp to Date */}
         <div className="space-y-3">
           <Label>Unix Timestamp (seconds)</Label>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Input
-              type="number"
+              type="text"
               placeholder="Enter Unix timestamp (e.g., 1704067200)"
               value={timestamp}
               onChange={(e) => {
@@ -157,16 +223,19 @@ function TimestampConverter() {
               }}
               className="flex-1"
             />
-            <Button onClick={handleTimestampConvert}>
+            <Button onClick={handleTimestampConvert} className="w-full sm:w-auto">
               Convert
             </Button>
           </div>
+          <p className="text-xs text-muted-foreground">
+            💡 Auto-converts as you type. Timestamp is in seconds since Unix epoch (Jan 1, 1970).
+          </p>
         </div>
 
         {/* Date to Timestamp */}
         <div className="space-y-3">
           <Label>Date & Time</Label>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Input
               type="datetime-local"
               value={dateInput}
@@ -176,10 +245,13 @@ function TimestampConverter() {
               }}
               className="flex-1"
             />
-            <Button onClick={handleDateConvert}>
+            <Button onClick={handleDateConvert} className="w-full sm:w-auto">
               Convert
             </Button>
           </div>
+          <p className="text-xs text-muted-foreground">
+            💡 Auto-converts as you select a date/time.
+          </p>
         </div>
 
         {/* Results */}
