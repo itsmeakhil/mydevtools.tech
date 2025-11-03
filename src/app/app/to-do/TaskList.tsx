@@ -4,22 +4,17 @@
 import TaskItem from "./TaskItem";
 import { FadeIn } from "@/components/ui/fade-in";
 import { Inbox, Loader2 } from "lucide-react";
-
-interface Task {
-  id: string;
-  text: string;
-  status: "not-started" | "ongoing" | "completed";
-  createdAt: string;
-}
+import { Task } from "@/app/app/to-do/types/Task";
 
 interface TaskListProps {
   tasks: Task[];
   isLoading: boolean;
   onUpdateStatus: (id: string, status: "not-started" | "ongoing" | "completed") => void;
+  onUpdateTask: (id: string, updates: Partial<Task>) => Promise<void>;
   onDeleteTask: (id: string) => void;
 }
 
-export default function TaskList({ tasks, isLoading, onUpdateStatus, onDeleteTask }: TaskListProps) {
+export default function TaskList({ tasks, isLoading, onUpdateStatus, onUpdateTask, onDeleteTask }: TaskListProps) {
   return (
     <ul>
       <FadeIn show={isLoading}>
@@ -55,6 +50,7 @@ export default function TaskList({ tasks, isLoading, onUpdateStatus, onDeleteTas
             key={task.id}
             task={task}
             onUpdateStatus={onUpdateStatus}
+            onUpdateTask={onUpdateTask}
             onDeleteTask={onDeleteTask}
           />
         ))}

@@ -11,6 +11,7 @@ interface KanbanColumnProps {
   title: string;
   icon: LucideIcon;
   tasks: Task[];
+  onUpdateTask: (id: string, updates: Partial<Task>) => Promise<void>;
   onDeleteTask: (id: string) => void;
 }
 
@@ -37,6 +38,7 @@ export default function KanbanColumn({
   title,
   icon: Icon,
   tasks,
+  onUpdateTask,
   onDeleteTask,
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
@@ -82,6 +84,7 @@ export default function KanbanColumn({
               <KanbanCard
                 key={task.id}
                 task={task}
+                onUpdateTask={onUpdateTask}
                 onDeleteTask={onDeleteTask}
               />
             ))

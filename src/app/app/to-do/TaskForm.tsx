@@ -8,9 +8,10 @@ import { Plus, Sparkles } from "lucide-react";
 
 interface TaskFormProps {
   onAddTask: (task: string) => void;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
-export default function TaskForm({ onAddTask }: TaskFormProps) {
+export default function TaskForm({ onAddTask, inputRef }: TaskFormProps) {
   const [newTask, setNewTask] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
@@ -38,10 +39,11 @@ export default function TaskForm({ onAddTask }: TaskFormProps) {
           {/* Input Field */}
           <div className="flex-1">
             <Input
+              ref={inputRef}
               type="text"
               value={newTask}
               onChange={(e) => setNewTask(e.target.value)}
-              placeholder="What needs to be done?"
+              placeholder="What needs to be done? (Press N to focus)"
               className="text-lg h-12 border-2 focus-visible:ring-0 focus-visible:ring-offset-0"
               onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}

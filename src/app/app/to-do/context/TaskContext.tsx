@@ -25,6 +25,7 @@ import { db } from "../../../../database/firebase";
 import { Task, NewTask } from "@/app/app/to-do/types/Task";
 import { format } from "date-fns";
 import useAuth, { AuthState } from "@/utils/useAuth";
+import { toast } from "sonner";
 
 interface TaskContextType {
   tasks: Task[];
@@ -44,8 +45,10 @@ interface TaskContextType {
   fetchPreviousPage: () => void;
   handlePageChange: (page: number) => void;
   addTask: (text: string) => Promise<void>;
+  updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
   updateTaskStatus: (taskId: string, newStatus: "not-started" | "ongoing" | "completed") => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
+  importTasks: (tasks: Task[]) => Promise<void>;
 }
 
 interface StatusOrderMap {
@@ -102,12 +105,25 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       tasksArray.push({
         id: doc.id,
         text: data.text,
+        description: data.description,
         status: data.status,
         statusOrder: data.statusOrder,
+        priority: data.priority,
+        dueDate: data.dueDate,
+        tags: data.tags,
+        subTasks: data.subTasks,
         createdAt: data.createdAt
           ? format(data.createdAt.toDate(), "dd MMM yyyy, hh:mm a")
           : "Unknown",
+        completedAt: data.completedAt
+          ? format(data.completedAt.toDate(), "dd MMM yyyy, hh:mm a")
+          : undefined,
         created_by: data.created_by,
+        archived: data.archived,
+        timeEstimate: data.timeEstimate,
+        timeLogged: data.timeLogged,
+        isTimerRunning: data.isTimerRunning,
+        timerStartedAt: data.timerStartedAt,
       });
     });
     setTasks(tasksArray);
@@ -248,12 +264,25 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         return {
           id: doc.id,
           text: data.text,
+          description: data.description,
           status: data.status,
           statusOrder: data.statusOrder,
+          priority: data.priority,
+          dueDate: data.dueDate,
+          tags: data.tags,
+          subTasks: data.subTasks,
           createdAt: data.createdAt
             ? format(data.createdAt.toDate(), "dd MMM yyyy, hh:mm a")
             : "Unknown",
+          completedAt: data.completedAt
+            ? format(data.completedAt.toDate(), "dd MMM yyyy, hh:mm a")
+            : undefined,
           created_by: data.created_by,
+          archived: data.archived,
+          timeEstimate: data.timeEstimate,
+          timeLogged: data.timeLogged,
+          isTimerRunning: data.isTimerRunning,
+          timerStartedAt: data.timerStartedAt,
         };
       });
 
@@ -453,12 +482,25 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       tasksArray.push({
         id: doc.id,
         text: data.text,
+        description: data.description,
         status: data.status,
         statusOrder: data.statusOrder,
+        priority: data.priority,
+        dueDate: data.dueDate,
+        tags: data.tags,
+        subTasks: data.subTasks,
         createdAt: data.createdAt
           ? format(data.createdAt.toDate(), "dd MMM yyyy, hh:mm a")
           : "Unknown",
+        completedAt: data.completedAt
+          ? format(data.completedAt.toDate(), "dd MMM yyyy, hh:mm a")
+          : undefined,
         created_by: data.created_by,
+        archived: data.archived,
+        timeEstimate: data.timeEstimate,
+        timeLogged: data.timeLogged,
+        isTimerRunning: data.isTimerRunning,
+        timerStartedAt: data.timerStartedAt,
       });
     });
 
@@ -487,6 +529,34 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     await addDoc(collection(db, "tasks"), newTask);
   };
 
+  const updateTask = async (taskId: string, updates: Partial<Task>): Promise<void> => {
+    if (!user?.uid) return;
+
+    // Optimistically update local state
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === taskId ? { ...task, ...updates } : task
+      )
+    );
+
+    try {
+      const updateData: any = { ...updates };
+      
+      // If status is being updated and completedAt is not explicitly set
+      if (updates.status === "completed" && !updates.completedAt) {
+        updateData.completedAt = serverTimestamp();
+      }
+      
+      // Remove the id field as it's not stored in Firestore document data
+      delete updateData.id;
+      
+      await updateDoc(doc(db, "tasks", taskId), updateData);
+    } catch (error) {
+      console.error("Failed to update task:", error);
+      await refreshCurrentPage();
+    }
+  };
+
   const updateTaskStatus = async (
     taskId: string,
     newStatus: "not-started" | "ongoing" | "completed"
@@ -498,43 +568,110 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     };
 
     if (newStatus in statusOrder) {
-      setTasks((currentTasks) =>
-        currentTasks.map((task) =>
-          task.id === taskId
-            ? {
-                ...task,
-                status: newStatus,
-                statusOrder: statusOrder[newStatus],
-              }
-            : task
-        )
-      );
-
-      try {
-        await updateDoc(doc(db, "tasks", taskId), {
-          status: newStatus,
-          statusOrder: statusOrder[newStatus as keyof StatusOrderMap],
-        });
-      } catch (error) {
-        console.error("Failed to update task:", error);
-        await refreshCurrentPage();
+      const updates: Partial<Task> = {
+        status: newStatus,
+        statusOrder: statusOrder[newStatus],
+      };
+      
+      // Add completedAt timestamp when marking as completed
+      if (newStatus === "completed") {
+        updates.completedAt = format(new Date(), "dd MMM yyyy, hh:mm a");
       }
+      
+      await updateTask(taskId, updates);
     }
   };
 
   const deleteTask = async (taskId: string): Promise<void> => {
     if (!user?.uid) return;
 
+    // Get the task before deleting it (for undo functionality)
+    const taskToDelete = tasks.find(t => t.id === taskId);
+    if (!taskToDelete) return;
+
+    // Optimistically remove from UI
     setTasks((currentTasks) => currentTasks.filter((task) => task.id !== taskId));
 
-    try {
-      await deleteDoc(doc(db, "tasks", taskId));
-      if (tasks.length === 1 && currentPage > 1) {
+    let deleteExecuted = false;
+    let deleteTimeout: NodeJS.Timeout;
+
+    // Show toast with undo option
+    toast(`Task "${taskToDelete.text}" deleted`, {
+      action: {
+        label: "Undo",
+        onClick: async () => {
+          // Cancel the deletion
+          clearTimeout(deleteTimeout);
+          
+          // Restore the task in UI
+          setTasks((currentTasks) => {
+            // Find the correct position to insert the task back
+            const newTasks = [...currentTasks];
+            newTasks.push(taskToDelete);
+            return newTasks.sort((a, b) => a.statusOrder - b.statusOrder);
+          });
+
+          // If deletion was already executed, re-add to Firestore
+          if (deleteExecuted) {
+            try {
+              const { id, ...taskData } = taskToDelete;
+              await addDoc(collection(db, "tasks"), {
+                ...taskData,
+                createdAt: serverTimestamp(),
+              });
+              toast.success("Task restored successfully");
+            } catch (error) {
+              console.error("Failed to restore task:", error);
+              toast.error("Failed to restore task. Please try again.");
+            }
+          } else {
+            toast.success("Task restored");
+          }
+        },
+      },
+      duration: 3000,
+    });
+
+    // Execute deletion after delay (allows time for undo)
+    deleteTimeout = setTimeout(async () => {
+      try {
+        await deleteDoc(doc(db, "tasks", taskId));
+        deleteExecuted = true;
+        if (tasks.length === 1 && currentPage > 1) {
+          await refreshCurrentPage();
+        }
+      } catch (error) {
+        console.error("Failed to delete task:", error);
         await refreshCurrentPage();
+        toast.error("Failed to delete task. Please try again.");
       }
-    } catch (error) {
-      console.error("Failed to delete task:", error);
+    }, 3000); // 3 second delay before permanent deletion
+  };
+
+  const importTasks = async (importedTasks: Task[]): Promise<void> => {
+    if (!user?.uid) return;
+
+    try {
+      const batch = [];
+      for (const task of importedTasks) {
+        // Remove the id field and add to Firestore
+        const { id, createdAt, completedAt, ...taskData } = task;
+        const newTask: NewTask = {
+          ...taskData,
+          created_by: user.uid,
+          createdAt: serverTimestamp(),
+          completedAt: completedAt ? serverTimestamp() : undefined,
+        };
+        batch.push(addDoc(collection(db, "tasks"), newTask));
+      }
+
+      await Promise.all(batch);
       await refreshCurrentPage();
+      toast.success(`Successfully imported ${importedTasks.length} tasks!`);
+    } catch (error) {
+      console.error("Failed to import tasks:", error);
+      toast.error("Failed to import tasks. Please try again.");
+      throw error;
     }
   };
 
@@ -591,8 +728,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         fetchPreviousPage,
         handlePageChange,
         addTask,
+        updateTask,
         updateTaskStatus,
         deleteTask,
+        importTasks,
       }}
     >
       {children}

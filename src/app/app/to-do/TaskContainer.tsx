@@ -1,18 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import TaskForm from "@/app/app/to-do/TaskForm";
 import TaskList from "@/app/app/to-do/TaskList";
 import KanbanBoard from "@/app/app/to-do/KanbanBoard";
 import PaginationDemo from "@/app/app/to-do/PaginationS";
 import { useTaskContext } from "@/app/app/to-do/context/TaskContext";
-import { ListTodo, CheckCircle2, Circle, Clock, TrendingUp, LayoutGrid, List } from "lucide-react";
+import { ListTodo, CheckCircle2, Circle, Clock, TrendingUp, LayoutGrid, List, Search, X, Keyboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useKeyboardShortcuts } from "./useKeyboardShortcuts";
+import KeyboardShortcutsDialog from "./KeyboardShortcutsDialog";
+import ExportImportDialog from "./ExportImportDialog";
+import { Download } from "lucide-react";
 
 export const TaskContainer = () => {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showShortcutsDialog, setShowShortcutsDialog] = useState(false);
+  const [showExportImportDialog, setShowExportImportDialog] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const taskFormInputRef = useRef<HTMLInputElement>(null);
   const {
     tasks,
     isLoading,
@@ -25,15 +35,39 @@ export const TaskContainer = () => {
     fetchPreviousPage,
     handlePageChange,
     addTask,
+    updateTask,
     updateTaskStatus,
     deleteTask,
+    importTasks,
   } = useTaskContext();
+
+  // Filter tasks based on search query
+  const searchFilteredTasks = useMemo(() => {
+    if (!searchQuery.trim()) return tasks;
+    
+    const query = searchQuery.toLowerCase();
+    return tasks.filter(task => {
+      // Search in task text
+      if (task.text.toLowerCase().includes(query)) return true;
+      
+      // Search in description
+      if (task.description?.toLowerCase().includes(query)) return true;
+      
+      // Search in tags
+      if (task.tags?.some(tag => tag.name.toLowerCase().includes(query))) return true;
+      
+      // Search in subtasks
+      if (task.subTasks?.some(st => st.text.toLowerCase().includes(query))) return true;
+      
+      return false;
+    });
+  }, [tasks, searchQuery]);
 
   // Filter tasks based on filterStatus for list view
   // For kanban view, always show all tasks (filtering is handled by columns)
   const filteredTasks = viewMode === "kanban" || filterStatus === "all"
-    ? tasks
-    : tasks.filter(task => task.status === filterStatus);
+    ? searchFilteredTasks
+    : searchFilteredTasks.filter(task => task.status === filterStatus);
 
   const sortedTasks = [...filteredTasks].sort(
     (a: { status: "ongoing" | "not-started" | "completed" }, 
@@ -49,6 +83,75 @@ export const TaskContainer = () => {
 
   // Calculate statistics using all tasks stats
   const completionRate = allTaskStats.total > 0 ? Math.round((allTaskStats.completed / allTaskStats.total) * 100) : 0;
+
+  // Setup keyboard shortcuts
+  useKeyboardShortcuts([
+    {
+      key: "n",
+      description: "Create new task",
+      callback: () => {
+        taskFormInputRef.current?.focus();
+      },
+    },
+    {
+      key: "/",
+      description: "Focus search",
+      callback: () => {
+        searchInputRef.current?.focus();
+      },
+    },
+    {
+      key: "Escape",
+      description: "Clear search",
+      callback: () => {
+        setSearchQuery("");
+        searchInputRef.current?.blur();
+      },
+    },
+    {
+      key: "k",
+      description: "Toggle view",
+      callback: () => {
+        setViewMode(prev => prev === "kanban" ? "list" : "kanban");
+      },
+    },
+    {
+      key: "?",
+      shiftKey: true,
+      description: "Show shortcuts",
+      callback: () => {
+        setShowShortcutsDialog(true);
+      },
+    },
+    {
+      key: "a",
+      description: "Show all tasks",
+      callback: () => {
+        setFilterStatus("all");
+      },
+    },
+    {
+      key: "1",
+      description: "Filter: Not Started",
+      callback: () => {
+        setFilterStatus("not-started");
+      },
+    },
+    {
+      key: "2",
+      description: "Filter: Ongoing",
+      callback: () => {
+        setFilterStatus("ongoing");
+      },
+    },
+    {
+      key: "3",
+      description: "Filter: Completed",
+      callback: () => {
+        setFilterStatus("completed");
+      },
+    },
+  ]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 ml-0 mr-0 px-0 w-full">
@@ -105,11 +208,61 @@ export const TaskContainer = () => {
         </Card>
 
         {/* Task Form */}
-        <TaskForm onAddTask={addTask} />
+        <TaskForm onAddTask={addTask} inputRef={taskFormInputRef} />
+
+        {/* Search Bar */}
+        <Card className="border-2 shadow-sm">
+          <CardContent className="p-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search tasks, tags, descriptions... (Press / to focus)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-10"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
+                  onClick={() => setSearchQuery("")}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            {searchQuery && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Found {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
+              </p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* View Mode Toggle and Filter Buttons */}
         <div className="flex flex-wrap gap-4 items-center justify-between">
           <div className="flex flex-wrap gap-2 items-center">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowShortcutsDialog(true)}
+              className="gap-2"
+            >
+              <Keyboard className="h-4 w-4" />
+              <span className="hidden sm:inline">Shortcuts</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowExportImportDialog(true)}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Export/Import</span>
+            </Button>
             {[
               { value: "all" as const, label: "All", icon: ListTodo },
               { value: "not-started" as const, label: "Not Started", icon: Circle },
@@ -157,6 +310,7 @@ export const TaskContainer = () => {
                   tasks={sortedTasks}
                   isLoading={isLoading}
                   onUpdateStatus={updateTaskStatus}
+                  onUpdateTask={updateTask}
                   onDeleteTask={deleteTask}
                 />
               </div>
@@ -171,6 +325,7 @@ export const TaskContainer = () => {
                     tasks={sortedTasks}
                     isLoading={isLoading}
                     onUpdateStatus={updateTaskStatus}
+                    onUpdateTask={updateTask}
                     onDeleteTask={deleteTask}
                   />
                 </div>
@@ -193,6 +348,20 @@ export const TaskContainer = () => {
             )}
           </>
         )}
+
+        {/* Keyboard Shortcuts Dialog */}
+        <KeyboardShortcutsDialog
+          open={showShortcutsDialog}
+          onOpenChange={setShowShortcutsDialog}
+        />
+
+        {/* Export/Import Dialog */}
+        <ExportImportDialog
+          open={showExportImportDialog}
+          onOpenChange={setShowExportImportDialog}
+          tasks={tasks}
+          onImport={importTasks}
+        />
       </div>
     </div>
   );

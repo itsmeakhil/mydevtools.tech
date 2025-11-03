@@ -23,6 +23,7 @@ import { Clock, TrendingUp, CheckCircle2 } from "lucide-react";
 interface KanbanBoardProps {
   tasks: Task[];
   onUpdateStatus: (taskId: string, newStatus: Task["status"]) => Promise<void>;
+  onUpdateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
   onDeleteTask: (taskId: string) => void;
   isLoading: boolean;
 }
@@ -38,6 +39,7 @@ const columns: { id: Status; title: string; icon: typeof Clock }[] = [
 export default function KanbanBoard({
   tasks,
   onUpdateStatus,
+  onUpdateTask,
   onDeleteTask,
   isLoading,
 }: KanbanBoardProps) {
@@ -134,6 +136,7 @@ export default function KanbanBoard({
             title={column.title}
             icon={column.icon}
             tasks={tasksByStatus[column.id]}
+            onUpdateTask={onUpdateTask}
             onDeleteTask={onDeleteTask}
           />
         ))}
@@ -142,7 +145,7 @@ export default function KanbanBoard({
       <DragOverlay>
         {activeTask ? (
           <div className="opacity-90">
-            <KanbanCard task={activeTask} onDeleteTask={onDeleteTask} />
+            <KanbanCard task={activeTask} onUpdateTask={onUpdateTask} onDeleteTask={onDeleteTask} />
           </div>
         ) : null}
       </DragOverlay>
