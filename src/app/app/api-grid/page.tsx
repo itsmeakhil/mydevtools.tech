@@ -1558,6 +1558,65 @@ function ApiGrid() {
         <span className="text-sm truncate flex-1 text-foreground/90 group-hover/request:text-foreground">
           {request.name}
         </span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 opacity-0 group-hover/request:opacity-100 hover:bg-muted transition-opacity shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+            >
+              <MoreHorizontal className="h-3.5 w-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                loadRequest(request, false);
+              }}
+            >
+              <Radio className="h-4 w-4 mr-2" />
+              Open
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                loadRequest(request, true);
+              }}
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              Duplicate
+              <DropdownMenuShortcut>D</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditRequest(collectionId, request.id);
+              }}
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+              <DropdownMenuShortcut>E</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteRequest(collectionId, request.id, request.name);
+              }}
+              className="text-destructive focus:text-destructive"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+              <DropdownMenuShortcut>Del</DropdownMenuShortcut>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     );
   };
@@ -1710,7 +1769,7 @@ function ApiGrid() {
               )}
               {/* Render requests */}
               <div className="space-y-0.5 mt-1" style={{ paddingLeft: `${indent + 16}px` }}>
-                {col.requests.length === 0 ? (
+                {col.requests.length === 0 && (!col.collections || col.collections.length === 0) ? (
                   <div className="px-3 py-2 text-xs text-muted-foreground">
                     Empty collection
                   </div>
