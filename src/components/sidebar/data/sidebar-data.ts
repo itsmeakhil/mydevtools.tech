@@ -71,6 +71,12 @@ export const sidebarData: SidebarData = {
           description: 'Manage your to-do lists efficiently.'
         },
         {
+          title: 'ApiGrid',
+          url: '/app/api-grid',
+          icon: IconWorldWww,
+          description: 'Test and debug APIs with ease. Send HTTP requests and view responses in real-time.'
+        },
+        {
           title: 'Url Shortener',
           url: '/app/url-shortener',
           icon: IconUnlink,
@@ -81,13 +87,7 @@ export const sidebarData: SidebarData = {
           url: '/app/markdown-preview',
           icon: IconFileDescription,
           description: 'Write and preview markdown in real-time with GitHub Flavored Markdown support.'
-        },
-        {
-          title: 'ApiGrid',
-          url: '/app/api-grid',
-          icon: IconWorldWww,
-          description: 'Test and debug APIs with ease. Send HTTP requests and view responses in real-time.'
-        },
+        }
       ],
     },
     {
