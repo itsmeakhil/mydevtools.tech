@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -202,7 +202,16 @@ function ApiGrid() {
     })
   );
 
-  const activeTab = requestTabs.find(t => t.id === activeTabId) || requestTabs[0];
+  // Memoize activeTab to avoid recalculating on every render
+  const activeTab = useMemo(() => {
+    return requestTabs.find(t => t.id === activeTabId) || requestTabs[0];
+  }, [requestTabs, activeTabId]);
+
+  // Request cancellation ref
+  const abortControllerRef = useRef<AbortController | null>(null);
+  
+  // Debounce timer ref for auto-save
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load collections from Firebase when user logs in
   useEffect(() => {
@@ -259,13 +268,19 @@ function ApiGrid() {
     loadCollections();
   }, [user?.uid, toast]);
 
-  // Save collections to Firebase whenever they change (for authenticated users)
+  // Debounced save collections to Firebase (1 second delay)
   useEffect(() => {
-    const saveCollections = async () => {
-      if (!user?.uid || isLoadingCollections || !collectionsInitialized) {
-        return;
-      }
+    if (!user?.uid || isLoadingCollections || !collectionsInitialized) {
+      return;
+    }
 
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Set new timeout for debounced save
+    saveTimeoutRef.current = setTimeout(async () => {
       try {
         const userCollectionsRef = doc(db, 'users', user.uid, 'apiGrid', 'collections');
         await setDoc(userCollectionsRef, { collections }, { merge: true });
@@ -277,9 +292,14 @@ function ApiGrid() {
           variant: 'destructive',
         });
       }
-    };
+    }, 1000);
 
-    saveCollections();
+    // Cleanup timeout on unmount or dependency change
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [collections, user?.uid, isLoadingCollections, collectionsInitialized, toast]);
 
   // Collections helpers
@@ -387,15 +407,15 @@ function ApiGrid() {
     return !exists;
   };
 
-  const updateActiveTab = (updates: Partial<RequestTab>) => {
+  const updateActiveTab = useCallback((updates: Partial<RequestTab>) => {
     setRequestTabs(tabs =>
       tabs.map(tab =>
         tab.id === activeTabId ? { ...tab, ...updates, isModified: true } : tab
       )
     );
-  };
+  }, [activeTabId]);
 
-  const addNewTab = () => {
+  const addNewTab = useCallback(() => {
     const newTab: RequestTab = {
       id: Date.now().toString(),
       name: 'Untitled Request',
@@ -409,18 +429,20 @@ function ApiGrid() {
       authData: {},
       isModified: false,
     };
-    setRequestTabs([...requestTabs, newTab]);
+    setRequestTabs(prev => [...prev, newTab]);
     setActiveTabId(newTab.id);
-  };
+  }, []);
 
-  const closeTab = (tabId: string) => {
-    if (requestTabs.length === 1) return;
-    const newTabs = requestTabs.filter(t => t.id !== tabId);
-    setRequestTabs(newTabs);
-    if (activeTabId === tabId) {
-      setActiveTabId(newTabs[0].id);
-    }
-  };
+  const closeTab = useCallback((tabId: string) => {
+    setRequestTabs(prev => {
+      if (prev.length === 1) return prev;
+      const newTabs = prev.filter(t => t.id !== tabId);
+      if (activeTabId === tabId && newTabs.length > 0) {
+        setActiveTabId(newTabs[0].id);
+      }
+      return newTabs;
+    });
+  }, [activeTabId]);
 
   const addKeyValue = (type: 'headers' | 'params') => {
     const newItem: KeyValuePair = {
@@ -448,7 +470,8 @@ function ApiGrid() {
     });
   };
 
-  const buildUrl = () => {
+  // Memoized helper functions
+  const buildUrl = useCallback(() => {
     let url = activeTab.url;
     const enabledParams = activeTab.params.filter(p => p.enabled && p.key.trim());
     
@@ -472,9 +495,9 @@ function ApiGrid() {
     }
     
     return url;
-  };
+  }, [activeTab.url, activeTab.params, activeTab.authType, activeTab.authData]);
 
-  const buildHeaders = () => {
+  const buildHeaders = useCallback(() => {
     const headers: Record<string, string> = {};
     
     // Add enabled headers
@@ -497,9 +520,9 @@ function ApiGrid() {
     }
 
     return headers;
-  };
+  }, [activeTab.headers, activeTab.authType, activeTab.authData]);
 
-  const buildBody = () => {
+  const buildBody = useCallback(() => {
     if (!['POST', 'PUT', 'PATCH'].includes(activeTab.method)) return undefined;
 
     if (activeTab.bodyType === 'json' || activeTab.bodyType === 'text' || activeTab.bodyType === 'raw') {
@@ -531,9 +554,22 @@ function ApiGrid() {
     }
 
     return undefined;
-  };
+  }, [activeTab.method, activeTab.bodyType, activeTab.body]);
 
-  const handleSendRequest = async () => {
+  // Cancel ongoing request
+  const cancelRequest = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setIsLoading(false);
+      toast({
+        title: 'Request Cancelled',
+        description: 'The request has been cancelled',
+      });
+    }
+  }, [toast]);
+
+  const handleSendRequest = useCallback(async () => {
     if (!activeTab.url.trim()) {
       toast({
         title: 'Error',
@@ -542,6 +578,15 @@ function ApiGrid() {
       });
       return;
     }
+
+    // Cancel any existing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new AbortController for this request
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
 
     setIsLoading(true);
     setResponse(null);
@@ -555,6 +600,7 @@ function ApiGrid() {
       const options: RequestInit = {
         method: activeTab.method,
         headers,
+        signal, // Add abort signal
       };
 
       if (body !== undefined) {
@@ -565,6 +611,12 @@ function ApiGrid() {
       }
 
       const res = await fetch(url, options);
+      
+      // Check if request was aborted
+      if (signal.aborted) {
+        return;
+      }
+      
       const endTime = Date.now();
       const responseTime = endTime - startTime;
 
@@ -596,7 +648,13 @@ function ApiGrid() {
       });
 
       updateActiveTab({ isModified: false });
+      abortControllerRef.current = null;
     } catch (error) {
+      // Don't show error if request was aborted
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
+      
       const endTime = Date.now();
       const errorMessage = error instanceof Error ? error.message : 'Request failed';
       
@@ -615,8 +673,51 @@ function ApiGrid() {
       });
     } finally {
       setIsLoading(false);
+      abortControllerRef.current = null;
     }
-  };
+  }, [activeTab, toast, buildUrl, buildHeaders, buildBody, updateActiveTab]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in inputs/textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
+      // Ctrl/Cmd + Enter: Send request
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (!isLoading && activeTab.url.trim()) {
+          handleSendRequest();
+        }
+      }
+
+      // Ctrl/Cmd + K: Cancel request
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k' && isLoading) {
+        e.preventDefault();
+        cancelRequest();
+      }
+
+      // Ctrl/Cmd + T: New tab
+      if ((e.ctrlKey || e.metaKey) && e.key === 't') {
+        e.preventDefault();
+        addNewTab();
+      }
+
+      // Ctrl/Cmd + W: Close active tab
+      if ((e.ctrlKey || e.metaKey) && e.key === 'w') {
+        e.preventDefault();
+        if (requestTabs.length > 1) {
+          closeTab(activeTabId);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLoading, activeTab.url, activeTabId, requestTabs.length, handleSendRequest, cancelRequest, addNewTab, closeTab]);
 
   const handleNewRequestInCollection = (collectionId: string) => {
     // Create a new empty tab
@@ -1874,12 +1975,12 @@ function ApiGrid() {
         </div>
 
         {/* Request Tabs */}
-        <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="flex items-center overflow-x-auto">
+        <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 overflow-hidden">
+          <div className="flex items-center overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
             {requestTabs.map((tab) => (
               <div
                 key={tab.id}
-                className={`group flex items-center gap-2.5 px-4 py-3 border-r cursor-pointer min-w-[200px] transition-all ${
+                className={`group flex items-center gap-2.5 px-4 py-3 border-r cursor-pointer min-w-[200px] flex-shrink-0 transition-all ${
                   activeTabId === tab.id 
                     ? 'bg-background border-b-2 border-b-primary shadow-sm' 
                     : 'hover:bg-muted/30'
@@ -1909,7 +2010,7 @@ function ApiGrid() {
                 )}
               </div>
             ))}
-            <Button variant="ghost" size="sm" onClick={addNewTab} className="ml-2">
+            <Button variant="ghost" size="sm" onClick={addNewTab} className="ml-2 flex-shrink-0">
               <Plus className="h-4 w-4" />
             </Button>
           </div>
@@ -1942,17 +2043,23 @@ function ApiGrid() {
                 className="font-mono flex-1 h-11 text-sm border-2 focus-visible:ring-2"
               />
               <Button 
-                onClick={handleSendRequest} 
-                disabled={isLoading || !activeTab.url.trim()}
+                onClick={isLoading ? cancelRequest : handleSendRequest} 
+                disabled={!isLoading && !activeTab.url.trim()}
                 className="h-11 px-6 shadow-sm hover:shadow-md transition-all font-semibold"
                 size="default"
+                variant={isLoading ? "destructive" : "default"}
               >
                 {isLoading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <>
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </>
                 ) : (
-                  <Send className="h-4 w-4 mr-2" />
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Send
+                  </>
                 )}
-                {isLoading ? 'Sending...' : 'Send'}
               </Button>
               <Button 
                 variant="outline" 
