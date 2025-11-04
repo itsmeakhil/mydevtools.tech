@@ -1078,11 +1078,6 @@ function ApiGrid() {
     <div className="relative flex h-screen w-full overflow-hidden bg-background">
       {/* Left Protocol Sidebar */}
       <div className="w-20 border-r bg-muted/30 flex flex-col items-center py-4 gap-2">
-        <div className="mb-4">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Globe className="h-5 w-5 text-primary" />
-          </div>
-        </div>
         <Button
           variant={protocol === 'REST' ? 'default' : 'ghost'}
           size="icon"
