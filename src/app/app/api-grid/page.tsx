@@ -114,6 +114,7 @@ interface RequestTab {
   authType: AuthType;
   authData: SavedRequest['authData'];
   isModified: boolean;
+  savedRequestId?: string; // Track which saved request this tab is based on
 }
 
 interface ApiResponse {
@@ -784,7 +785,14 @@ function ApiGrid() {
     // Optional flat list for quick access/search
     setSavedRequests([...savedRequests, savedRequest]);
 
+    // Update active tab with saved request info
     updateActiveTab({ name: savedRequest.name, isModified: false });
+    // Set savedRequestId on the active tab
+    setRequestTabs(tabs =>
+      tabs.map(tab =>
+        tab.id === activeTabId ? { ...tab, savedRequestId: savedRequest.id } : tab
+      )
+    );
     setShowSaveRequestDialog(false);
     setSaveCollectionId('');
     setSaveCollectionName('');
@@ -811,7 +819,18 @@ function ApiGrid() {
     setShowSaveRequestDialog(true);
   };
 
-  const loadRequest = (savedRequest: SavedRequest) => {
+  const loadRequest = (savedRequest: SavedRequest, duplicate: boolean = false) => {
+    // Check if this request is already open in a tab (unless duplicating)
+    if (!duplicate) {
+      const existingTab = requestTabs.find(tab => tab.savedRequestId === savedRequest.id);
+      if (existingTab) {
+        // Switch to the existing tab
+        setActiveTabId(existingTab.id);
+        return;
+      }
+    }
+
+    // Create a new tab
     const newTab: RequestTab = {
       id: Date.now().toString(),
       name: savedRequest.name,
@@ -824,6 +843,7 @@ function ApiGrid() {
       authType: savedRequest.authType,
       authData: savedRequest.authData,
       isModified: false,
+      savedRequestId: savedRequest.id,
     };
     setRequestTabs([...requestTabs, newTab]);
     setActiveTabId(newTab.id);
@@ -1523,7 +1543,9 @@ function ApiGrid() {
           // Only load request if not dragging
           if (!isDragging) {
             e.stopPropagation();
-            loadRequest(request);
+            // Hold Shift to duplicate, otherwise switch to existing tab if open
+            const shouldDuplicate = e.shiftKey;
+            loadRequest(request, shouldDuplicate);
           }
         }}
       >
