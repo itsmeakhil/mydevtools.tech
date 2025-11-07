@@ -7,7 +7,7 @@ import {
   IconPhotoVideo,
   IconBlocks,
   IconNetwork,
-  // IconBook2,
+  IconBook2,
   IconAlignJustified,
   IconShieldCode,
   IconHash,
@@ -44,6 +44,7 @@ import {
   IconClock,
   IconPalette,
   IconLock,
+  IconBookmark,
   // IconNotes,
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
@@ -58,12 +59,6 @@ export const sidebarData: SidebarData = {
     {
       title: 'General Tools',
       items: [
-        //  {
-        //   title: 'Notes',
-        //   url: '/app/notes',
-        //   icon: IconBook2,
-        //   description: 'Write, save, and organize your notes.'
-        // },
         {
           title: 'Tasks',
           url: '/app/to-do',
@@ -169,6 +164,12 @@ export const sidebarData: SidebarData = {
               url: '/app/json-csv',
               description: 'Convert JSON data to CSV format.',
               icon:IconFileTypeCsv
+            },
+            {
+              title: 'Case Converter',
+              url: '/app/json-case-converter',
+              description: 'Convert variable names or JSON keys between camelCase, snake_case, kebab-case, and more.',
+              icon:IconBraces
             },
             {
               title: 'TOML to JSON',
