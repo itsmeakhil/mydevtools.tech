@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
   ChevronLeft, ChevronRight,
   Globe, Radio, Code, Settings, Search,
-  Loader2,
+  Loader2, Download,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import useAuth from '@/utils/useAuth';
@@ -60,6 +60,8 @@ import { SaveRequestDialog } from '@/components/api-grid/save-request-dialog';
 import { CreateCollectionDialog } from '@/components/api-grid/create-collection-dialog';
 import { EnvironmentSwitcher } from '@/components/api-grid/environment-switcher';
 import { EnvironmentManager } from '@/components/api-grid/environment-manager';
+import { ImportModal } from '@/components/api-grid/import-modal';
+import { parseHAR, parseOpenAPI } from '@/lib/api-grid/parsers';
 
 // Dynamically import BodyEditor for code-splitting
 const BodyEditor = lazy(() => 
@@ -125,6 +127,7 @@ function ApiGrid() {
   const [isLoadingEnvironments, setIsLoadingEnvironments] = useState(false);
   const [environmentsInitialized, setEnvironmentsInitialized] = useState(false);
   const [showEnvironmentManager, setShowEnvironmentManager] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const { toast } = useToast();
 
   // Memoize activeTab to avoid recalculating on every render
@@ -688,10 +691,51 @@ function ApiGrid() {
       const endTime = Date.now();
       const responseTime = endTime - startTime;
 
+      // Capture headers first (before reading body)
+      const responseHeaders: Record<string, string> = {};
+      res.headers.forEach((value, key) => {
+        responseHeaders[key] = value;
+      });
+
+      // Get content-length from header or calculate from body
+      const contentLengthHeader = res.headers.get('content-length');
+      let contentLength: number | undefined;
+      if (contentLengthHeader) {
+        const parsed = parseInt(contentLengthHeader, 10);
+        if (!isNaN(parsed)) {
+          contentLength = parsed;
+        }
+      }
+
       let responseBody = '';
       const contentType = res.headers.get('content-type') || '';
       
-      if (contentType.includes('application/json')) {
+      // Handle images and binary data differently
+      if (contentType.startsWith('image/')) {
+        // Read image as blob and convert to base64 data URL
+        try {
+          const blob = await res.blob();
+          if (!contentLength) {
+            contentLength = blob.size;
+          }
+          // Convert blob to base64 data URL for display
+          const reader = new FileReader();
+          responseBody = await new Promise<string>((resolve, reject) => {
+            reader.onloadend = () => {
+              if (typeof reader.result === 'string') {
+                resolve(reader.result);
+              } else {
+                reject(new Error('Failed to read image'));
+              }
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        } catch (error) {
+          // Fallback to text if blob reading fails
+          responseBody = await res.text();
+        }
+      } else if (contentType.includes('application/json')) {
         try {
           const json = await res.json();
           responseBody = JSON.stringify(json, null, 2);
@@ -702,10 +746,19 @@ function ApiGrid() {
         responseBody = await res.text();
       }
 
-      const responseHeaders: Record<string, string> = {};
-      res.headers.forEach((value, key) => {
-        responseHeaders[key] = value;
-      });
+      // If content-length wasn't in headers, calculate from body
+      if (!contentLength && responseBody) {
+        // For base64 data URLs, extract the actual size
+        if (responseBody.startsWith('data:')) {
+          const base64Data = responseBody.split(',')[1];
+          if (base64Data) {
+            // Approximate size: base64 is ~4/3 of original size
+            contentLength = Math.round((base64Data.length * 3) / 4);
+          }
+        } else {
+          contentLength = new Blob([responseBody]).size;
+        }
+      }
 
       setResponse({
         status: res.status,
@@ -713,6 +766,7 @@ function ApiGrid() {
         headers: responseHeaders,
         body: responseBody,
         time: responseTime,
+        contentLength,
       });
 
       updateActiveTab({ isModified: false });
@@ -1552,6 +1606,129 @@ function ApiGrid() {
     }
   };
 
+  // Handle cURL import from modal
+  const handleImportCurl = useCallback((curlString: string) => {
+    const parsed = parseCurlCommand(curlString);
+    
+    if (parsed) {
+      updateActiveTab({
+        ...parsed,
+        isModified: true,
+      });
+
+      toast({
+        title: 'cURL Imported',
+        description: 'Request has been populated from cURL command',
+      });
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Failed to parse cURL command',
+        variant: 'destructive',
+      });
+    }
+  }, [updateActiveTab, toast]);
+
+  // Handle HAR import
+  const handleImportHar = useCallback((harData: any) => {
+    try {
+      const requests = parseHAR(harData);
+      
+      if (requests.length === 0) {
+        toast({
+          title: 'Error',
+          description: 'No requests found in HAR file',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Load the first request into the active tab
+      const firstRequest = requests[0];
+      updateActiveTab({
+        ...firstRequest,
+        isModified: true,
+      });
+
+      // If there are more requests, create tabs for them
+      if (requests.length > 1) {
+        const newTabs: RequestTab[] = requests.slice(1).map((req, index) => {
+          let requestName = 'Imported Request';
+          try {
+            if (req.url) {
+              const urlObj = new URL(req.url);
+              requestName = `${req.method || 'GET'} ${urlObj.pathname}`;
+            }
+          } catch {
+            requestName = `${req.method || 'GET'} Request`;
+          }
+
+          return {
+            id: Date.now().toString() + index,
+            name: requestName,
+            method: req.method || 'GET',
+            url: req.url || '',
+            headers: req.headers || defaultHeaders,
+            params: req.params || [],
+            body: req.body || '',
+            bodyType: req.bodyType || 'json',
+            authType: req.authType || 'none',
+            authData: req.authData || {},
+            isModified: false,
+          };
+        });
+
+        setRequestTabs(prev => [...prev, ...newTabs]);
+      }
+
+      toast({
+        title: 'HAR Imported',
+        description: `Imported ${requests.length} request${requests.length > 1 ? 's' : ''}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to parse HAR file',
+        variant: 'destructive',
+      });
+    }
+  }, [updateActiveTab, toast]);
+
+  // Handle OpenAPI import
+  const handleImportOpenAPI = useCallback((openApiData: any, source: 'url' | 'file') => {
+    try {
+      const collection = parseOpenAPI(openApiData);
+      
+      // Add the collection to collections
+      setCollections(prev => [...prev, collection]);
+
+      // Update savedRequests with all requests from the collection
+      const collectAllRequests = (col: Collection): SavedRequest[] => {
+        const allRequests = [...col.requests];
+        if (col.collections) {
+          col.collections.forEach(subCol => {
+            allRequests.push(...collectAllRequests(subCol));
+          });
+        }
+        return allRequests;
+      };
+      
+      const allRequests = collectAllRequests(collection);
+      setSavedRequests(prev => [...prev, ...allRequests]);
+
+      toast({
+        title: 'OpenAPI Imported',
+        description: `Created collection "${collection.name}" with ${allRequests.length} request${allRequests.length > 1 ? 's' : ''}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to parse OpenAPI specification',
+        variant: 'destructive',
+      });
+    }
+  }, [toast]);
+
 
   // Move request from one collection to another
   const moveRequestToCollection = (requestId: string, targetCollectionId: string, sourceCollectionId: string) => {
@@ -1700,6 +1877,15 @@ function ApiGrid() {
               <span className="text-xs text-muted-foreground">API Client</span>
             </div>
             <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8"
+                onClick={() => setShowImportModal(true)}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Import
+              </Button>
               <Button variant="ghost" size="sm" className="h-8">
                 <Search className="h-4 w-4 mr-2" />
                 Search
@@ -2113,6 +2299,15 @@ function ApiGrid() {
           onSetDefault={handleSetDefaultEnvironment}
         />
       )}
+
+      {/* Import Modal */}
+      <ImportModal
+        open={showImportModal}
+        onOpenChange={setShowImportModal}
+        onImportCurl={handleImportCurl}
+        onImportHar={handleImportHar}
+        onImportOpenAPI={handleImportOpenAPI}
+      />
     </div>
   );
 }

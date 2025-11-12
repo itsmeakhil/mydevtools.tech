@@ -54,6 +54,7 @@ export interface ApiResponse {
   headers: Record<string, string>;
   body: string;
   time: number;
+  contentLength?: number;
 }
 
 export interface Collection {
