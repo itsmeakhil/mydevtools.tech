@@ -1,70 +1,166 @@
 "use client";
 
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
+import { useState, useRef, useEffect } from "react";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Sparkles } from "lucide-react";
+import { Plus, Sparkles, Keyboard } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface TaskFormProps {
   onAddTask: (task: string) => void;
-  inputRef?: React.RefObject<HTMLInputElement | null>;
+  inputRef?: React.RefObject<HTMLInputElement | HTMLTextAreaElement | null>;
 }
 
 export default function TaskForm({ onAddTask, inputRef }: TaskFormProps) {
   const [newTask, setNewTask] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [isMultiline, setIsMultiline] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const internalRef = inputRef || textareaRef;
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (internalRef.current && 'scrollHeight' in internalRef.current) {
+      const textarea = internalRef.current as HTMLTextAreaElement;
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+    }
+  }, [newTask, internalRef]);
 
   const handleAddTask = () => {
     if (newTask.trim() === "") return;
-    onAddTask(newTask);
+    onAddTask(newTask.trim());
     setNewTask("");
+    setIsMultiline(false);
+    // Reset textarea height
+    if (internalRef.current && 'style' in internalRef.current) {
+      (internalRef.current as HTMLTextAreaElement).style.height = 'auto';
+    }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Enter to submit (unless Shift is held)
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
       handleAddTask();
+    }
+    // Shift+Enter for new line
+    else if (e.key === "Enter" && e.shiftKey) {
+      setIsMultiline(true);
+      // Allow default behavior (new line)
+    }
+    // Escape to clear
+    else if (e.key === "Escape") {
+      setNewTask("");
+      setIsMultiline(false);
+      internalRef.current?.blur();
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNewTask(e.target.value);
+    if (e.target.value.includes('\n')) {
+      setIsMultiline(true);
     }
   };
 
   return (
-    <Card className={`transition-all duration-200 ${isFocused ? 'border-primary shadow-md ring-1 ring-primary/20' : 'border'}`}>
-      <div className="p-3 md:p-4">
-        <div className="flex gap-2 items-center">
-          {/* Icon - Smaller */}
-          <div className="flex items-center justify-center p-1.5 bg-primary/10 rounded-md min-w-[32px] h-[32px]">
-            <Sparkles className="h-4 w-4 text-primary" />
+    <Card 
+      className={`transition-all duration-300 ${
+        isFocused 
+          ? 'border-primary shadow-lg ring-2 ring-primary/20 bg-card' 
+          : 'border shadow-sm hover:shadow-md bg-card'
+      }`}
+    >
+      <div className="p-4">
+        <div className="flex gap-3 items-start">
+          {/* Icon */}
+          <div className={`flex items-center justify-center p-2 bg-primary/10 rounded-lg min-w-[40px] h-[40px] transition-all ${
+            isFocused ? 'bg-primary/20 scale-110' : ''
+          }`}>
+            <Sparkles className="h-5 w-5 text-primary" />
           </div>
           
           {/* Input Field */}
-          <div className="flex-1">
-            <Input
-              ref={inputRef}
-              type="text"
-              value={newTask}
-              onChange={(e) => setNewTask(e.target.value)}
-              placeholder="What needs to be done?"
-              className="h-9 border text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-              onKeyDown={handleKeyDown}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-            />
+          <div className="flex-1 space-y-2">
+            <div className="relative">
+              <Label htmlFor="task-input" className="sr-only">
+                Add new task
+              </Label>
+              <Textarea
+                id="task-input"
+                ref={internalRef as React.RefObject<HTMLTextAreaElement>}
+                value={newTask}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                placeholder={isMultiline ? "Add task details... (Shift+Enter for new line)" : "What needs to be done? Press Enter to add"}
+                className={`min-h-[40px] max-h-[120px] resize-none border-2 text-sm transition-all ${
+                  isFocused 
+                    ? 'border-primary focus-visible:ring-2 focus-visible:ring-primary/20' 
+                    : 'border-border hover:border-primary/50'
+                }`}
+                rows={1}
+                aria-label="Task input"
+                aria-describedby="task-hint"
+              />
+            </div>
+            
+            {/* Helper text */}
+            <div className="flex items-center justify-between">
+              <p 
+                id="task-hint"
+                className="text-xs text-muted-foreground flex items-center gap-2"
+              >
+                <span className="hidden sm:inline">
+                  {isMultiline ? "Shift+Enter for new line, Enter to add" : "Enter to add"}
+                </span>
+                <span className="sm:hidden">Enter to add</span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button 
+                        type="button"
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label="Keyboard shortcuts"
+                      >
+                        <Keyboard className="h-3 w-3" />
+                        <span className="hidden md:inline">Shortcuts</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs">
+                      <div className="space-y-1">
+                        <div><kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Enter</kbd> Add task</div>
+                        <div><kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Shift</kbd> + <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Enter</kbd> New line</div>
+                        <div><kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Esc</kbd> Clear</div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </p>
+            </div>
           </div>
 
           {/* Add Task Button */}
           <Button
             onClick={handleAddTask}
-            size="sm"
-            className="gap-1.5 h-9 px-4"
+            size="default"
+            className="gap-2 h-[40px] px-4 shadow-sm hover:shadow-md transition-all"
             disabled={newTask.trim() === ""}
+            aria-label="Add task"
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Add</span>
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground mt-1.5 ml-[44px]">
-          Press Enter to add
-        </p>
       </div>
     </Card>
   );

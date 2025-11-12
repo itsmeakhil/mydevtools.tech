@@ -47,27 +47,45 @@ function JSONViewerComponent({ data, className = '', searchable = true, onSearch
 
   // Build tree structure from parsed JSON
   const buildTree = useCallback((value: any, key: string | number = 'root', level: number = 0, path: string = 'root'): JSONNode => {
+    // Determine type and children first
+    let type: 'object' | 'array' | 'string' | 'number' | 'boolean' | 'null';
+    let children: JSONNode[] | undefined = undefined;
+
+    if (value === null) {
+      type = 'null';
+    } else if (Array.isArray(value)) {
+      type = 'array';
+      children = value.map((item, index) =>
+        buildTree(item, index, level + 1, `${path}[${index}]`)
+      );
+    } else if (typeof value === 'object') {
+      type = 'object';
+      children = Object.entries(value).map(([k, v]) =>
+        buildTree(v, k, level + 1, `${path}.${k}`)
+      );
+    } else if (typeof value === 'string') {
+      type = 'string';
+    } else if (typeof value === 'number') {
+      type = 'number';
+    } else if (typeof value === 'boolean') {
+      type = 'boolean';
+    } else {
+      // Fallback - should never happen
+      type = 'null';
+    }
+
+    // Create node with all required properties
     const node: JSONNode = {
       key,
       value,
+      type,
       level,
       path,
     };
 
-    if (value === null) {
-      node.type = 'null';
-    } else if (Array.isArray(value)) {
-      node.type = 'array';
-      node.children = value.map((item, index) =>
-        buildTree(item, index, level + 1, `${path}[${index}]`)
-      );
-    } else if (typeof value === 'object') {
-      node.type = 'object';
-      node.children = Object.entries(value).map(([k, v]) =>
-        buildTree(v, k, level + 1, `${path}.${k}`)
-      );
-    } else {
-      node.type = typeof value as 'string' | 'number' | 'boolean';
+    // Add children if they exist
+    if (children !== undefined) {
+      node.children = children;
     }
 
     return node;

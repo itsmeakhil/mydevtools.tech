@@ -27,6 +27,38 @@ import { format } from "date-fns";
 import useAuth, { AuthState } from "@/utils/useAuth";
 import { toast } from "sonner";
 
+// Helper function to safely convert Firestore timestamps to formatted strings
+const formatFirestoreDate = (dateValue: any): string | undefined => {
+  if (!dateValue) return undefined;
+  
+  // If it's already a string, return it
+  if (typeof dateValue === 'string') {
+    return dateValue;
+  }
+  
+  // If it's a Firestore Timestamp, convert it
+  if (dateValue && typeof dateValue.toDate === 'function') {
+    try {
+      return format(dateValue.toDate(), "dd MMM yyyy, hh:mm a");
+    } catch (error) {
+      console.error("Error formatting Firestore date:", error);
+      return undefined;
+    }
+  }
+  
+  // If it's a Date object, format it
+  if (dateValue instanceof Date) {
+    try {
+      return format(dateValue, "dd MMM yyyy, hh:mm a");
+    } catch (error) {
+      console.error("Error formatting Date:", error);
+      return undefined;
+    }
+  }
+  
+  return undefined;
+};
+
 interface TaskContextType {
   tasks: Task[];
   isLoading: boolean;
@@ -112,12 +144,8 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         dueDate: data.dueDate,
         tags: data.tags,
         subTasks: data.subTasks,
-        createdAt: data.createdAt
-          ? format(data.createdAt.toDate(), "dd MMM yyyy, hh:mm a")
-          : "Unknown",
-        completedAt: data.completedAt
-          ? format(data.completedAt.toDate(), "dd MMM yyyy, hh:mm a")
-          : undefined,
+        createdAt: formatFirestoreDate(data.createdAt) || "Unknown",
+        completedAt: formatFirestoreDate(data.completedAt),
         created_by: data.created_by,
         archived: data.archived,
         timeEstimate: data.timeEstimate,
@@ -271,12 +299,8 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
           dueDate: data.dueDate,
           tags: data.tags,
           subTasks: data.subTasks,
-          createdAt: data.createdAt
-            ? format(data.createdAt.toDate(), "dd MMM yyyy, hh:mm a")
-            : "Unknown",
-          completedAt: data.completedAt
-            ? format(data.completedAt.toDate(), "dd MMM yyyy, hh:mm a")
-            : undefined,
+          createdAt: formatFirestoreDate(data.createdAt) || "Unknown",
+          completedAt: formatFirestoreDate(data.completedAt),
           created_by: data.created_by,
           archived: data.archived,
           timeEstimate: data.timeEstimate,
@@ -489,12 +513,8 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         dueDate: data.dueDate,
         tags: data.tags,
         subTasks: data.subTasks,
-        createdAt: data.createdAt
-          ? format(data.createdAt.toDate(), "dd MMM yyyy, hh:mm a")
-          : "Unknown",
-        completedAt: data.completedAt
-          ? format(data.completedAt.toDate(), "dd MMM yyyy, hh:mm a")
-          : undefined,
+        createdAt: formatFirestoreDate(data.createdAt) || "Unknown",
+        completedAt: formatFirestoreDate(data.completedAt),
         created_by: data.created_by,
         archived: data.archived,
         timeEstimate: data.timeEstimate,
@@ -526,7 +546,17 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       createdAt: serverTimestamp(),
       created_by: user.uid,
     };
-    await addDoc(collection(db, "tasks"), newTask);
+    try {
+      await addDoc(collection(db, "tasks"), newTask);
+      toast.success("Task added successfully", {
+        description: newTaskText.length > 50 ? `${newTaskText.substring(0, 50)}...` : newTaskText,
+      });
+    } catch (error) {
+      console.error("Failed to add task:", error);
+      toast.error("Failed to add task", {
+        description: "Please try again.",
+      });
+    }
   };
 
   const updateTask = async (taskId: string, updates: Partial<Task>): Promise<void> => {
@@ -551,8 +581,12 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       delete updateData.id;
       
       await updateDoc(doc(db, "tasks", taskId), updateData);
+      toast.success("Task updated successfully");
     } catch (error) {
       console.error("Failed to update task:", error);
+      toast.error("Failed to update task", {
+        description: "Please try again.",
+      });
       await refreshCurrentPage();
     }
   };
@@ -568,6 +602,13 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     };
 
     if (newStatus in statusOrder) {
+      const task = tasks.find(t => t.id === taskId);
+      const statusLabels = {
+        "not-started": "Not Started",
+        "ongoing": "Ongoing",
+        "completed": "Completed",
+      };
+      
       const updates: Partial<Task> = {
         status: newStatus,
         statusOrder: statusOrder[newStatus],
@@ -578,7 +619,18 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         updates.completedAt = format(new Date(), "dd MMM yyyy, hh:mm a");
       }
       
-      await updateTask(taskId, updates);
+      try {
+        await updateTask(taskId, updates);
+        if (task) {
+          toast.success(`Task moved to ${statusLabels[newStatus]}`, {
+            description: task.text.length > 50 ? `${task.text.substring(0, 50)}...` : task.text,
+          });
+        }
+      } catch (error) {
+        toast.error("Failed to update task status", {
+          description: "Please try again.",
+        });
+      }
     }
   };
 
