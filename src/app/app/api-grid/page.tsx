@@ -9,12 +9,12 @@ import { Badge } from '@/components/ui/badge';
 import { 
   ChevronLeft, ChevronRight,
   Globe, Radio, Code, Settings, Search,
-  Loader2, Download,
+  Loader2, Download, History,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import useAuth from '@/utils/useAuth';
 import { db } from '@/database/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, addDoc, query, orderBy, limit, getDocs, deleteDoc, where, Timestamp } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,6 +46,7 @@ import {
   ApiResponse,
   Collection,
   Environment,
+  RequestHistory,
   defaultHeaders,
 } from '@/lib/api-grid/types';
 import { buildUrl, buildHeaders, buildBody, buildUrlWithEnv, buildHeadersWithEnv, buildBodyWithEnv, interpolateVariables } from '@/lib/api-grid/helpers';
@@ -61,6 +62,7 @@ import { CreateCollectionDialog } from '@/components/api-grid/create-collection-
 import { EnvironmentSwitcher } from '@/components/api-grid/environment-switcher';
 import { EnvironmentManager } from '@/components/api-grid/environment-manager';
 import { ImportModal } from '@/components/api-grid/import-modal';
+import { HistoryPanel } from '@/components/api-grid/history-panel';
 import { parseHAR, parseOpenAPI } from '@/lib/api-grid/parsers';
 
 // Dynamically import BodyEditor for code-splitting
@@ -128,6 +130,10 @@ function ApiGrid() {
   const [environmentsInitialized, setEnvironmentsInitialized] = useState(false);
   const [showEnvironmentManager, setShowEnvironmentManager] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [requestHistory, setRequestHistory] = useState<RequestHistory[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [historyInitialized, setHistoryInitialized] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const { toast } = useToast();
 
   // Memoize activeTab to avoid recalculating on every render
@@ -318,6 +324,206 @@ function ApiGrid() {
       }
     };
   }, [collections, user?.uid, isLoadingCollections, collectionsInitialized, toast]);
+
+  // Load request history from Firebase when user logs in
+  useEffect(() => {
+    const loadHistory = async () => {
+      if (!user?.uid) {
+        setRequestHistory([]);
+        setHistoryInitialized(false);
+        return;
+      }
+
+      setIsLoadingHistory(true);
+      try {
+        // Ensure apiGrid document exists first
+        const apiGridRef = doc(db, 'users', user.uid, 'apiGrid', 'data');
+        const apiGridDoc = await getDoc(apiGridRef);
+        if (!apiGridDoc.exists()) {
+          // Create the apiGrid document if it doesn't exist
+          await setDoc(apiGridRef, { createdAt: Timestamp.now() });
+        }
+
+        // Now reference the history subcollection
+        const historyRef = collection(apiGridRef, 'history');
+        const historyQuery = query(historyRef, orderBy('timestamp', 'desc'), limit(100));
+        const historySnapshot = await getDocs(historyQuery);
+        
+        const history: RequestHistory[] = [];
+        historySnapshot.forEach((doc) => {
+          const data = doc.data();
+          history.push({
+            id: doc.id,
+            ...data,
+            timestamp: data.timestamp?.toMillis?.() || data.timestamp || Date.now(),
+          } as RequestHistory);
+        });
+        
+        setRequestHistory(history);
+        setHistoryInitialized(true);
+      } catch (error) {
+        console.error('Error loading history:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load request history',
+          variant: 'destructive',
+        });
+        setHistoryInitialized(true);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    loadHistory();
+  }, [user?.uid, toast]);
+
+  // Save request to history
+  const saveToHistory = useCallback(async (response: ApiResponse, requestTab: RequestTab) => {
+    if (!user?.uid) return;
+
+    try {
+      const historyEntry: Omit<RequestHistory, 'id'> = {
+        method: requestTab.method,
+        url: requestTab.url,
+        headers: requestTab.headers,
+        params: requestTab.params,
+        body: requestTab.body,
+        bodyType: requestTab.bodyType,
+        authType: requestTab.authType,
+        authData: requestTab.authData,
+        status: response.status,
+        statusText: response.statusText,
+        timestamp: Date.now(),
+        duration: response.time,
+      };
+
+      // Reference the apiGrid document and then the history subcollection
+      const apiGridRef = doc(db, 'users', user.uid, 'apiGrid', 'data');
+      const historyRef = collection(apiGridRef, 'history');
+      const docRef = await addDoc(historyRef, {
+        ...historyEntry,
+        timestamp: Timestamp.fromMillis(historyEntry.timestamp),
+      });
+
+      // Add to local state (prepend to maintain order)
+      const newHistoryEntry: RequestHistory = {
+        id: docRef.id,
+        ...historyEntry,
+      };
+      setRequestHistory(prev => [newHistoryEntry, ...prev.slice(0, 99)]);
+    } catch (error) {
+      console.error('Error saving to history:', error);
+      // Don't show error toast for history saves - it's not critical
+    }
+  }, [user?.uid]);
+
+  // Clear all history
+  const clearAllHistory = useCallback(async () => {
+    if (!user?.uid) return;
+
+    try {
+      const apiGridRef = doc(db, 'users', user.uid, 'apiGrid', 'data');
+      const historyRef = collection(apiGridRef, 'history');
+      const historyQuery = query(historyRef);
+      const historySnapshot = await getDocs(historyQuery);
+      
+      const deletePromises = historySnapshot.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+      
+      setRequestHistory([]);
+      toast({
+        title: 'History Cleared',
+        description: 'All request history has been cleared',
+      });
+    } catch (error) {
+      console.error('Error clearing history:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to clear history',
+        variant: 'destructive',
+      });
+    }
+  }, [user?.uid, toast]);
+
+  // Clear history by date range
+  const clearHistoryByRange = useCallback(async (startDate: number, endDate: number) => {
+    if (!user?.uid) return;
+
+    try {
+      const apiGridRef = doc(db, 'users', user.uid, 'apiGrid', 'data');
+      const historyRef = collection(apiGridRef, 'history');
+      // Get all history and filter client-side (Firestore doesn't support range queries easily)
+      const historyQuery = query(historyRef, orderBy('timestamp', 'desc'));
+      const historySnapshot = await getDocs(historyQuery);
+      
+      const startTimestamp = Timestamp.fromMillis(startDate);
+      const endTimestamp = Timestamp.fromMillis(endDate);
+      
+      // Filter docs in the range
+      const docsToDelete = historySnapshot.docs.filter(doc => {
+        const timestamp = doc.data().timestamp;
+        if (!timestamp) return false;
+        return timestamp >= startTimestamp && timestamp <= endTimestamp;
+      });
+      
+      const deletePromises = docsToDelete.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+      
+      // Update local state
+      setRequestHistory(prev => prev.filter(h => {
+        const timestamp = h.timestamp;
+        return timestamp < startDate || timestamp > endDate;
+      }));
+      
+      toast({
+        title: 'History Cleared',
+        description: `Cleared ${docsToDelete.length} history entries`,
+      });
+    } catch (error) {
+      console.error('Error clearing history by range:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to clear history',
+        variant: 'destructive',
+      });
+    }
+  }, [user?.uid, toast]);
+
+  // Re-run request from history
+  const rerunHistoryRequest = useCallback((historyEntry: RequestHistory) => {
+    // Extract pathname from URL for naming
+    let requestName = `${historyEntry.method} Request`;
+    try {
+      const urlObj = new URL(historyEntry.url);
+      requestName = `${historyEntry.method} ${urlObj.pathname}`;
+    } catch {
+      // If URL is invalid, use default name
+      requestName = `${historyEntry.method} ${historyEntry.url}`;
+    }
+
+    // Create a new tab with the history request
+    const newTab: RequestTab = {
+      id: Date.now().toString(),
+      name: requestName,
+      method: historyEntry.method,
+      url: historyEntry.url,
+      headers: historyEntry.headers,
+      params: historyEntry.params,
+      body: historyEntry.body,
+      bodyType: historyEntry.bodyType,
+      authType: historyEntry.authType,
+      authData: historyEntry.authData,
+      isModified: false,
+    };
+    
+    setRequestTabs(prev => [...prev, newTab]);
+    setActiveTabId(newTab.id);
+    
+    toast({
+      title: 'Request Loaded',
+      description: 'Request has been loaded into a new tab',
+    });
+  }, [toast]);
 
   // Collections helpers
   const findCollectionById = (id: string, collectionsList: Collection[] = collections): Collection | undefined => {
@@ -648,14 +854,19 @@ function ApiGrid() {
         }
       }
 
-      setResponse({
+      const apiResponse: ApiResponse = {
         status: res.status,
         statusText: res.statusText,
         headers: responseHeaders,
         body: responseBody,
         time: responseTime,
         contentLength,
-      });
+      };
+
+      setResponse(apiResponse);
+
+      // Save to history
+      await saveToHistory(apiResponse, activeTab);
 
       updateActiveTab({ isModified: false });
       abortControllerRef.current = null;
@@ -667,14 +878,18 @@ function ApiGrid() {
       
       const endTime = Date.now();
       const errorMessage = error instanceof Error ? error.message : 'Request failed';
-      
-      setResponse({
+      const errorResponse: ApiResponse = {
         status: 0,
         statusText: 'Error',
         headers: {},
         body: `Error: ${errorMessage}`,
         time: endTime - startTime,
-      });
+      };
+      
+      setResponse(errorResponse);
+
+      // Save error to history as well
+      await saveToHistory(errorResponse, activeTab);
 
       toast({
         title: 'Request Failed',
@@ -685,7 +900,7 @@ function ApiGrid() {
       setIsLoading(false);
       abortControllerRef.current = null;
     }
-  }, [activeTab, toast, getBuiltUrl, getBuiltHeaders, getBuiltBody, updateActiveTab]);
+  }, [activeTab, toast, getBuiltUrl, getBuiltHeaders, getBuiltBody, updateActiveTab, saveToHistory]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -1765,6 +1980,22 @@ function ApiGrid() {
               <span className="text-xs text-muted-foreground">API Client</span>
             </div>
             <div className="flex items-center gap-2">
+              {user?.uid && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8"
+                  onClick={() => setShowHistory(true)}
+                >
+                  <History className="h-4 w-4 mr-2" />
+                  History
+                  {requestHistory.length > 0 && (
+                    <Badge variant="secondary" className="ml-2 text-xs px-1.5 py-0.5">
+                      {requestHistory.length}
+                    </Badge>
+                  )}
+                </Button>
+              )}
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -2194,6 +2425,19 @@ function ApiGrid() {
         onImportHar={handleImportHar}
         onImportOpenAPI={handleImportOpenAPI}
       />
+
+      {/* History Panel */}
+      {user?.uid && (
+        <HistoryPanel
+          history={requestHistory}
+          isLoading={isLoadingHistory}
+          onRerun={rerunHistoryRequest}
+          onClearAll={clearAllHistory}
+          onClearRange={clearHistoryByRange}
+          open={showHistory}
+          onOpenChange={setShowHistory}
+        />
+      )}
     </div>
   );
 }

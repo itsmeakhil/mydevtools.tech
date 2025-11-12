@@ -76,3 +76,19 @@ export interface Environment {
   timestamp: number;
 }
 
+export interface RequestHistory {
+  id: string;
+  method: HttpMethod;
+  url: string;
+  headers: KeyValuePair[];
+  params: KeyValuePair[];
+  body: string;
+  bodyType: BodyType;
+  authType: AuthType;
+  authData: SavedRequest['authData'];
+  status: number;
+  statusText: string;
+  timestamp: number;
+  duration: number;
+}
+
