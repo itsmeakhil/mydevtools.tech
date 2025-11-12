@@ -5,35 +5,18 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AuthType, RequestTab } from '@/lib/api-grid/types';
-import { PresetsPanel } from './presets-panel';
 
 interface AuthPanelProps {
   activeTab: RequestTab;
   onUpdate: (updates: Partial<RequestTab>) => void;
-  onApplyAuthPreset?: (authType: AuthType, addTo: 'header' | 'query') => void;
 }
 
-function AuthPanelComponent({ activeTab, onUpdate, onApplyAuthPreset }: AuthPanelProps) {
+function AuthPanelComponent({ activeTab, onUpdate }: AuthPanelProps) {
   const handleAuthTypeChange = useCallback(
     (value: string) => {
       onUpdate({ authType: value as AuthType });
     },
     [onUpdate]
-  );
-
-  const handleApplyAuthPreset = useCallback(
-    (authType: AuthType, addTo: 'header' | 'query') => {
-      if (onApplyAuthPreset) {
-        onApplyAuthPreset(authType, addTo);
-      } else {
-        // Fallback: directly update the tab
-        onUpdate({ 
-          authType,
-          authData: { ...activeTab.authData, addTo }
-        });
-      }
-    },
-    [onApplyAuthPreset, onUpdate, activeTab.authData]
   );
 
   const handleTokenChange = useCallback(
@@ -92,7 +75,6 @@ function AuthPanelComponent({ activeTab, onUpdate, onApplyAuthPreset }: AuthPane
 
   return (
     <div className="space-y-4">
-      <PresetsPanel mode="auth" onApplyAuth={handleApplyAuthPreset} />
       <div>
         <Label>Type</Label>
         <Select value={activeTab.authType} onValueChange={handleAuthTypeChange}>
