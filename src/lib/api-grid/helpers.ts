@@ -1,4 +1,4 @@
-import { HttpMethod, RequestTab } from './types';
+import { HttpMethod, RequestTab, Environment } from './types';
 
 export const getMethodColor = (method: HttpMethod): string => {
   const colors: Record<HttpMethod, string> = {
@@ -93,6 +93,151 @@ export const buildBody = (activeTab: RequestTab): string | FormData | URLSearchP
     const params = new URLSearchParams();
     try {
       const pairs = activeTab.body.split('\n').filter(p => p.trim());
+      pairs.forEach(pair => {
+        const [key, value] = pair.split('=').map(s => s.trim());
+        if (key) params.append(key, value || '');
+      });
+    } catch {
+      // Fallback
+    }
+    return params.toString();
+  }
+
+  return undefined;
+};
+
+/**
+ * Interpolates environment variables in a string
+ * Supports ${VAR} and {{VAR}} syntax
+ */
+export const interpolateVariables = (text: string, environment?: Environment): string => {
+  if (!environment || !text) return text;
+
+  let result = text;
+  const variables = environment.variables || {};
+
+  // Replace ${VAR} and {{VAR}} patterns
+  result = result.replace(/\$\{([^}]+)\}/g, (match, varName) => {
+    const trimmedName = varName.trim();
+    return variables[trimmedName] !== undefined ? variables[trimmedName] : match;
+  });
+
+  result = result.replace(/\{\{([^}]+)\}\}/g, (match, varName) => {
+    const trimmedName = varName.trim();
+    return variables[trimmedName] !== undefined ? variables[trimmedName] : match;
+  });
+
+  return result;
+};
+
+/**
+ * Interpolates variables in KeyValuePair array
+ */
+export const interpolateKeyValuePairs = <T extends { key: string; value: string }>(
+  pairs: T[],
+  environment?: Environment
+): T[] => {
+  if (!environment) return pairs;
+
+  return pairs.map(pair => ({
+    ...pair,
+    key: interpolateVariables(pair.key, environment),
+    value: interpolateVariables(pair.value, environment),
+  }));
+};
+
+/**
+ * Builds URL with environment variable interpolation
+ */
+export const buildUrlWithEnv = (activeTab: RequestTab, environment?: Environment): string => {
+  let url = interpolateVariables(activeTab.url, environment);
+  const enabledParams = activeTab.params.filter(p => p.enabled && p.key.trim());
+
+  // Interpolate params with environment variables
+  const interpolatedParams = interpolateKeyValuePairs(enabledParams, environment);
+
+  // Add API key to query params if configured
+  if (activeTab.authType === 'apiKey' && activeTab.authData.addTo === 'query' && activeTab.authData.key && activeTab.authData.value) {
+    const authKey = interpolateVariables(activeTab.authData.key, environment);
+    const authValue = interpolateVariables(activeTab.authData.value, environment);
+    interpolatedParams.push({
+      key: authKey,
+      value: authValue,
+    });
+  }
+
+  if (interpolatedParams.length > 0) {
+    const params = new URLSearchParams();
+    interpolatedParams.forEach(p => {
+      params.append(p.key, p.value);
+    });
+    const separator = url.includes('?') ? '&' : '?';
+    url += separator + params.toString();
+  }
+
+  return url;
+};
+
+/**
+ * Builds headers with environment variable interpolation
+ */
+export const buildHeadersWithEnv = (activeTab: RequestTab, environment?: Environment): Record<string, string> => {
+  const headers: Record<string, string> = {};
+
+  // Add enabled headers with interpolation
+  const enabledHeaders = activeTab.headers.filter(h => h.enabled && h.key.trim());
+  const interpolatedHeaders = interpolateKeyValuePairs(enabledHeaders, environment);
+
+  interpolatedHeaders.forEach(h => {
+    headers[h.key.trim()] = h.value.trim();
+  });
+
+  // Add auth headers with interpolation
+  if (activeTab.authType === 'bearer' && activeTab.authData.token) {
+    const token = interpolateVariables(activeTab.authData.token, environment);
+    headers['Authorization'] = `Bearer ${token}`;
+  } else if (activeTab.authType === 'basic' && activeTab.authData.username && activeTab.authData.password) {
+    const username = interpolateVariables(activeTab.authData.username, environment);
+    const password = interpolateVariables(activeTab.authData.password, environment);
+    const credentials = btoa(`${username}:${password}`);
+    headers['Authorization'] = `Basic ${credentials}`;
+  } else if (activeTab.authType === 'apiKey' && activeTab.authData.key && activeTab.authData.value) {
+    if (activeTab.authData.addTo === 'header') {
+      const key = interpolateVariables(activeTab.authData.key, environment);
+      const value = interpolateVariables(activeTab.authData.value, environment);
+      headers[key] = value;
+    }
+  }
+
+  return headers;
+};
+
+/**
+ * Builds body with environment variable interpolation
+ */
+export const buildBodyWithEnv = (activeTab: RequestTab, environment?: Environment): string | FormData | URLSearchParams | undefined => {
+  if (!['POST', 'PUT', 'PATCH'].includes(activeTab.method)) return undefined;
+
+  const interpolatedBody = interpolateVariables(activeTab.body, environment);
+
+  if (activeTab.bodyType === 'json' || activeTab.bodyType === 'text' || activeTab.bodyType === 'raw') {
+    return interpolatedBody;
+  } else if (activeTab.bodyType === 'form-data') {
+    const formData = new FormData();
+    try {
+      const pairs = interpolatedBody.split('\n').filter(p => p.trim());
+      pairs.forEach(pair => {
+        const [key, value] = pair.split('=').map(s => s.trim());
+        if (key) formData.append(key, value || '');
+      });
+    } catch {
+      // Fallback to simple parsing
+    }
+    return formData;
+  } else if (activeTab.bodyType === 'x-www-form-urlencoded') {
+    const params = new URLSearchParams();
+    try {
+      const pairs = interpolatedBody.split('\n').filter(p => p.trim());
       pairs.forEach(pair => {
         const [key, value] = pair.split('=').map(s => s.trim());
         if (key) params.append(key, value || '');

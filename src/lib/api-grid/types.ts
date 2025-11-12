@@ -67,3 +67,11 @@ export const defaultHeaders: KeyValuePair[] = [
   { id: '1', key: 'Content-Type', value: 'application/json', enabled: true },
 ];
 
+export interface Environment {
+  id: string;
+  name: string;
+  variables: Record<string, string>;
+  isDefault?: boolean;
+  timestamp: number;
+}
+

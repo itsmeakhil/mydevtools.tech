@@ -45,9 +45,10 @@ import {
   RequestTab,
   ApiResponse,
   Collection,
+  Environment,
   defaultHeaders,
 } from '@/lib/api-grid/types';
-import { buildUrl, buildHeaders, buildBody } from '@/lib/api-grid/helpers';
+import { buildUrl, buildHeaders, buildBody, buildUrlWithEnv, buildHeadersWithEnv, buildBodyWithEnv, interpolateVariables } from '@/lib/api-grid/helpers';
 import { RequestTabs } from '@/components/api-grid/request-tabs';
 import { UrlBar } from '@/components/api-grid/url-bar';
 import { ParamsTable } from '@/components/api-grid/params-table';
@@ -57,6 +58,8 @@ import { ResponsePanel } from '@/components/api-grid/response-panel';
 import { CollectionsSidebar } from '@/components/api-grid/collections-sidebar';
 import { SaveRequestDialog } from '@/components/api-grid/save-request-dialog';
 import { CreateCollectionDialog } from '@/components/api-grid/create-collection-dialog';
+import { EnvironmentSwitcher } from '@/components/api-grid/environment-switcher';
+import { EnvironmentManager } from '@/components/api-grid/environment-manager';
 
 // Dynamically import BodyEditor for code-splitting
 const BodyEditor = lazy(() => 
@@ -117,6 +120,11 @@ function ApiGrid() {
   const [searchQuery, setSearchQuery] = useState('');
   const [protocol, setProtocol] = useState<ProtocolType>('REST');
   const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set());
+  const [environments, setEnvironments] = useState<Environment[]>([]);
+  const [activeEnvironmentId, setActiveEnvironmentId] = useState<string | null>(null);
+  const [isLoadingEnvironments, setIsLoadingEnvironments] = useState(false);
+  const [environmentsInitialized, setEnvironmentsInitialized] = useState(false);
+  const [showEnvironmentManager, setShowEnvironmentManager] = useState(false);
   const { toast } = useToast();
 
   // Memoize activeTab to avoid recalculating on every render
@@ -129,6 +137,7 @@ function ApiGrid() {
   
   // Debounce timer ref for auto-save
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveEnvironmentsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load collections from Firebase when user logs in
   useEffect(() => {
@@ -184,6 +193,94 @@ function ApiGrid() {
 
     loadCollections();
   }, [user?.uid, toast]);
+
+  // Load environments from Firebase when user logs in
+  useEffect(() => {
+    const loadEnvironments = async () => {
+      if (!user?.uid) {
+        // Clear environments when user logs out
+        setEnvironments([]);
+        setActiveEnvironmentId(null);
+        setEnvironmentsInitialized(false);
+        return;
+      }
+
+      setIsLoadingEnvironments(true);
+      try {
+        const userEnvironmentsRef = doc(db, 'users', user.uid, 'apiGrid', 'environments');
+        const environmentsDoc = await getDoc(userEnvironmentsRef);
+
+        if (environmentsDoc.exists()) {
+          const data = environmentsDoc.data();
+          const loadedEnvironments = (data.environments || []) as Environment[];
+          setEnvironments(loadedEnvironments);
+          
+          // Set active environment to default if available
+          const defaultEnv = loadedEnvironments.find(env => env.isDefault);
+          if (defaultEnv) {
+            setActiveEnvironmentId(defaultEnv.id);
+          } else if (loadedEnvironments.length > 0) {
+            // If no default, use first environment
+            setActiveEnvironmentId(loadedEnvironments[0].id);
+          } else {
+            setActiveEnvironmentId(null);
+          }
+        } else {
+          // Initialize empty environments document
+          await setDoc(userEnvironmentsRef, { environments: [] });
+          setEnvironments([]);
+          setActiveEnvironmentId(null);
+        }
+        setEnvironmentsInitialized(true);
+      } catch (error) {
+        console.error('Error loading environments:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load environments',
+          variant: 'destructive',
+        });
+        setEnvironmentsInitialized(true);
+      } finally {
+        setIsLoadingEnvironments(false);
+      }
+    };
+
+    loadEnvironments();
+  }, [user?.uid, toast]);
+
+  // Debounced save environments to Firebase (1 second delay)
+  useEffect(() => {
+    if (!user?.uid || isLoadingEnvironments || !environmentsInitialized) {
+      return;
+    }
+
+    // Clear existing timeout
+    if (saveEnvironmentsTimeoutRef.current) {
+      clearTimeout(saveEnvironmentsTimeoutRef.current);
+    }
+
+    // Set new timeout for debounced save
+    saveEnvironmentsTimeoutRef.current = setTimeout(async () => {
+      try {
+        const userEnvironmentsRef = doc(db, 'users', user.uid, 'apiGrid', 'environments');
+        await setDoc(userEnvironmentsRef, { environments }, { merge: true });
+      } catch (error) {
+        console.error('Error saving environments:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to save environments',
+          variant: 'destructive',
+        });
+      }
+    }, 1000);
+
+    // Cleanup timeout on unmount or dependency change
+    return () => {
+      if (saveEnvironmentsTimeoutRef.current) {
+        clearTimeout(saveEnvironmentsTimeoutRef.current);
+      }
+    };
+  }, [environments, user?.uid, isLoadingEnvironments, environmentsInitialized, toast]);
 
   // Debounced save collections to Firebase (1 second delay)
   useEffect(() => {
@@ -387,10 +484,32 @@ function ApiGrid() {
     });
   };
 
+  // Get active environment
+  const activeEnvironment = useMemo(() => {
+    return environments.find(env => env.id === activeEnvironmentId) || null;
+  }, [environments, activeEnvironmentId]);
+
   // Helper functions to build request parts (called in handleSendRequest)
-  const getBuiltUrl = useCallback(() => buildUrl(activeTab), [activeTab]);
-  const getBuiltHeaders = useCallback(() => buildHeaders(activeTab), [activeTab]);
-  const getBuiltBody = useCallback(() => buildBody(activeTab), [activeTab]);
+  const getBuiltUrl = useCallback(() => {
+    if (activeEnvironment) {
+      return buildUrlWithEnv(activeTab, activeEnvironment);
+    }
+    return buildUrl(activeTab);
+  }, [activeTab, activeEnvironment]);
+
+  const getBuiltHeaders = useCallback(() => {
+    if (activeEnvironment) {
+      return buildHeadersWithEnv(activeTab, activeEnvironment);
+    }
+    return buildHeaders(activeTab);
+  }, [activeTab, activeEnvironment]);
+
+  const getBuiltBody = useCallback(() => {
+    if (activeEnvironment) {
+      return buildBodyWithEnv(activeTab, activeEnvironment);
+    }
+    return buildBody(activeTab);
+  }, [activeTab, activeEnvironment]);
 
   // Cancel ongoing request
   const cancelRequest = useCallback(() => {
@@ -1039,6 +1158,62 @@ function ApiGrid() {
     });
   };
 
+  // Environment management functions
+  const handleSaveEnvironment = useCallback((environment: Environment) => {
+    setEnvironments(prev => {
+      const existingIndex = prev.findIndex(env => env.id === environment.id);
+      if (existingIndex >= 0) {
+        // Update existing
+        const updated = [...prev];
+        updated[existingIndex] = environment;
+        return updated;
+      } else {
+        // Add new
+        return [...prev, environment];
+      }
+    });
+    toast({
+      title: 'Environment Saved',
+      description: `Environment "${environment.name}" has been saved`,
+    });
+  }, [toast]);
+
+  const handleDeleteEnvironment = useCallback((environmentId: string) => {
+    setEnvironments(prev => {
+      const filtered = prev.filter(env => env.id !== environmentId);
+      // If deleted environment was active, set to first available or null
+      if (activeEnvironmentId === environmentId) {
+        const defaultEnv = filtered.find(env => env.isDefault);
+        if (defaultEnv) {
+          setActiveEnvironmentId(defaultEnv.id);
+        } else if (filtered.length > 0) {
+          setActiveEnvironmentId(filtered[0].id);
+        } else {
+          setActiveEnvironmentId(null);
+        }
+      }
+      return filtered;
+    });
+    toast({
+      title: 'Environment Deleted',
+      description: 'Environment has been deleted',
+    });
+  }, [activeEnvironmentId, toast]);
+
+  const handleSetDefaultEnvironment = useCallback((environmentId: string) => {
+    setEnvironments(prev =>
+      prev.map(env => ({
+        ...env,
+        isDefault: env.id === environmentId,
+      }))
+    );
+    setActiveEnvironmentId(environmentId);
+    toast({
+      title: 'Default Environment Set',
+      description: 'Default environment has been updated',
+    });
+  }, [toast]);
+
 
   // Parse cURL command
   const parseCurlCommand = (curlString: string): Partial<RequestTab> | null => {
@@ -1432,10 +1607,23 @@ function ApiGrid() {
         {/* Request Builder */}
         <div className="flex-1 overflow-auto bg-background">
           <div className="max-w-7xl mx-auto p-6 space-y-6">
+            {/* Environment Switcher */}
+            {user?.uid && (
+              <div className="flex items-center justify-end">
+                <EnvironmentSwitcher
+                  environments={environments}
+                  activeEnvironmentId={activeEnvironmentId}
+                  onEnvironmentChange={setActiveEnvironmentId}
+                  onManageEnvironments={() => setShowEnvironmentManager(true)}
+                />
+              </div>
+            )}
+
             {/* URL Bar */}
             <UrlBar
               activeTab={activeTab}
               isLoading={isLoading}
+              environment={activeEnvironment}
               onMethodChange={(method) => updateActiveTab({ method })}
               onUrlChange={(url) => updateActiveTab({ url })}
               onUrlPaste={handleUrlPaste}
@@ -1798,6 +1986,18 @@ function ApiGrid() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Environment Manager Dialog */}
+      {user?.uid && (
+        <EnvironmentManager
+          open={showEnvironmentManager}
+          onOpenChange={setShowEnvironmentManager}
+          environments={environments}
+          onSaveEnvironment={handleSaveEnvironment}
+          onDeleteEnvironment={handleDeleteEnvironment}
+          onSetDefault={handleSetDefaultEnvironment}
+        />
+      )}
     </div>
   );
 }
