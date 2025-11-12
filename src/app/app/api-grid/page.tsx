@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, Suspense, lazy } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
   ChevronLeft, ChevronRight,
   Globe, Radio, Code, Settings, Search,
+  Loader2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import useAuth from '@/utils/useAuth';
@@ -52,11 +53,15 @@ import { UrlBar } from '@/components/api-grid/url-bar';
 import { ParamsTable } from '@/components/api-grid/params-table';
 import { HeadersTable } from '@/components/api-grid/headers-table';
 import { AuthPanel } from '@/components/api-grid/auth-panel';
-import { BodyEditor } from '@/components/api-grid/body-editor';
 import { ResponsePanel } from '@/components/api-grid/response-panel';
 import { CollectionsSidebar } from '@/components/api-grid/collections-sidebar';
 import { SaveRequestDialog } from '@/components/api-grid/save-request-dialog';
 import { CreateCollectionDialog } from '@/components/api-grid/create-collection-dialog';
+
+// Dynamically import BodyEditor for code-splitting
+const BodyEditor = lazy(() => 
+  import('@/components/api-grid/body-editor').then(module => ({ default: module.BodyEditor }))
+);
 
 export default function ApiGridPage() {
   return (
@@ -1488,10 +1493,19 @@ function ApiGrid() {
               </TabsContent>
 
               <TabsContent value="body" className="mt-4">
-                <BodyEditor
-                  activeTab={activeTab}
-                  onUpdate={updateActiveTab}
-                />
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center min-h-[300px] bg-card p-8 rounded-xl border">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mr-2" />
+                      <span className="text-sm text-muted-foreground">Loading body editor...</span>
+                    </div>
+                  }
+                >
+                  <BodyEditor
+                    activeTab={activeTab}
+                    onUpdate={updateActiveTab}
+                  />
+                </Suspense>
               </TabsContent>
 
               <TabsContent value="headers" className="mt-4">

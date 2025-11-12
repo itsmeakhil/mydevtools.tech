@@ -1,14 +1,19 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tab';
-import { Copy, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { Copy, CheckCircle2, AlertCircle, Clock, Loader2 } from 'lucide-react';
 import { ApiResponse } from '@/lib/api-grid/types';
 import { getStatusColor } from '@/lib/api-grid/helpers';
 import { useToast } from '@/hooks/use-toast';
+
+// Dynamically import JSONViewer
+const JSONViewer = React.lazy(() => 
+  import('./json-viewer').then(module => ({ default: module.JSONViewer }))
+);
 
 interface ResponsePanelProps {
   response: ApiResponse;
@@ -35,6 +40,19 @@ function ResponsePanelComponent({ response }: ResponsePanelProps) {
     [response.headers]
   );
 
+  const isJSONResponse = useMemo(() => {
+    if (!response.body || !response.body.trim()) return false;
+    const contentType = response.headers['content-type'] || response.headers['Content-Type'] || '';
+    if (contentType.includes('application/json')) return true;
+    // Try to parse as JSON
+    try {
+      JSON.parse(response.body);
+      return true;
+    } catch {
+      return false;
+    }
+  }, [response.body, response.headers]);
+
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(response.body);
     toast({
@@ -42,6 +60,14 @@ function ResponsePanelComponent({ response }: ResponsePanelProps) {
       description: 'Response copied to clipboard',
     });
   }, [response.body, toast]);
+
+  // Loading fallback component
+  const LoadingFallback = () => (
+    <div className="flex items-center justify-center min-h-[300px] text-muted-foreground">
+      <Loader2 className="h-6 w-6 animate-spin mr-2" />
+      <span>Loading viewer...</span>
+    </div>
+  );
 
   return (
     <div className="space-y-4 border-t pt-6 mt-8">
@@ -84,6 +110,10 @@ function ResponsePanelComponent({ response }: ResponsePanelProps) {
                 <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                 <span>{response.body}</span>
               </div>
+            ) : isJSONResponse ? (
+              <Suspense fallback={<LoadingFallback />}>
+                <JSONViewer data={response.body} />
+              </Suspense>
             ) : (
               <pre className="font-mono text-sm whitespace-pre-wrap break-words leading-relaxed text-foreground/90">
                 {response.body}
