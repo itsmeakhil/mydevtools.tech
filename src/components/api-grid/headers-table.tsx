@@ -7,15 +7,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2 } from 'lucide-react';
 import { KeyValuePair } from '@/lib/api-grid/types';
+import { PresetsPanel } from './presets-panel';
 
 interface HeadersTableProps {
   headers: KeyValuePair[];
   onAdd: () => void;
   onUpdate: (id: string, field: keyof KeyValuePair, value: any) => void;
   onRemove: (id: string) => void;
+  onApplyPreset?: (headers: Array<{ key: string; value: string }>) => void;
 }
 
-function HeadersTableComponent({ headers, onAdd, onUpdate, onRemove }: HeadersTableProps) {
+function HeadersTableComponent({ headers, onAdd, onUpdate, onRemove, onApplyPreset }: HeadersTableProps) {
   const allDisabled = useMemo(
     () => headers.every(h => !h.enabled || h.key.trim() === ''),
     [headers]
@@ -34,9 +36,21 @@ function HeadersTableComponent({ headers, onAdd, onUpdate, onRemove }: HeadersTa
     },
     [onRemove]
   );
+
+  const handleApplyPreset = useCallback(
+    (presetHeaders: Array<{ key: string; value: string }>) => {
+      if (onApplyPreset) {
+        onApplyPreset(presetHeaders);
+      }
+    },
+    [onApplyPreset]
+  );
+
   return (
-    <div className="border rounded-xl overflow-hidden shadow-sm bg-card">
-      <Table>
+    <div className="space-y-4">
+      <PresetsPanel mode="headers" onApplyHeaders={handleApplyPreset} />
+      <div className="border rounded-xl overflow-hidden shadow-sm bg-card">
+        <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="w-12">
@@ -91,6 +105,7 @@ function HeadersTableComponent({ headers, onAdd, onUpdate, onRemove }: HeadersTa
           <Plus className="h-4 w-4 mr-2" />
           Add
         </Button>
+      </div>
       </div>
     </div>
   );

@@ -484,6 +484,119 @@ function ApiGrid() {
     });
   };
 
+  // Handle applying header presets
+  const handleApplyHeaderPreset = useCallback((presetHeaders: Array<{ key: string; value: string }>) => {
+    const updatedHeaders = [...activeTab.headers];
+    
+    presetHeaders.forEach(presetHeader => {
+      const existingIndex = updatedHeaders.findIndex(
+        h => h.key.toLowerCase() === presetHeader.key.toLowerCase()
+      );
+      
+      if (existingIndex >= 0) {
+        // Update existing header
+        updatedHeaders[existingIndex] = {
+          ...updatedHeaders[existingIndex],
+          value: presetHeader.value,
+          enabled: true,
+        };
+      } else {
+        // Add new header
+        updatedHeaders.push({
+          id: Date.now().toString() + Math.random(),
+          key: presetHeader.key,
+          value: presetHeader.value,
+          enabled: true,
+        });
+      }
+    });
+    
+    updateActiveTab({ headers: updatedHeaders });
+  }, [activeTab.headers, updateActiveTab]);
+
+  // Handle applying auth presets
+  const handleApplyAuthPreset = useCallback((authType: AuthType, addTo: 'header' | 'query') => {
+    // Update auth type and addTo preference
+    const updatedAuthData = { ...activeTab.authData, addTo };
+    
+    // For API Key, if key and value are already set, move them to the appropriate location
+    // For Bearer and Basic, they're handled in buildHeaders helper
+    if (authType === 'apiKey' && activeTab.authData.key && activeTab.authData.value) {
+      if (addTo === 'header') {
+        // Remove from params if it exists there
+        const updatedParams = activeTab.params.filter(
+          p => p.key.toLowerCase() !== activeTab.authData.key?.toLowerCase()
+        );
+        
+        // Add or update in headers
+        const headerKey = activeTab.authData.key;
+        const headerValue = activeTab.authData.value;
+        const existingHeaderIndex = activeTab.headers.findIndex(
+          h => h.key.toLowerCase() === headerKey.toLowerCase()
+        );
+        
+        let updatedHeaders = [...activeTab.headers];
+        if (existingHeaderIndex >= 0) {
+          updatedHeaders[existingHeaderIndex] = {
+            ...updatedHeaders[existingHeaderIndex],
+            value: headerValue,
+            enabled: true,
+          };
+        } else {
+          updatedHeaders.push({
+            id: Date.now().toString() + Math.random(),
+            key: headerKey,
+            value: headerValue,
+            enabled: true,
+          });
+        }
+        
+        updateActiveTab({ headers: updatedHeaders, params: updatedParams });
+      } else if (addTo === 'query') {
+        // Remove from headers if it exists there
+        const updatedHeaders = activeTab.headers.filter(
+          h => h.key.toLowerCase() !== activeTab.authData.key?.toLowerCase()
+        );
+        
+        // Add or update in params
+        const paramKey = activeTab.authData.key;
+        const paramValue = activeTab.authData.value;
+        const existingParamIndex = activeTab.params.findIndex(
+          p => p.key.toLowerCase() === paramKey.toLowerCase()
+        );
+        
+        let updatedParams = [...activeTab.params];
+        if (existingParamIndex >= 0) {
+          updatedParams[existingParamIndex] = {
+            ...updatedParams[existingParamIndex],
+            value: paramValue,
+            enabled: true,
+          };
+        } else {
+          updatedParams.push({
+            id: Date.now().toString() + Math.random(),
+            key: paramKey,
+            value: paramValue,
+            enabled: true,
+          });
+        }
+        
+        updateActiveTab({ 
+          headers: updatedHeaders, 
+          params: updatedParams,
+          authType,
+          authData: updatedAuthData,
+        });
+      }
+    } else {
+      // For other auth types or API Key without values, just update the auth type
+      updateActiveTab({
+        authType,
+        authData: updatedAuthData,
+      });
+    }
+  }, [activeTab, updateActiveTab]);
+
   // Get active environment
   const activeEnvironment = useMemo(() => {
     return environments.find(env => env.id === activeEnvironmentId) || null;
@@ -1702,6 +1815,7 @@ function ApiGrid() {
                   onAdd={() => addKeyValue('headers')}
                   onUpdate={(id, field, value) => updateKeyValue('headers', id, field, value)}
                   onRemove={(id) => removeKeyValue('headers', id)}
+                  onApplyPreset={handleApplyHeaderPreset}
                 />
               </TabsContent>
 
@@ -1709,6 +1823,7 @@ function ApiGrid() {
                 <AuthPanel
                   activeTab={activeTab}
                   onUpdate={updateActiveTab}
+                  onApplyAuthPreset={handleApplyAuthPreset}
                 />
               </TabsContent>
             </Tabs>
