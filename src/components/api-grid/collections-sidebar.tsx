@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -48,8 +48,8 @@ import {
   Pencil,
   Radio,
 } from 'lucide-react';
-import { Collection, SavedRequest } from './types';
-import { getMethodColor } from './helpers';
+import { Collection, SavedRequest } from '@/lib/api-grid/types';
+import { getMethodColor } from '@/lib/api-grid/helpers';
 import { useToast } from '@/hooks/use-toast';
 
 interface CollectionsSidebarProps {
@@ -246,7 +246,7 @@ function DroppableCollection({
   );
 }
 
-export function CollectionsSidebar({
+function CollectionsSidebarComponent({
   collections,
   savedRequests,
   isLoadingCollections,
@@ -285,11 +285,11 @@ export function CollectionsSidebar({
       .filter((col): col is Collection => col !== null);
   }, [collections, searchQuery]);
 
-  const handleDragStart = (event: DragStartEvent) => {
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveDragId(event.active.id as string);
-  };
+  }, []);
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     setActiveDragId(null);
 
@@ -318,7 +318,7 @@ export function CollectionsSidebar({
     if (targetCollectionId === sourceCollectionId) return;
 
     onMoveRequest(requestId, targetCollectionId, sourceCollectionId);
-  };
+  }, [collections, onMoveRequest]);
 
   // Recursive component to render collections with nested collections
   const renderCollection = (col: Collection, depth: number = 0) => {
@@ -556,4 +556,6 @@ export function CollectionsSidebar({
     </div>
   );
 }
+
+export const CollectionsSidebar = React.memo(CollectionsSidebarComponent);
 

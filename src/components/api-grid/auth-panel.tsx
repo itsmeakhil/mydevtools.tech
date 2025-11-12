@@ -1,24 +1,83 @@
 'use client';
 
+import React, { useCallback, useMemo } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AuthType, RequestTab } from './types';
+import { AuthType, RequestTab } from '@/lib/api-grid/types';
 
 interface AuthPanelProps {
   activeTab: RequestTab;
   onUpdate: (updates: Partial<RequestTab>) => void;
 }
 
-export function AuthPanel({ activeTab, onUpdate }: AuthPanelProps) {
+function AuthPanelComponent({ activeTab, onUpdate }: AuthPanelProps) {
+  const handleAuthTypeChange = useCallback(
+    (value: string) => {
+      onUpdate({ authType: value as AuthType });
+    },
+    [onUpdate]
+  );
+
+  const handleTokenChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onUpdate({
+        authData: { ...activeTab.authData, token: e.target.value },
+      });
+    },
+    [onUpdate, activeTab.authData]
+  );
+
+  const handleUsernameChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onUpdate({
+        authData: { ...activeTab.authData, username: e.target.value },
+      });
+    },
+    [onUpdate, activeTab.authData]
+  );
+
+  const handlePasswordChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onUpdate({
+        authData: { ...activeTab.authData, password: e.target.value },
+      });
+    },
+    [onUpdate, activeTab.authData]
+  );
+
+  const handleKeyChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onUpdate({
+        authData: { ...activeTab.authData, key: e.target.value },
+      });
+    },
+    [onUpdate, activeTab.authData]
+  );
+
+  const handleValueChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onUpdate({
+        authData: { ...activeTab.authData, value: e.target.value },
+      });
+    },
+    [onUpdate, activeTab.authData]
+  );
+
+  const handleAddToChange = useCallback(
+    (value: 'header' | 'query') => {
+      onUpdate({
+        authData: { ...activeTab.authData, addTo: value },
+      });
+    },
+    [onUpdate, activeTab.authData]
+  );
+
   return (
     <div className="space-y-4">
       <div>
         <Label>Type</Label>
-        <Select
-          value={activeTab.authType}
-          onValueChange={(value) => onUpdate({ authType: value as AuthType })}
-        >
+        <Select value={activeTab.authType} onValueChange={handleAuthTypeChange}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -37,11 +96,7 @@ export function AuthPanel({ activeTab, onUpdate }: AuthPanelProps) {
           <Input
             placeholder="Enter bearer token"
             value={activeTab.authData.token || ''}
-            onChange={(e) =>
-              onUpdate({
-                authData: { ...activeTab.authData, token: e.target.value },
-              })
-            }
+            onChange={handleTokenChange}
             className="font-mono"
           />
         </div>
@@ -54,11 +109,7 @@ export function AuthPanel({ activeTab, onUpdate }: AuthPanelProps) {
             <Input
               placeholder="Username"
               value={activeTab.authData.username || ''}
-              onChange={(e) =>
-                onUpdate({
-                  authData: { ...activeTab.authData, username: e.target.value },
-                })
-              }
+              onChange={handleUsernameChange}
             />
           </div>
           <div>
@@ -67,11 +118,7 @@ export function AuthPanel({ activeTab, onUpdate }: AuthPanelProps) {
               type="password"
               placeholder="Password"
               value={activeTab.authData.password || ''}
-              onChange={(e) =>
-                onUpdate({
-                  authData: { ...activeTab.authData, password: e.target.value },
-                })
-              }
+              onChange={handlePasswordChange}
             />
           </div>
         </div>
@@ -84,11 +131,7 @@ export function AuthPanel({ activeTab, onUpdate }: AuthPanelProps) {
             <Input
               placeholder="API Key name"
               value={activeTab.authData.key || ''}
-              onChange={(e) =>
-                onUpdate({
-                  authData: { ...activeTab.authData, key: e.target.value },
-                })
-              }
+              onChange={handleKeyChange}
             />
           </div>
           <div>
@@ -96,24 +139,13 @@ export function AuthPanel({ activeTab, onUpdate }: AuthPanelProps) {
             <Input
               placeholder="API Key value"
               value={activeTab.authData.value || ''}
-              onChange={(e) =>
-                onUpdate({
-                  authData: { ...activeTab.authData, value: e.target.value },
-                })
-              }
+              onChange={handleValueChange}
               className="font-mono"
             />
           </div>
           <div>
             <Label>Add to</Label>
-            <Select
-              value={activeTab.authData.addTo || 'header'}
-              onValueChange={(value: 'header' | 'query') =>
-                onUpdate({
-                  authData: { ...activeTab.authData, addTo: value },
-                })
-              }
-            >
+            <Select value={activeTab.authData.addTo || 'header'} onValueChange={handleAddToChange}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -128,4 +160,6 @@ export function AuthPanel({ activeTab, onUpdate }: AuthPanelProps) {
     </div>
   );
 }
+
+export const AuthPanel = React.memo(AuthPanelComponent);
 

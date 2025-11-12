@@ -1,32 +1,55 @@
 'use client';
 
+import React, { useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tab';
 import { Copy, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
-import { ApiResponse } from './types';
-import { getStatusColor } from './helpers';
+import { ApiResponse } from '@/lib/api-grid/types';
+import { getStatusColor } from '@/lib/api-grid/helpers';
 import { useToast } from '@/hooks/use-toast';
 
 interface ResponsePanelProps {
   response: ApiResponse;
 }
 
-export function ResponsePanel({ response }: ResponsePanelProps) {
+function ResponsePanelComponent({ response }: ResponsePanelProps) {
   const { toast } = useToast();
+
+  const statusColor = useMemo(() => getStatusColor(response.status), [response.status]);
+  
+  const statusIcon = useMemo(() => {
+    if (response.status >= 200 && response.status < 300) {
+      return <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 inline" />;
+    } else if (response.status >= 400) {
+      return <AlertCircle className="w-3.5 h-3.5 mr-1.5 inline" />;
+    }
+    return null;
+  }, [response.status]);
+
+  const headersText = useMemo(
+    () => Object.entries(response.headers)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join('\n'),
+    [response.headers]
+  );
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(response.body);
+    toast({
+      title: 'Copied',
+      description: 'Response copied to clipboard',
+    });
+  }, [response.body, toast]);
 
   return (
     <div className="space-y-4 border-t pt-6 mt-8">
       <div className="flex items-center justify-between bg-card p-4 rounded-xl border shadow-sm">
         <div className="flex items-center gap-3 flex-wrap">
           <Label className="text-lg font-semibold">Response</Label>
-          <Badge className={`${getStatusColor(response.status)} px-3 py-1 font-semibold`}>
-            {response.status >= 200 && response.status < 300 ? (
-              <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 inline" />
-            ) : response.status >= 400 ? (
-              <AlertCircle className="w-3.5 h-3.5 mr-1.5 inline" />
-            ) : null}
+          <Badge className={`${statusColor} px-3 py-1 font-semibold`}>
+            {statusIcon}
             {response.status} {response.statusText}
           </Badge>
           <Badge variant="outline" className="flex items-center gap-1.5 px-3 py-1">
@@ -38,13 +61,7 @@ export function ResponsePanel({ response }: ResponsePanelProps) {
           variant="outline"
           size="sm"
           className="shadow-sm hover:shadow-md transition-shadow"
-          onClick={() => {
-            navigator.clipboard.writeText(response.body);
-            toast({
-              title: 'Copied',
-              description: 'Response copied to clipboard',
-            });
-          }}
+          onClick={handleCopy}
         >
           <Copy className="h-4 w-4 mr-2" />
           Copy
@@ -77,9 +94,7 @@ export function ResponsePanel({ response }: ResponsePanelProps) {
         <TabsContent value="headers" className="mt-4">
           <div className="border rounded-xl p-4 bg-muted/20 backdrop-blur-sm min-h-[300px] max-h-[600px] overflow-auto shadow-inner">
             <pre className="font-mono text-sm whitespace-pre-wrap break-words leading-relaxed text-foreground/90">
-              {Object.entries(response.headers)
-                .map(([key, value]) => `${key}: ${value}`)
-                .join('\n')}
+              {headersText}
             </pre>
           </div>
         </TabsContent>
@@ -87,4 +102,6 @@ export function ResponsePanel({ response }: ResponsePanelProps) {
     </div>
   );
 }
+
+export const ResponsePanel = React.memo(ResponsePanelComponent);
 

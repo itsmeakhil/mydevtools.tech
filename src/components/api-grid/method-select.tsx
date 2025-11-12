@@ -1,18 +1,27 @@
 'use client';
 
+import React, { useCallback, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { HttpMethod } from './types';
-import { getMethodColor } from './helpers';
+import { HttpMethod } from '@/lib/api-grid/types';
+import { getMethodColor } from '@/lib/api-grid/helpers';
 
 interface MethodSelectProps {
   value: HttpMethod;
   onChange: (value: HttpMethod) => void;
 }
 
-export function MethodSelect({ value, onChange }: MethodSelectProps) {
+function MethodSelectComponent({ value, onChange }: MethodSelectProps) {
+  const methodColor = useMemo(() => getMethodColor(value), [value]);
+  
+  const handleChange = useCallback(
+    (newValue: string) => {
+      onChange(newValue as HttpMethod);
+    },
+    [onChange]
+  );
   return (
-    <Select value={value} onValueChange={(value) => onChange(value as HttpMethod)}>
-      <SelectTrigger className={`w-32 font-mono font-semibold h-11 ${getMethodColor(value)}`}>
+    <Select value={value} onValueChange={handleChange}>
+      <SelectTrigger className={`w-32 font-mono font-semibold h-11 ${methodColor}`}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
@@ -27,4 +36,6 @@ export function MethodSelect({ value, onChange }: MethodSelectProps) {
     </Select>
   );
 }
+
+export const MethodSelect = React.memo(MethodSelectComponent);
 

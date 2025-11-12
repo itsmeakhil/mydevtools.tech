@@ -1,10 +1,11 @@
 'use client';
 
+import React, { useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, X } from 'lucide-react';
-import { RequestTab, HttpMethod } from './types';
-import { getMethodColor } from './helpers';
+import { RequestTab, HttpMethod } from '@/lib/api-grid/types';
+import { getMethodColor } from '@/lib/api-grid/helpers';
 
 interface RequestTabsProps {
   tabs: RequestTab[];
@@ -14,13 +15,27 @@ interface RequestTabsProps {
   onAddTab: () => void;
 }
 
-export function RequestTabs({
+function RequestTabsComponent({
   tabs,
   activeTabId,
   onTabClick,
   onTabClose,
   onAddTab,
 }: RequestTabsProps) {
+  const handleTabClick = useCallback(
+    (tabId: string) => {
+      onTabClick(tabId);
+    },
+    [onTabClick]
+  );
+
+  const handleTabClose = useCallback(
+    (e: React.MouseEvent, tabId: string) => {
+      e.stopPropagation();
+      onTabClose(tabId);
+    },
+    [onTabClose]
+  );
   return (
     <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 overflow-hidden">
       <div className="flex items-center overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
@@ -32,7 +47,7 @@ export function RequestTabs({
                 ? 'bg-background border-b-2 border-b-primary shadow-sm'
                 : 'hover:bg-muted/30'
             }`}
-            onClick={() => onTabClick(tab.id)}
+            onClick={() => handleTabClick(tab.id)}
           >
             <Badge
               variant="outline"
@@ -47,10 +62,7 @@ export function RequestTabs({
                 variant="ghost"
                 size="icon"
                 className="h-5 w-5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive shrink-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onTabClose(tab.id);
-                }}
+                onClick={(e) => handleTabClose(e, tab.id)}
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -64,4 +76,6 @@ export function RequestTabs({
     </div>
   );
 }
+
+export const RequestTabs = React.memo(RequestTabsComponent);
 

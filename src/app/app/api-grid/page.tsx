@@ -45,8 +45,8 @@ import {
   ApiResponse,
   Collection,
   defaultHeaders,
-} from '@/components/api-grid/types';
-import { buildUrl, buildHeaders, buildBody } from '@/components/api-grid/helpers';
+} from '@/lib/api-grid/types';
+import { buildUrl, buildHeaders, buildBody } from '@/lib/api-grid/helpers';
 import { RequestTabs } from '@/components/api-grid/request-tabs';
 import { UrlBar } from '@/components/api-grid/url-bar';
 import { ParamsTable } from '@/components/api-grid/params-table';

@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, X, Folder } from 'lucide-react';
-import { Collection } from './types';
+import { Collection } from '@/lib/api-grid/types';
 import React from 'react';
 
 interface SaveRequestDialogProps {

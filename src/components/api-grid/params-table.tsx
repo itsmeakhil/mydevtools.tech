@@ -1,11 +1,12 @@
 'use client';
 
+import React, { useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2 } from 'lucide-react';
-import { KeyValuePair } from './types';
+import { KeyValuePair } from '@/lib/api-grid/types';
 
 interface ParamsTableProps {
   params: KeyValuePair[];
@@ -14,14 +15,32 @@ interface ParamsTableProps {
   onRemove: (id: string) => void;
 }
 
-export function ParamsTable({ params, onAdd, onUpdate, onRemove }: ParamsTableProps) {
+function ParamsTableComponent({ params, onAdd, onUpdate, onRemove }: ParamsTableProps) {
+  const allDisabled = useMemo(
+    () => params.every(p => !p.enabled || p.key.trim() === ''),
+    [params]
+  );
+
+  const handleUpdate = useCallback(
+    (id: string, field: keyof KeyValuePair, value: any) => {
+      onUpdate(id, field, value);
+    },
+    [onUpdate]
+  );
+
+  const handleRemove = useCallback(
+    (id: string) => {
+      onRemove(id);
+    },
+    [onRemove]
+  );
   return (
     <div className="border rounded-xl overflow-hidden shadow-sm bg-card">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="w-12">
-              <Checkbox checked={params.every(p => !p.enabled || p.key.trim() === '')} />
+              <Checkbox checked={allDisabled} />
             </TableHead>
             <TableHead>Key</TableHead>
             <TableHead>Value</TableHead>
@@ -34,14 +53,14 @@ export function ParamsTable({ params, onAdd, onUpdate, onRemove }: ParamsTablePr
               <TableCell>
                 <Checkbox
                   checked={param.enabled}
-                  onCheckedChange={(checked) => onUpdate(param.id, 'enabled', checked)}
+                  onCheckedChange={(checked) => handleUpdate(param.id, 'enabled', checked)}
                 />
               </TableCell>
               <TableCell>
                 <Input
                   placeholder="key"
                   value={param.key}
-                  onChange={(e) => onUpdate(param.id, 'key', e.target.value)}
+                  onChange={(e) => handleUpdate(param.id, 'key', e.target.value)}
                   className="font-mono border-0 h-8"
                 />
               </TableCell>
@@ -49,7 +68,7 @@ export function ParamsTable({ params, onAdd, onUpdate, onRemove }: ParamsTablePr
                 <Input
                   placeholder="value"
                   value={param.value}
-                  onChange={(e) => onUpdate(param.id, 'value', e.target.value)}
+                  onChange={(e) => handleUpdate(param.id, 'value', e.target.value)}
                   className="font-mono border-0 h-8"
                 />
               </TableCell>
@@ -58,7 +77,7 @@ export function ParamsTable({ params, onAdd, onUpdate, onRemove }: ParamsTablePr
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => onRemove(param.id)}
+                  onClick={() => handleRemove(param.id)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -76,4 +95,6 @@ export function ParamsTable({ params, onAdd, onUpdate, onRemove }: ParamsTablePr
     </div>
   );
 }
+
+export const ParamsTable = React.memo(ParamsTableComponent);
 
