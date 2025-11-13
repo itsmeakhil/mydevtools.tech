@@ -173,7 +173,7 @@ export function parseOpenAPI(openApiData: any, collectionName?: string): Collect
     const methods = ['get', 'post', 'put', 'delete', 'patch', 'head', 'options'] as const;
     
     for (const method of methods) {
-      const operation = (pathItem as any)[method];
+      const operation: any = (pathItem as any)[method];
       if (!operation) continue;
 
       // Extract operation details
