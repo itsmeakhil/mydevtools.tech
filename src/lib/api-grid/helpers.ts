@@ -1,4 +1,4 @@
-import { HttpMethod, RequestTab, Environment } from './types';
+import { HttpMethod, RequestTab, Environment, KeyValuePair } from './types';
 
 export const getMethodColor = (method: HttpMethod): string => {
   const colors: Record<HttpMethod, string> = {
@@ -154,15 +154,17 @@ export const buildUrlWithEnv = (activeTab: RequestTab, environment?: Environment
   const enabledParams = activeTab.params.filter(p => p.enabled && p.key.trim());
 
   // Interpolate params with environment variables
-  const interpolatedParams = interpolateKeyValuePairs(enabledParams, environment);
+  const interpolatedParams: KeyValuePair[] = interpolateKeyValuePairs(enabledParams, environment);
 
   // Add API key to query params if configured
   if (activeTab.authType === 'apiKey' && activeTab.authData.addTo === 'query' && activeTab.authData.key && activeTab.authData.value) {
     const authKey = interpolateVariables(activeTab.authData.key, environment);
     const authValue = interpolateVariables(activeTab.authData.value, environment);
     interpolatedParams.push({
+      id: `auth-api-key-${Date.now()}`,
       key: authKey,
       value: authValue,
+      enabled: true,
     });
   }
 
