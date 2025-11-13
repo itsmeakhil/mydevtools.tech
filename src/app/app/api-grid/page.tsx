@@ -1,48 +1,20 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import {
-  DndContext,
-  DragEndEvent,
-  DragStartEvent,
-  DragOverlay,
-  useDraggable,
-  useDroppable,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  closestCenter,
-} from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
+import React, { useState, useEffect, useMemo, useCallback, useRef, Suspense, lazy } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tab';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Checkbox } from '@/components/ui/checkbox';
 import { 
-  Copy, Send, Trash2, Plus, Clock, Save, X, 
-  ChevronRight, ChevronLeft, ChevronDown, FolderPlus, Folder, Search,
-  Loader2, CheckCircle2, AlertCircle, Pencil,
-  Globe, Radio, Code, Settings, MoreHorizontal,
-  FilePlus, Play, Download
+  ChevronLeft, ChevronRight,
+  Globe, Radio, Code, Settings,
+  Loader2, Download, History, Code2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import useAuth from '@/utils/useAuth';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { db } from '@/database/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { doc, getDoc, setDoc, collection, addDoc, query, orderBy, limit, getDocs, deleteDoc, where, Timestamp } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,87 +26,49 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+
+// Import types and components
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuShortcut,
-} from '@/components/ui/dropdown-menu';
+  HttpMethod,
+  AuthType,
+  BodyType,
+  ProtocolType,
+  KeyValuePair,
+  SavedRequest,
+  RequestTab,
+  ApiResponse,
+  Collection,
+  Environment,
+  RequestHistory,
+  defaultHeaders,
+} from '@/lib/api-grid/types';
+import { buildUrl, buildHeaders, buildBody, buildUrlWithEnv, buildHeadersWithEnv, buildBodyWithEnv, interpolateVariables } from '@/lib/api-grid/helpers';
+import { RequestTabs } from '@/components/api-grid/request-tabs';
+import { UrlBar } from '@/components/api-grid/url-bar';
+import { ParamsTable } from '@/components/api-grid/params-table';
+import { HeadersTable } from '@/components/api-grid/headers-table';
+import { AuthPanel } from '@/components/api-grid/auth-panel';
+import { ResponsePanel } from '@/components/api-grid/response-panel';
+import { CollectionsSidebar } from '@/components/api-grid/collections-sidebar';
+import { SaveRequestDialog } from '@/components/api-grid/save-request-dialog';
+import { CreateCollectionDialog } from '@/components/api-grid/create-collection-dialog';
+import { EnvironmentSwitcher } from '@/components/api-grid/environment-switcher';
+import { EnvironmentManager } from '@/components/api-grid/environment-manager';
+import { ImportModal } from '@/components/api-grid/import-modal';
+import { HistoryPanel } from '@/components/api-grid/history-panel';
+import { parseHAR, parseOpenAPI } from '@/lib/api-grid/parsers';
 
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
-type AuthType = 'none' | 'bearer' | 'basic' | 'apiKey';
-type BodyType = 'json' | 'text' | 'form-data' | 'x-www-form-urlencoded' | 'raw';
-type ProtocolType = 'REST' | 'WebSocket' | 'GraphQL';
-
-interface KeyValuePair {
-  id: string;
-  key: string;
-  value: string;
-  enabled: boolean;
-  description?: string;
-}
-
-interface SavedRequest {
-  id: string;
-  name: string;
-  method: HttpMethod;
-  url: string;
-  headers: KeyValuePair[];
-  params: KeyValuePair[];
-  body: string;
-  bodyType: BodyType;
-  authType: AuthType;
-  authData: {
-    token?: string;
-    username?: string;
-    password?: string;
-    key?: string;
-    value?: string;
-    addTo?: 'header' | 'query';
-  };
-  collectionId?: string;
-  timestamp: number;
-}
-
-interface RequestTab {
-  id: string;
-  name: string;
-  method: HttpMethod;
-  url: string;
-  headers: KeyValuePair[];
-  params: KeyValuePair[];
-  body: string;
-  bodyType: BodyType;
-  authType: AuthType;
-  authData: SavedRequest['authData'];
-  isModified: boolean;
-  savedRequestId?: string; // Track which saved request this tab is based on
-}
-
-interface ApiResponse {
-  status: number;
-  statusText: string;
-  headers: Record<string, string>;
-  body: string;
-  time: number;
-}
-
-interface Collection {
-  id: string;
-  name: string;
-  requests: SavedRequest[];
-  collections?: Collection[];
-}
-
-const defaultHeaders: KeyValuePair[] = [
-  { id: '1', key: 'Content-Type', value: 'application/json', enabled: true },
-];
+// Dynamically import BodyEditor for code-splitting
+const BodyEditor = lazy(() => 
+  import('@/components/api-grid/body-editor').then(module => ({ default: module.BodyEditor }))
+);
 
 export default function ApiGridPage() {
   return (
@@ -190,17 +124,17 @@ function ApiGrid() {
   const [searchQuery, setSearchQuery] = useState('');
   const [protocol, setProtocol] = useState<ProtocolType>('REST');
   const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set());
-  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [environments, setEnvironments] = useState<Environment[]>([]);
+  const [activeEnvironmentId, setActiveEnvironmentId] = useState<string | null>(null);
+  const [isLoadingEnvironments, setIsLoadingEnvironments] = useState(false);
+  const [environmentsInitialized, setEnvironmentsInitialized] = useState(false);
+  const [showEnvironmentManager, setShowEnvironmentManager] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [requestHistory, setRequestHistory] = useState<RequestHistory[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [historyInitialized, setHistoryInitialized] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const { toast } = useToast();
-
-  // Drag and drop sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
 
   // Memoize activeTab to avoid recalculating on every render
   const activeTab = useMemo(() => {
@@ -212,6 +146,7 @@ function ApiGrid() {
   
   // Debounce timer ref for auto-save
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveEnvironmentsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load collections from Firebase when user logs in
   useEffect(() => {
@@ -268,6 +203,94 @@ function ApiGrid() {
     loadCollections();
   }, [user?.uid, toast]);
 
+  // Load environments from Firebase when user logs in
+  useEffect(() => {
+    const loadEnvironments = async () => {
+      if (!user?.uid) {
+        // Clear environments when user logs out
+        setEnvironments([]);
+        setActiveEnvironmentId(null);
+        setEnvironmentsInitialized(false);
+        return;
+      }
+
+      setIsLoadingEnvironments(true);
+      try {
+        const userEnvironmentsRef = doc(db, 'users', user.uid, 'apiGrid', 'environments');
+        const environmentsDoc = await getDoc(userEnvironmentsRef);
+
+        if (environmentsDoc.exists()) {
+          const data = environmentsDoc.data();
+          const loadedEnvironments = (data.environments || []) as Environment[];
+          setEnvironments(loadedEnvironments);
+          
+          // Set active environment to default if available
+          const defaultEnv = loadedEnvironments.find(env => env.isDefault);
+          if (defaultEnv) {
+            setActiveEnvironmentId(defaultEnv.id);
+          } else if (loadedEnvironments.length > 0) {
+            // If no default, use first environment
+            setActiveEnvironmentId(loadedEnvironments[0].id);
+          } else {
+            setActiveEnvironmentId(null);
+          }
+        } else {
+          // Initialize empty environments document
+          await setDoc(userEnvironmentsRef, { environments: [] });
+          setEnvironments([]);
+          setActiveEnvironmentId(null);
+        }
+        setEnvironmentsInitialized(true);
+      } catch (error) {
+        console.error('Error loading environments:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load environments',
+          variant: 'destructive',
+        });
+        setEnvironmentsInitialized(true);
+      } finally {
+        setIsLoadingEnvironments(false);
+      }
+    };
+
+    loadEnvironments();
+  }, [user?.uid, toast]);
+
+  // Debounced save environments to Firebase (1 second delay)
+  useEffect(() => {
+    if (!user?.uid || isLoadingEnvironments || !environmentsInitialized) {
+      return;
+    }
+
+    // Clear existing timeout
+    if (saveEnvironmentsTimeoutRef.current) {
+      clearTimeout(saveEnvironmentsTimeoutRef.current);
+    }
+
+    // Set new timeout for debounced save
+    saveEnvironmentsTimeoutRef.current = setTimeout(async () => {
+      try {
+        const userEnvironmentsRef = doc(db, 'users', user.uid, 'apiGrid', 'environments');
+        await setDoc(userEnvironmentsRef, { environments }, { merge: true });
+      } catch (error) {
+        console.error('Error saving environments:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to save environments',
+          variant: 'destructive',
+        });
+      }
+    }, 1000);
+
+    // Cleanup timeout on unmount or dependency change
+    return () => {
+      if (saveEnvironmentsTimeoutRef.current) {
+        clearTimeout(saveEnvironmentsTimeoutRef.current);
+      }
+    };
+  }, [environments, user?.uid, isLoadingEnvironments, environmentsInitialized, toast]);
+
   // Debounced save collections to Firebase (1 second delay)
   useEffect(() => {
     if (!user?.uid || isLoadingCollections || !collectionsInitialized) {
@@ -301,6 +324,206 @@ function ApiGrid() {
       }
     };
   }, [collections, user?.uid, isLoadingCollections, collectionsInitialized, toast]);
+
+  // Load request history from Firebase when user logs in
+  useEffect(() => {
+    const loadHistory = async () => {
+      if (!user?.uid) {
+        setRequestHistory([]);
+        setHistoryInitialized(false);
+        return;
+      }
+
+      setIsLoadingHistory(true);
+      try {
+        // Ensure apiGrid document exists first
+        const apiGridRef = doc(db, 'users', user.uid, 'apiGrid', 'data');
+        const apiGridDoc = await getDoc(apiGridRef);
+        if (!apiGridDoc.exists()) {
+          // Create the apiGrid document if it doesn't exist
+          await setDoc(apiGridRef, { createdAt: Timestamp.now() });
+        }
+
+        // Now reference the history subcollection
+        const historyRef = collection(apiGridRef, 'history');
+        const historyQuery = query(historyRef, orderBy('timestamp', 'desc'), limit(100));
+        const historySnapshot = await getDocs(historyQuery);
+        
+        const history: RequestHistory[] = [];
+        historySnapshot.forEach((doc) => {
+          const data = doc.data();
+          history.push({
+            id: doc.id,
+            ...data,
+            timestamp: data.timestamp?.toMillis?.() || data.timestamp || Date.now(),
+          } as RequestHistory);
+        });
+        
+        setRequestHistory(history);
+        setHistoryInitialized(true);
+      } catch (error) {
+        console.error('Error loading history:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load request history',
+          variant: 'destructive',
+        });
+        setHistoryInitialized(true);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    loadHistory();
+  }, [user?.uid, toast]);
+
+  // Save request to history
+  const saveToHistory = useCallback(async (response: ApiResponse, requestTab: RequestTab) => {
+    if (!user?.uid) return;
+
+    try {
+      const historyEntry: Omit<RequestHistory, 'id'> = {
+        method: requestTab.method,
+        url: requestTab.url,
+        headers: requestTab.headers,
+        params: requestTab.params,
+        body: requestTab.body,
+        bodyType: requestTab.bodyType,
+        authType: requestTab.authType,
+        authData: requestTab.authData,
+        status: response.status,
+        statusText: response.statusText,
+        timestamp: Date.now(),
+        duration: response.time,
+      };
+
+      // Reference the apiGrid document and then the history subcollection
+      const apiGridRef = doc(db, 'users', user.uid, 'apiGrid', 'data');
+      const historyRef = collection(apiGridRef, 'history');
+      const docRef = await addDoc(historyRef, {
+        ...historyEntry,
+        timestamp: Timestamp.fromMillis(historyEntry.timestamp),
+      });
+
+      // Add to local state (prepend to maintain order)
+      const newHistoryEntry: RequestHistory = {
+        id: docRef.id,
+        ...historyEntry,
+      };
+      setRequestHistory(prev => [newHistoryEntry, ...prev.slice(0, 99)]);
+    } catch (error) {
+      console.error('Error saving to history:', error);
+      // Don't show error toast for history saves - it's not critical
+    }
+  }, [user?.uid]);
+
+  // Clear all history
+  const clearAllHistory = useCallback(async () => {
+    if (!user?.uid) return;
+
+    try {
+      const apiGridRef = doc(db, 'users', user.uid, 'apiGrid', 'data');
+      const historyRef = collection(apiGridRef, 'history');
+      const historyQuery = query(historyRef);
+      const historySnapshot = await getDocs(historyQuery);
+      
+      const deletePromises = historySnapshot.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+      
+      setRequestHistory([]);
+      toast({
+        title: 'History Cleared',
+        description: 'All request history has been cleared',
+      });
+    } catch (error) {
+      console.error('Error clearing history:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to clear history',
+        variant: 'destructive',
+      });
+    }
+  }, [user?.uid, toast]);
+
+  // Clear history by date range
+  const clearHistoryByRange = useCallback(async (startDate: number, endDate: number) => {
+    if (!user?.uid) return;
+
+    try {
+      const apiGridRef = doc(db, 'users', user.uid, 'apiGrid', 'data');
+      const historyRef = collection(apiGridRef, 'history');
+      // Get all history and filter client-side (Firestore doesn't support range queries easily)
+      const historyQuery = query(historyRef, orderBy('timestamp', 'desc'));
+      const historySnapshot = await getDocs(historyQuery);
+      
+      const startTimestamp = Timestamp.fromMillis(startDate);
+      const endTimestamp = Timestamp.fromMillis(endDate);
+      
+      // Filter docs in the range
+      const docsToDelete = historySnapshot.docs.filter(doc => {
+        const timestamp = doc.data().timestamp;
+        if (!timestamp) return false;
+        return timestamp >= startTimestamp && timestamp <= endTimestamp;
+      });
+      
+      const deletePromises = docsToDelete.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+      
+      // Update local state
+      setRequestHistory(prev => prev.filter(h => {
+        const timestamp = h.timestamp;
+        return timestamp < startDate || timestamp > endDate;
+      }));
+      
+      toast({
+        title: 'History Cleared',
+        description: `Cleared ${docsToDelete.length} history entries`,
+      });
+    } catch (error) {
+      console.error('Error clearing history by range:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to clear history',
+        variant: 'destructive',
+      });
+    }
+  }, [user?.uid, toast]);
+
+  // Re-run request from history
+  const rerunHistoryRequest = useCallback((historyEntry: RequestHistory) => {
+    // Extract pathname from URL for naming
+    let requestName = `${historyEntry.method} Request`;
+    try {
+      const urlObj = new URL(historyEntry.url);
+      requestName = `${historyEntry.method} ${urlObj.pathname}`;
+    } catch {
+      // If URL is invalid, use default name
+      requestName = `${historyEntry.method} ${historyEntry.url}`;
+    }
+
+    // Create a new tab with the history request
+    const newTab: RequestTab = {
+      id: Date.now().toString(),
+      name: requestName,
+      method: historyEntry.method,
+      url: historyEntry.url,
+      headers: historyEntry.headers,
+      params: historyEntry.params,
+      body: historyEntry.body,
+      bodyType: historyEntry.bodyType,
+      authType: historyEntry.authType,
+      authData: historyEntry.authData,
+      isModified: false,
+    };
+    
+    setRequestTabs(prev => [...prev, newTab]);
+    setActiveTabId(newTab.id);
+    
+    toast({
+      title: 'Request Loaded',
+      description: 'Request has been loaded into a new tab',
+    });
+  }, [toast]);
 
   // Collections helpers
   const findCollectionById = (id: string, collectionsList: Collection[] = collections): Collection | undefined => {
@@ -470,91 +693,33 @@ function ApiGrid() {
     });
   };
 
-  // Memoized helper functions
-  const buildUrl = useCallback(() => {
-    let url = activeTab.url;
-    const enabledParams = activeTab.params.filter(p => p.enabled && p.key.trim());
-    
-    // Add API key to query params if configured
-    if (activeTab.authType === 'apiKey' && activeTab.authData.addTo === 'query' && activeTab.authData.key && activeTab.authData.value) {
-      enabledParams.push({
-        id: 'api-key',
-        key: activeTab.authData.key,
-        value: activeTab.authData.value,
-        enabled: true,
-      });
+
+  // Get active environment
+  const activeEnvironment = useMemo(() => {
+    return environments.find(env => env.id === activeEnvironmentId) || null;
+  }, [environments, activeEnvironmentId]);
+
+  // Helper functions to build request parts (called in handleSendRequest)
+  const getBuiltUrl = useCallback(() => {
+    if (activeEnvironment) {
+      return buildUrlWithEnv(activeTab, activeEnvironment);
     }
-    
-    if (enabledParams.length > 0) {
-      const params = new URLSearchParams();
-      enabledParams.forEach(p => {
-        params.append(p.key, p.value);
-      });
-      const separator = url.includes('?') ? '&' : '?';
-      url += separator + params.toString();
+    return buildUrl(activeTab);
+  }, [activeTab, activeEnvironment]);
+
+  const getBuiltHeaders = useCallback(() => {
+    if (activeEnvironment) {
+      return buildHeadersWithEnv(activeTab, activeEnvironment);
     }
-    
-    return url;
-  }, [activeTab.url, activeTab.params, activeTab.authType, activeTab.authData]);
+    return buildHeaders(activeTab);
+  }, [activeTab, activeEnvironment]);
 
-  const buildHeaders = useCallback(() => {
-    const headers: Record<string, string> = {};
-    
-    // Add enabled headers
-    activeTab.headers
-      .filter(h => h.enabled && h.key.trim())
-      .forEach(h => {
-        headers[h.key.trim()] = h.value.trim();
-      });
-
-    // Add auth headers
-    if (activeTab.authType === 'bearer' && activeTab.authData.token) {
-      headers['Authorization'] = `Bearer ${activeTab.authData.token}`;
-    } else if (activeTab.authType === 'basic' && activeTab.authData.username && activeTab.authData.password) {
-      const credentials = btoa(`${activeTab.authData.username}:${activeTab.authData.password}`);
-      headers['Authorization'] = `Basic ${credentials}`;
-    } else if (activeTab.authType === 'apiKey' && activeTab.authData.key && activeTab.authData.value) {
-      if (activeTab.authData.addTo === 'header') {
-        headers[activeTab.authData.key] = activeTab.authData.value;
-      }
+  const getBuiltBody = useCallback(() => {
+    if (activeEnvironment) {
+      return buildBodyWithEnv(activeTab, activeEnvironment);
     }
-
-    return headers;
-  }, [activeTab.headers, activeTab.authType, activeTab.authData]);
-
-  const buildBody = useCallback(() => {
-    if (!['POST', 'PUT', 'PATCH'].includes(activeTab.method)) return undefined;
-
-    if (activeTab.bodyType === 'json' || activeTab.bodyType === 'text' || activeTab.bodyType === 'raw') {
-      return activeTab.body;
-    } else if (activeTab.bodyType === 'form-data') {
-      const formData = new FormData();
-      try {
-        const pairs = activeTab.body.split('\n').filter(p => p.trim());
-        pairs.forEach(pair => {
-          const [key, value] = pair.split('=').map(s => s.trim());
-          if (key) formData.append(key, value || '');
-        });
-      } catch {
-        // Fallback to simple parsing
-      }
-      return formData;
-    } else if (activeTab.bodyType === 'x-www-form-urlencoded') {
-      const params = new URLSearchParams();
-      try {
-        const pairs = activeTab.body.split('\n').filter(p => p.trim());
-        pairs.forEach(pair => {
-          const [key, value] = pair.split('=').map(s => s.trim());
-          if (key) params.append(key, value || '');
-        });
-      } catch {
-        // Fallback
-      }
-      return params.toString();
-    }
-
-    return undefined;
-  }, [activeTab.method, activeTab.bodyType, activeTab.body]);
+    return buildBody(activeTab);
+  }, [activeTab, activeEnvironment]);
 
   // Cancel ongoing request
   const cancelRequest = useCallback(() => {
@@ -593,24 +758,24 @@ function ApiGrid() {
     const startTime = Date.now();
 
     try {
-      const url = buildUrl();
-      const headers = buildHeaders();
-      const body = buildBody();
+      const requestUrl = getBuiltUrl();
+      const requestHeaders = getBuiltHeaders();
+      const requestBody = getBuiltBody();
 
       const options: RequestInit = {
         method: activeTab.method,
-        headers,
+        headers: requestHeaders,
         signal, // Add abort signal
       };
 
-      if (body !== undefined) {
-        options.body = body instanceof FormData ? body : body;
-        if (typeof body === 'string' && activeTab.bodyType === 'json' && !headers['Content-Type']) {
-          options.headers = { ...headers, 'Content-Type': 'application/json' };
+      if (requestBody !== undefined) {
+        options.body = requestBody instanceof FormData ? requestBody : requestBody;
+        if (typeof requestBody === 'string' && activeTab.bodyType === 'json' && !requestHeaders['Content-Type']) {
+          options.headers = { ...requestHeaders, 'Content-Type': 'application/json' };
         }
       }
 
-      const res = await fetch(url, options);
+      const res = await fetch(requestUrl, options);
       
       // Check if request was aborted
       if (signal.aborted) {
@@ -620,10 +785,51 @@ function ApiGrid() {
       const endTime = Date.now();
       const responseTime = endTime - startTime;
 
+      // Capture headers first (before reading body)
+      const responseHeaders: Record<string, string> = {};
+      res.headers.forEach((value, key) => {
+        responseHeaders[key] = value;
+      });
+
+      // Get content-length from header or calculate from body
+      const contentLengthHeader = res.headers.get('content-length');
+      let contentLength: number | undefined;
+      if (contentLengthHeader) {
+        const parsed = parseInt(contentLengthHeader, 10);
+        if (!isNaN(parsed)) {
+          contentLength = parsed;
+        }
+      }
+
       let responseBody = '';
       const contentType = res.headers.get('content-type') || '';
       
-      if (contentType.includes('application/json')) {
+      // Handle images and binary data differently
+      if (contentType.startsWith('image/')) {
+        // Read image as blob and convert to base64 data URL
+        try {
+          const blob = await res.blob();
+          if (!contentLength) {
+            contentLength = blob.size;
+          }
+          // Convert blob to base64 data URL for display
+          const reader = new FileReader();
+          responseBody = await new Promise<string>((resolve, reject) => {
+            reader.onloadend = () => {
+              if (typeof reader.result === 'string') {
+                resolve(reader.result);
+              } else {
+                reject(new Error('Failed to read image'));
+              }
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        } catch (error) {
+          // Fallback to text if blob reading fails
+          responseBody = await res.text();
+        }
+      } else if (contentType.includes('application/json')) {
         try {
           const json = await res.json();
           responseBody = JSON.stringify(json, null, 2);
@@ -634,18 +840,33 @@ function ApiGrid() {
         responseBody = await res.text();
       }
 
-      const responseHeaders: Record<string, string> = {};
-      res.headers.forEach((value, key) => {
-        responseHeaders[key] = value;
-      });
+      // If content-length wasn't in headers, calculate from body
+      if (!contentLength && responseBody) {
+        // For base64 data URLs, extract the actual size
+        if (responseBody.startsWith('data:')) {
+          const base64Data = responseBody.split(',')[1];
+          if (base64Data) {
+            // Approximate size: base64 is ~4/3 of original size
+            contentLength = Math.round((base64Data.length * 3) / 4);
+          }
+        } else {
+          contentLength = new Blob([responseBody]).size;
+        }
+      }
 
-      setResponse({
+      const apiResponse: ApiResponse = {
         status: res.status,
         statusText: res.statusText,
         headers: responseHeaders,
         body: responseBody,
         time: responseTime,
-      });
+        contentLength,
+      };
+
+      setResponse(apiResponse);
+
+      // Save to history
+      await saveToHistory(apiResponse, activeTab);
 
       updateActiveTab({ isModified: false });
       abortControllerRef.current = null;
@@ -657,14 +878,18 @@ function ApiGrid() {
       
       const endTime = Date.now();
       const errorMessage = error instanceof Error ? error.message : 'Request failed';
-      
-      setResponse({
+      const errorResponse: ApiResponse = {
         status: 0,
         statusText: 'Error',
         headers: {},
         body: `Error: ${errorMessage}`,
         time: endTime - startTime,
-      });
+      };
+      
+      setResponse(errorResponse);
+
+      // Save error to history as well
+      await saveToHistory(errorResponse, activeTab);
 
       toast({
         title: 'Request Failed',
@@ -675,7 +900,7 @@ function ApiGrid() {
       setIsLoading(false);
       abortControllerRef.current = null;
     }
-  }, [activeTab, toast, buildUrl, buildHeaders, buildBody, updateActiveTab]);
+  }, [activeTab, toast, getBuiltUrl, getBuiltHeaders, getBuiltBody, updateActiveTab, saveToHistory]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -1187,27 +1412,8 @@ function ApiGrid() {
     setEditRequestNameError('');
   };
 
-  const getStatusColor = (status: number) => {
-    if (status >= 200 && status < 300) return 'bg-green-500/20 text-green-600 dark:text-green-400';
-    if (status >= 300 && status < 400) return 'bg-blue-500/20 text-blue-600 dark:text-blue-400';
-    if (status >= 400 && status < 500) return 'bg-orange-500/20 text-orange-600 dark:text-orange-400';
-    if (status >= 500) return 'bg-red-500/20 text-red-600 dark:text-red-400';
-    return 'bg-gray-500/20 text-gray-600 dark:text-gray-400';
-  };
 
   // HTTP Method colors matching Swagger/OpenAPI style
-  const getMethodColor = (method: HttpMethod) => {
-    const colors: Record<HttpMethod, string> = {
-      GET: 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30',
-      POST: 'bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30',
-      PUT: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30',
-      PATCH: 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30',
-      DELETE: 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30',
-      HEAD: 'bg-gray-500/15 text-gray-600 dark:text-gray-400 border-gray-500/30',
-      OPTIONS: 'bg-gray-500/15 text-gray-600 dark:text-gray-400 border-gray-500/30',
-    };
-    return colors[method] || colors.GET;
-  };
 
   // Toggle collection expansion
   const toggleCollection = (collectionId: string) => {
@@ -1222,36 +1428,62 @@ function ApiGrid() {
     });
   };
 
-  // Filter collections and requests based on search (recursive)
-  const filterCollection = (col: Collection): Collection | null => {
-    const filteredRequests = col.requests.filter(req => 
-      req.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      req.url.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      req.method.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    
-    const filteredNested = col.collections
-      ? col.collections.map(filterCollection).filter((c): c is Collection => c !== null)
-      : [];
-    
-    const nameMatches = col.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const hasMatchingRequests = filteredRequests.length > 0;
-    const hasMatchingNested = filteredNested.length > 0;
-    
-    if (nameMatches || hasMatchingRequests || hasMatchingNested) {
-      return {
-        ...col,
-        requests: filteredRequests,
-        collections: filteredNested.length > 0 ? filteredNested : col.collections,
-      };
-    }
-    
-    return null;
-  };
+  // Environment management functions
+  const handleSaveEnvironment = useCallback((environment: Environment) => {
+    setEnvironments(prev => {
+      const existingIndex = prev.findIndex(env => env.id === environment.id);
+      if (existingIndex >= 0) {
+        // Update existing
+        const updated = [...prev];
+        updated[existingIndex] = environment;
+        return updated;
+      } else {
+        // Add new
+        return [...prev, environment];
+      }
+    });
+    toast({
+      title: 'Environment Saved',
+      description: `Environment "${environment.name}" has been saved`,
+    });
+  }, [toast]);
 
-  const filteredCollections = collections
-    .map(filterCollection)
-    .filter((col): col is Collection => col !== null);
+  const handleDeleteEnvironment = useCallback((environmentId: string) => {
+    setEnvironments(prev => {
+      const filtered = prev.filter(env => env.id !== environmentId);
+      // If deleted environment was active, set to first available or null
+      if (activeEnvironmentId === environmentId) {
+        const defaultEnv = filtered.find(env => env.isDefault);
+        if (defaultEnv) {
+          setActiveEnvironmentId(defaultEnv.id);
+        } else if (filtered.length > 0) {
+          setActiveEnvironmentId(filtered[0].id);
+        } else {
+          setActiveEnvironmentId(null);
+        }
+      }
+      return filtered;
+    });
+    toast({
+      title: 'Environment Deleted',
+      description: 'Environment has been deleted',
+    });
+  }, [activeEnvironmentId, toast]);
+
+  const handleSetDefaultEnvironment = useCallback((environmentId: string) => {
+    setEnvironments(prev =>
+      prev.map(env => ({
+        ...env,
+        isDefault: env.id === environmentId,
+      }))
+    );
+    setActiveEnvironmentId(environmentId);
+    toast({
+      title: 'Default Environment Set',
+      description: 'Default environment has been updated',
+    });
+  }, [toast]);
+
 
   // Parse cURL command
   const parseCurlCommand = (curlString: string): Partial<RequestTab> | null => {
@@ -1477,34 +1709,129 @@ function ApiGrid() {
     }
   };
 
-  // Helper function to render collection options recursively for select dropdown
-  const renderCollectionOptions = (cols: Collection[], depth: number = 0) => {
-    const options: React.ReactElement[] = [];
+  // Handle cURL import from modal
+  const handleImportCurl = useCallback((curlString: string) => {
+    const parsed = parseCurlCommand(curlString);
     
-    cols.forEach((col) => {
-      const indent = '  '.repeat(depth);
+    if (parsed) {
+      updateActiveTab({
+        ...parsed,
+        isModified: true,
+      });
+
+      toast({
+        title: 'cURL Imported',
+        description: 'Request has been populated from cURL command',
+      });
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Failed to parse cURL command',
+        variant: 'destructive',
+      });
+    }
+  }, [updateActiveTab, toast]);
+
+  // Handle HAR import
+  const handleImportHar = useCallback((harData: any) => {
+    try {
+      const requests = parseHAR(harData);
       
-      options.push(
-        <SelectItem key={col.id} value={col.id}>
-          <span className="flex items-center gap-2">
-            <span className="text-muted-foreground font-mono text-xs">{indent}</span>
-            <Folder className="h-3 w-3 text-muted-foreground shrink-0" />
-            <span>{col.name}</span>
-            <span className="text-muted-foreground text-xs">
-              ({col.requests.length} {col.requests.length === 1 ? 'request' : 'requests'})
-            </span>
-          </span>
-        </SelectItem>
-      );
-      
-      // Recursively render nested collections
-      if (col.collections && col.collections.length > 0) {
-        options.push(...renderCollectionOptions(col.collections, depth + 1));
+      if (requests.length === 0) {
+        toast({
+          title: 'Error',
+          description: 'No requests found in HAR file',
+          variant: 'destructive',
+        });
+        return;
       }
-    });
-    
-    return options;
-  };
+
+      // Load the first request into the active tab
+      const firstRequest = requests[0];
+      updateActiveTab({
+        ...firstRequest,
+        isModified: true,
+      });
+
+      // If there are more requests, create tabs for them
+      if (requests.length > 1) {
+        const newTabs: RequestTab[] = requests.slice(1).map((req, index) => {
+          let requestName = 'Imported Request';
+          try {
+            if (req.url) {
+              const urlObj = new URL(req.url);
+              requestName = `${req.method || 'GET'} ${urlObj.pathname}`;
+            }
+          } catch {
+            requestName = `${req.method || 'GET'} Request`;
+          }
+
+          return {
+            id: Date.now().toString() + index,
+            name: requestName,
+            method: req.method || 'GET',
+            url: req.url || '',
+            headers: req.headers || defaultHeaders,
+            params: req.params || [],
+            body: req.body || '',
+            bodyType: req.bodyType || 'json',
+            authType: req.authType || 'none',
+            authData: req.authData || {},
+            isModified: false,
+          };
+        });
+
+        setRequestTabs(prev => [...prev, ...newTabs]);
+      }
+
+      toast({
+        title: 'HAR Imported',
+        description: `Imported ${requests.length} request${requests.length > 1 ? 's' : ''}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to parse HAR file',
+        variant: 'destructive',
+      });
+    }
+  }, [updateActiveTab, toast]);
+
+  // Handle OpenAPI import
+  const handleImportOpenAPI = useCallback((openApiData: any, source: 'url' | 'file') => {
+    try {
+      const collection = parseOpenAPI(openApiData);
+      
+      // Add the collection to collections
+      setCollections(prev => [...prev, collection]);
+
+      // Update savedRequests with all requests from the collection
+      const collectAllRequests = (col: Collection): SavedRequest[] => {
+        const allRequests = [...col.requests];
+        if (col.collections) {
+          col.collections.forEach(subCol => {
+            allRequests.push(...collectAllRequests(subCol));
+          });
+        }
+        return allRequests;
+      };
+      
+      const allRequests = collectAllRequests(collection);
+      setSavedRequests(prev => [...prev, ...allRequests]);
+
+      toast({
+        title: 'OpenAPI Imported',
+        description: `Created collection "${collection.name}" with ${allRequests.length} request${allRequests.length > 1 ? 's' : ''}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to parse OpenAPI specification',
+        variant: 'destructive',
+      });
+    }
+  }, [toast]);
+
 
   // Move request from one collection to another
   const moveRequestToCollection = (requestId: string, targetCollectionId: string, sourceCollectionId: string) => {
@@ -1573,320 +1900,7 @@ function ApiGrid() {
     });
   };
 
-  // Handle drag start
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveDragId(event.active.id as string);
-  };
 
-  // Handle drag end
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveDragId(null);
-
-    if (!over) return;
-
-    const requestId = active.id as string;
-    const targetCollectionId = over.id as string;
-
-    // Find source collection
-    const findSourceCollection = (cols: Collection[]): string | null => {
-      for (const col of cols) {
-        if (col.requests.some(r => r.id === requestId)) {
-          return col.id;
-        }
-        if (col.collections) {
-          const found = findSourceCollection(col.collections);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-
-    const sourceCollectionId = findSourceCollection(collections);
-    if (!sourceCollectionId) return;
-
-    // Don't allow dropping on the same collection or on a request
-    if (targetCollectionId === sourceCollectionId) return;
-
-    // Verify target is a collection (not a request)
-    const targetCollection = findCollectionById(targetCollectionId);
-    if (!targetCollection) return;
-
-    moveRequestToCollection(requestId, targetCollectionId, sourceCollectionId);
-  };
-
-  // Draggable Request Component
-  const DraggableRequest = ({ request, collectionId }: { request: SavedRequest; collectionId: string }) => {
-    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-      id: request.id,
-      data: {
-        type: 'request',
-        request,
-        collectionId,
-      },
-    });
-
-    const style = {
-      transform: CSS.Translate.toString(transform),
-      opacity: isDragging ? 0.5 : 1,
-    };
-
-    return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        {...listeners}
-        {...attributes}
-        className={`px-3 py-1.5 rounded-md hover:bg-muted/50 transition-colors flex items-center gap-2 group/request cursor-grab active:cursor-grabbing ${
-          isDragging ? 'opacity-50' : ''
-        }`}
-        onClick={(e) => {
-          // Only load request if not dragging
-          if (!isDragging) {
-            e.stopPropagation();
-            // Hold Shift to duplicate, otherwise switch to existing tab if open
-            const shouldDuplicate = e.shiftKey;
-            loadRequest(request, shouldDuplicate);
-          }
-        }}
-      >
-        <Badge 
-          variant="outline" 
-          className={`font-mono text-[10px] font-semibold px-1.5 py-0 border ${getMethodColor(request.method)}`}
-        >
-          {request.method}
-        </Badge>
-        <span className="text-sm truncate flex-1 text-foreground/90 group-hover/request:text-foreground">
-          {request.name}
-        </span>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 opacity-0 group-hover/request:opacity-100 hover:bg-muted transition-opacity shrink-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-              }}
-            >
-              <MoreHorizontal className="h-3.5 w-3.5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                loadRequest(request, false);
-              }}
-            >
-              <Radio className="h-4 w-4 mr-2" />
-              Open
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                loadRequest(request, true);
-              }}
-            >
-              <Copy className="h-4 w-4 mr-2" />
-              Duplicate
-              <DropdownMenuShortcut>D</DropdownMenuShortcut>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEditRequest(collectionId, request.id);
-              }}
-            >
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit
-              <DropdownMenuShortcut>E</DropdownMenuShortcut>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteRequest(collectionId, request.id, request.name);
-              }}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-              <DropdownMenuShortcut>Del</DropdownMenuShortcut>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    );
-  };
-
-  // Droppable Collection Component
-  const DroppableCollection = ({ 
-    collectionId, 
-    children, 
-    className 
-  }: { 
-    collectionId: string; 
-    children: React.ReactNode; 
-    className?: string;
-  }) => {
-    const { setNodeRef, isOver } = useDroppable({
-      id: collectionId,
-      data: {
-        type: 'collection',
-      },
-    });
-
-    return (
-      <div
-        ref={setNodeRef}
-        className={`${className || ''} ${isOver ? 'ring-2 ring-primary ring-offset-2 bg-primary/5 rounded-md' : ''}`}
-      >
-        {children}
-      </div>
-    );
-  };
-
-  // Recursive component to render collections with nested collections
-  const renderCollection = (col: Collection, depth: number = 0) => {
-    const isExpanded = expandedCollections.has(col.id);
-    const indent = depth * 16;
-
-    return (
-      <DroppableCollection key={col.id} collectionId={col.id}>
-        <Collapsible
-          open={isExpanded}
-          onOpenChange={() => toggleCollection(col.id)}
-        >
-          <div className="group/collection">
-            <div 
-              className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted/50 transition-colors"
-              style={{ paddingLeft: `${8 + indent}px` }}
-            >
-              <CollapsibleTrigger className="flex items-center gap-2 flex-1 min-w-0 text-left">
-                <ChevronRight
-                  className={`h-4 w-4 text-muted-foreground transition-transform duration-200 shrink-0 ${
-                    isExpanded ? 'rotate-90' : ''
-                  }`}
-                />
-                <Folder className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-sm truncate text-foreground">{col.name}</span>
-              </CollapsibleTrigger>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 opacity-0 group-hover/collection:opacity-100 hover:bg-muted transition-opacity shrink-0"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => handleNewRequestInCollection(col.id)}>
-                  <FilePlus className="h-4 w-4 mr-2" />
-                  New Request
-                  <DropdownMenuShortcut>R</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    if (!user?.uid) {
-                      window.location.href = '/login';
-                      return;
-                    }
-                    setParentCollectionId(col.id);
-                    setNewCollectionName('');
-                    setCollectionNameError('');
-                    setShowCreateCollectionDialog(true);
-                  }}
-                >
-                  <FolderPlus className="h-4 w-4 mr-2" />
-                  New Folder
-                  <DropdownMenuShortcut>N</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    toast({
-                      title: 'Feature Coming Soon',
-                      description: 'Run collection feature will be available soon',
-                    });
-                  }}
-                >
-                  <Play className="h-4 w-4 mr-2" />
-                  Run collection
-                  <DropdownMenuShortcut>T</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => handleEditCollection(col.id)}>
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Edit
-                  <DropdownMenuShortcut>E</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    toast({
-                      title: 'Feature Coming Soon',
-                      description: 'Sort feature will be available soon',
-                    });
-                  }}
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Sort
-                  <DropdownMenuShortcut>S</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleDuplicateCollection(col.id)}>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Duplicate
-                  <DropdownMenuShortcut>D</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExportCollection(col.id)}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                  <DropdownMenuShortcut>X</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => handleDeleteCollection(col.id)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                  <DropdownMenuShortcut>Del</DropdownMenuShortcut>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <CollapsibleContent>
-            <div className="ml-4">
-              {/* Render nested collections */}
-              {col.collections && col.collections.length > 0 && (
-                <div className="space-y-0">
-                  {col.collections.map((nestedCol) => renderCollection(nestedCol, depth + 1))}
-                </div>
-              )}
-              {/* Render requests */}
-              <div className="space-y-0.5 mt-1" style={{ paddingLeft: `${indent + 16}px` }}>
-                {col.requests.length === 0 && (!col.collections || col.collections.length === 0) ? (
-                  <div className="px-3 py-2 text-xs text-muted-foreground">
-                    Empty collection
-                  </div>
-                ) : (
-                  col.requests.map((req) => (
-                    <DraggableRequest key={req.id} request={req} collectionId={col.id} />
-                  ))
-                )}
-              </div>
-            </div>
-          </CollapsibleContent>
-        </div>
-      </Collapsible>
-      </DroppableCollection>
-    );
-  };
 
   return (
     <div className="relative flex h-screen w-full overflow-hidden bg-background">
@@ -1966,110 +1980,71 @@ function ApiGrid() {
               <span className="text-xs text-muted-foreground">API Client</span>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="h-8">
-                <Search className="h-4 w-4 mr-2" />
-                Search
+              {user?.uid && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8"
+                  onClick={() => setShowHistory(true)}
+                >
+                  <History className="h-4 w-4 mr-2" />
+                  History
+                  {requestHistory.length > 0 && (
+                    <Badge variant="secondary" className="ml-2 text-xs px-1.5 py-0.5">
+                      {requestHistory.length}
+                    </Badge>
+                  )}
+                </Button>
+              )}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8"
+                onClick={() => setShowImportModal(true)}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Import
               </Button>
             </div>
           </div>
         </div>
 
         {/* Request Tabs */}
-        <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 overflow-hidden">
-          <div className="flex items-center overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-            {requestTabs.map((tab) => (
-              <div
-                key={tab.id}
-                className={`group flex items-center gap-2.5 px-4 py-3 border-r cursor-pointer min-w-[200px] flex-shrink-0 transition-all ${
-                  activeTabId === tab.id 
-                    ? 'bg-background border-b-2 border-b-primary shadow-sm' 
-                    : 'hover:bg-muted/30'
-                }`}
-                onClick={() => setActiveTabId(tab.id)}
-              >
-                <Badge 
-                  variant="outline" 
-                  className={`font-mono text-xs font-semibold px-2 py-0.5 border ${getMethodColor(tab.method)}`}
-                >
-                  {tab.method}
-                </Badge>
-                <span className="text-sm truncate flex-1 font-medium">{tab.name}</span>
-                {tab.isModified && <span className="w-1.5 h-1.5 bg-primary rounded-full shrink-0" />}
-                {requestTabs.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive shrink-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      closeTab(tab.id);
-                    }}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
-            ))}
-            <Button variant="ghost" size="sm" onClick={addNewTab} className="ml-2 flex-shrink-0">
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <RequestTabs
+          tabs={requestTabs}
+          activeTabId={activeTabId}
+          onTabClick={setActiveTabId}
+          onTabClose={closeTab}
+          onAddTab={addNewTab}
+        />
 
         {/* Request Builder */}
         <div className="flex-1 overflow-auto bg-background">
           <div className="max-w-7xl mx-auto p-6 space-y-6">
+            {/* Environment Switcher */}
+            {user?.uid && (
+              <div className="flex items-center justify-end">
+                <EnvironmentSwitcher
+                  environments={environments}
+                  activeEnvironmentId={activeEnvironmentId}
+                  onEnvironmentChange={setActiveEnvironmentId}
+                  onManageEnvironments={() => setShowEnvironmentManager(true)}
+                />
+              </div>
+            )}
+
             {/* URL Bar */}
-            <div className="flex gap-3 items-center bg-card p-4 rounded-xl border shadow-sm hover:shadow-md transition-shadow">
-              <Select value={activeTab.method} onValueChange={(value) => updateActiveTab({ method: value as HttpMethod })}>
-                <SelectTrigger className={`w-32 font-mono font-semibold h-11 ${getMethodColor(activeTab.method)}`}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="GET" className="font-mono font-semibold">GET</SelectItem>
-                  <SelectItem value="POST" className="font-mono font-semibold">POST</SelectItem>
-                  <SelectItem value="PUT" className="font-mono font-semibold">PUT</SelectItem>
-                  <SelectItem value="DELETE" className="font-mono font-semibold">DELETE</SelectItem>
-                  <SelectItem value="PATCH" className="font-mono font-semibold">PATCH</SelectItem>
-                  <SelectItem value="HEAD" className="font-mono font-semibold">HEAD</SelectItem>
-                  <SelectItem value="OPTIONS" className="font-mono font-semibold">OPTIONS</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input
-                placeholder="https://api.example.com/endpoint or paste cURL command"
-                value={activeTab.url}
-                onChange={(e) => updateActiveTab({ url: e.target.value })}
-                onPaste={handleUrlPaste}
-                className="font-mono flex-1 h-11 text-sm border-2 focus-visible:ring-2"
-              />
-              <Button 
-                onClick={isLoading ? cancelRequest : handleSendRequest} 
-                disabled={!isLoading && !activeTab.url.trim()}
-                className="h-11 px-6 shadow-sm hover:shadow-md transition-all font-semibold"
-                size="default"
-                variant={isLoading ? "destructive" : "default"}
-              >
-                {isLoading ? (
-                  <>
-                    <X className="h-4 w-4 mr-2" />
-                    Cancel
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Send
-                  </>
-                )}
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={openSaveRequestDialog}
-                className="h-11 px-4"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Save
-              </Button>
-            </div>
+            <UrlBar
+              activeTab={activeTab}
+              isLoading={isLoading}
+              environment={activeEnvironment}
+              onMethodChange={(method) => updateActiveTab({ method })}
+              onUrlChange={(url) => updateActiveTab({ url })}
+              onUrlPaste={handleUrlPaste}
+              onSend={handleSendRequest}
+              onCancel={cancelRequest}
+              onSave={openSaveRequestDialog}
+            />
 
             {/* Request Tabs - Params, Body, Headers, Auth */}
             <Tabs defaultValue="params" className="w-full">
@@ -2111,352 +2086,49 @@ function ApiGrid() {
               </TabsList>
 
               <TabsContent value="params" className="mt-4">
-                <div className="border rounded-xl overflow-hidden shadow-sm bg-card">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">
-                          <Checkbox checked={activeTab.params.every(p => !p.enabled || p.key.trim() === '')} />
-                        </TableHead>
-                        <TableHead>Key</TableHead>
-                        <TableHead>Value</TableHead>
-                        <TableHead className="w-12"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {activeTab.params.map((param) => (
-                        <TableRow key={param.id}>
-                          <TableCell>
-                            <Checkbox
-                              checked={param.enabled}
-                              onCheckedChange={(checked) =>
-                                updateKeyValue('params', param.id, 'enabled', checked)
-                              }
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              placeholder="key"
-                              value={param.key}
-                              onChange={(e) => updateKeyValue('params', param.id, 'key', e.target.value)}
-                              className="font-mono border-0 h-8"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              placeholder="value"
-                              value={param.value}
-                              onChange={(e) => updateKeyValue('params', param.id, 'value', e.target.value)}
-                              className="font-mono border-0 h-8"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => removeKeyValue('params', param.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  <div className="p-2 border-t">
-                    <Button variant="ghost" size="sm" onClick={() => addKeyValue('params')}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add
-                    </Button>
-                  </div>
-                </div>
+                <ParamsTable
+                  params={activeTab.params}
+                  onAdd={() => addKeyValue('params')}
+                  onUpdate={(id, field, value) => updateKeyValue('params', id, field, value)}
+                  onRemove={(id) => removeKeyValue('params', id)}
+                />
               </TabsContent>
 
               <TabsContent value="body" className="mt-4">
-                {['POST', 'PUT', 'PATCH'].includes(activeTab.method) ? (
-                  <div className="space-y-4 bg-card p-5 rounded-xl border shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-semibold">Body Type</Label>
-                      <Tabs value={activeTab.bodyType} onValueChange={(value) => updateActiveTab({ bodyType: value as BodyType })}>
-                        <TabsList className="bg-muted/30 p-1 rounded-lg h-9">
-                          <TabsTrigger value="json" className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs px-3">JSON</TabsTrigger>
-                          <TabsTrigger value="text" className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs px-3">Text</TabsTrigger>
-                          <TabsTrigger value="form-data" className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs px-3">Form Data</TabsTrigger>
-                          <TabsTrigger value="x-www-form-urlencoded" className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs px-3">URL Encoded</TabsTrigger>
-                          <TabsTrigger value="raw" className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs px-3">Raw</TabsTrigger>
-                        </TabsList>
-                      </Tabs>
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center min-h-[300px] bg-card p-8 rounded-xl border">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mr-2" />
+                      <span className="text-sm text-muted-foreground">Loading body editor...</span>
                     </div>
-                    <Textarea
-                      placeholder={
-                        activeTab.bodyType === 'json'
-                          ? '{\n  "key": "value"\n}'
-                          : activeTab.bodyType === 'form-data' || activeTab.bodyType === 'x-www-form-urlencoded'
-                          ? 'key=value'
-                          : 'Enter body content...'
-                      }
-                      value={activeTab.body}
-                      onChange={(e) => updateActiveTab({ body: e.target.value })}
-                      className="font-mono min-h-[300px] text-sm bg-background/50 border-2 focus-visible:ring-2 rounded-lg"
-                    />
-                  </div>
-                ) : (
-                  <div className="text-center text-muted-foreground py-16 bg-card p-8 rounded-lg border">
-                    <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">This request method doesn't support a body</p>
-                  </div>
-                )}
+                  }
+                >
+                  <BodyEditor
+                    activeTab={activeTab}
+                    onUpdate={updateActiveTab}
+                  />
+                </Suspense>
               </TabsContent>
 
               <TabsContent value="headers" className="mt-4">
-                <div className="border rounded-xl overflow-hidden shadow-sm bg-card">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">
-                          <Checkbox checked={activeTab.headers.every(h => !h.enabled || h.key.trim() === '')} />
-                        </TableHead>
-                        <TableHead>Header Name</TableHead>
-                        <TableHead>Value</TableHead>
-                        <TableHead className="w-12"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {activeTab.headers.map((header) => (
-                        <TableRow key={header.id}>
-                          <TableCell>
-                            <Checkbox
-                              checked={header.enabled}
-                              onCheckedChange={(checked) =>
-                                updateKeyValue('headers', header.id, 'enabled', checked)
-                              }
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              placeholder="Header name"
-                              value={header.key}
-                              onChange={(e) => updateKeyValue('headers', header.id, 'key', e.target.value)}
-                              className="font-mono border-0 h-8"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              placeholder="Header value"
-                              value={header.value}
-                              onChange={(e) => updateKeyValue('headers', header.id, 'value', e.target.value)}
-                              className="font-mono border-0 h-8"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => removeKeyValue('headers', header.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  <div className="p-2 border-t">
-                    <Button variant="ghost" size="sm" onClick={() => addKeyValue('headers')}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add
-                    </Button>
-                  </div>
-                </div>
+                <HeadersTable
+                  headers={activeTab.headers}
+                  onAdd={() => addKeyValue('headers')}
+                  onUpdate={(id, field, value) => updateKeyValue('headers', id, field, value)}
+                  onRemove={(id) => removeKeyValue('headers', id)}
+                />
               </TabsContent>
 
               <TabsContent value="auth" className="mt-4">
-                <div className="space-y-4">
-                  <div>
-                    <Label>Type</Label>
-                    <Select
-                      value={activeTab.authType}
-                      onValueChange={(value) => updateActiveTab({ authType: value as AuthType })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No Auth</SelectItem>
-                        <SelectItem value="bearer">Bearer Token</SelectItem>
-                        <SelectItem value="basic">Basic Auth</SelectItem>
-                        <SelectItem value="apiKey">API Key</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {activeTab.authType === 'bearer' && (
-                    <div>
-                      <Label>Token</Label>
-                      <Input
-                        placeholder="Enter bearer token"
-                        value={activeTab.authData.token || ''}
-                        onChange={(e) =>
-                          updateActiveTab({
-                            authData: { ...activeTab.authData, token: e.target.value },
-                          })
-                        }
-                        className="font-mono"
-                      />
-                    </div>
-                  )}
-
-                  {activeTab.authType === 'basic' && (
-                    <div className="space-y-2">
-                      <div>
-                        <Label>Username</Label>
-                        <Input
-                          placeholder="Username"
-                          value={activeTab.authData.username || ''}
-                          onChange={(e) =>
-                            updateActiveTab({
-                              authData: { ...activeTab.authData, username: e.target.value },
-                            })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label>Password</Label>
-                        <Input
-                          type="password"
-                          placeholder="Password"
-                          value={activeTab.authData.password || ''}
-                          onChange={(e) =>
-                            updateActiveTab({
-                              authData: { ...activeTab.authData, password: e.target.value },
-                            })
-                          }
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab.authType === 'apiKey' && (
-                    <div className="space-y-2">
-                      <div>
-                        <Label>Key</Label>
-                        <Input
-                          placeholder="API Key name"
-                          value={activeTab.authData.key || ''}
-                          onChange={(e) =>
-                            updateActiveTab({
-                              authData: { ...activeTab.authData, key: e.target.value },
-                            })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label>Value</Label>
-                        <Input
-                          placeholder="API Key value"
-                          value={activeTab.authData.value || ''}
-                          onChange={(e) =>
-                            updateActiveTab({
-                              authData: { ...activeTab.authData, value: e.target.value },
-                            })
-                          }
-                          className="font-mono"
-                        />
-                      </div>
-                      <div>
-                        <Label>Add to</Label>
-                        <Select
-                          value={activeTab.authData.addTo || 'header'}
-                          onValueChange={(value: 'header' | 'query') =>
-                            updateActiveTab({
-                              authData: { ...activeTab.authData, addTo: value },
-                            })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="header">Header</SelectItem>
-                            <SelectItem value="query">Query Params</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <AuthPanel
+                  activeTab={activeTab}
+                  onUpdate={updateActiveTab}
+                />
               </TabsContent>
             </Tabs>
 
             {/* Response Section */}
-            {response && (
-              <div className="space-y-4 border-t pt-6 mt-8">
-                <div className="flex items-center justify-between bg-card p-4 rounded-xl border shadow-sm">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <Label className="text-lg font-semibold">Response</Label>
-                    <Badge className={`${getStatusColor(response.status)} px-3 py-1 font-semibold`}>
-                      {response.status >= 200 && response.status < 300 ? (
-                        <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 inline" />
-                      ) : response.status >= 400 ? (
-                        <AlertCircle className="w-3.5 h-3.5 mr-1.5 inline" />
-                      ) : null}
-                      {response.status} {response.statusText}
-                    </Badge>
-                    <Badge variant="outline" className="flex items-center gap-1.5 px-3 py-1">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span className="font-medium">{response.time}ms</span>
-                    </Badge>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="shadow-sm hover:shadow-md transition-shadow"
-                    onClick={() => {
-                      navigator.clipboard.writeText(response.body);
-                      toast({
-                        title: 'Copied',
-                        description: 'Response copied to clipboard',
-                      });
-                    }}
-                  >
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy
-                  </Button>
-                </div>
-
-                <Tabs defaultValue="body">
-                  <TabsList className="bg-muted/30 p-1 rounded-lg h-11">
-                    <TabsTrigger value="body" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">Body</TabsTrigger>
-                    <TabsTrigger value="headers" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">Headers</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="body" className="mt-4">
-                    <div className="border rounded-xl p-4 bg-muted/20 backdrop-blur-sm min-h-[300px] max-h-[600px] overflow-auto shadow-inner">
-                      {response.status === 0 ? (
-                        <div className="text-red-500 dark:text-red-400 font-mono text-sm flex items-start gap-2">
-                          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                          <span>{response.body}</span>
-                        </div>
-                      ) : (
-                        <pre className="font-mono text-sm whitespace-pre-wrap break-words leading-relaxed text-foreground/90">
-                          {response.body}
-                        </pre>
-                      )}
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="headers" className="mt-4">
-                    <div className="border rounded-xl p-4 bg-muted/20 backdrop-blur-sm min-h-[300px] max-h-[600px] overflow-auto shadow-inner">
-                      <pre className="font-mono text-sm whitespace-pre-wrap break-words leading-relaxed text-foreground/90">
-                        {Object.entries(response.headers)
-                          .map(([key, value]) => `${key}: ${value}`)
-                          .join('\n')}
-                      </pre>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
-            )}
+            {response && <ResponsePanel response={response} />}
           </div>
         </div>
       </div>
@@ -2487,303 +2159,106 @@ function ApiGrid() {
 
       {/* Sidebar */}
       {sidebarOpen && (
-        <div className="w-80 border-l bg-background flex flex-col shadow-lg">
-          <div className="p-4 border-b">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-base">Collections</h2>
-              <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)} className="h-8 w-8">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search" 
-                className="h-9 pl-9 bg-background" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Button
-              variant="default"
-              size="sm"
-              className="w-full h-9 font-medium"
-              onClick={() => {
-                if (!user?.uid) {
-                  window.location.href = '/login';
-                  return;
-                }
-                setParentCollectionId(undefined);
-                setNewCollectionName('');
-                setCollectionNameError('');
-                setShowCreateCollectionDialog(true);
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              New
-            </Button>
-          </div>
-          <ScrollArea className="flex-1">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-            >
-              <div className="p-2">
-                {isLoadingCollections ? (
-                  <div className="p-8 text-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Loading collections...</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-0">
-                      {filteredCollections.map((col) => renderCollection(col))}
-                    </div>
-                    {filteredCollections.length === 0 && !isLoadingCollections && (
-                      <div className="p-8 text-center">
-                        {searchQuery ? (
-                          <>
-                            <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
-                            <p className="text-sm text-muted-foreground mb-1">No results found</p>
-                            <p className="text-xs text-muted-foreground">Try adjusting your search query</p>
-                          </>
-                        ) : collections.length === 0 ? (
-                          <>
-                            <FolderPlus className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
-                            <p className="text-sm text-muted-foreground mb-1">No collections yet</p>
-                            <p className="text-xs text-muted-foreground">Create one to get started</p>
-                          </>
-                        ) : (
-                          <>
-                            <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
-                            <p className="text-sm text-muted-foreground">No matching requests found</p>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-              <DragOverlay>
-                {activeDragId ? (
-                  <div className="px-3 py-1.5 rounded-md bg-background border shadow-lg flex items-center gap-2">
-                    <Badge 
-                      variant="outline" 
-                      className={`font-mono text-[10px] font-semibold px-1.5 py-0 border ${
-                        savedRequests.find(r => r.id === activeDragId) 
-                          ? getMethodColor(savedRequests.find(r => r.id === activeDragId)!.method)
-                          : ''
-                      }`}
-                    >
-                      {savedRequests.find(r => r.id === activeDragId)?.method || 'GET'}
-                    </Badge>
-                    <span className="text-sm truncate">
-                      {savedRequests.find(r => r.id === activeDragId)?.name || 'Request'}
-                    </span>
-                  </div>
-                ) : null}
-              </DragOverlay>
-            </DndContext>
-          </ScrollArea>
+        <div className="relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 z-10 h-8 w-8"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <CollectionsSidebar
+            collections={collections}
+            savedRequests={savedRequests}
+            isLoadingCollections={isLoadingCollections}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            expandedCollections={expandedCollections}
+            onToggleCollection={toggleCollection}
+            onNewCollection={() => {
+              setParentCollectionId(undefined);
+              setNewCollectionName('');
+              setCollectionNameError('');
+              setShowCreateCollectionDialog(true);
+            }}
+            onNewRequestInCollection={handleNewRequestInCollection}
+            onNewFolderInCollection={(collectionId) => {
+              setParentCollectionId(collectionId);
+              setNewCollectionName('');
+              setCollectionNameError('');
+              setShowCreateCollectionDialog(true);
+            }}
+            onLoadRequest={loadRequest}
+            onEditCollection={handleEditCollection}
+            onEditRequest={handleEditRequest}
+            onDeleteCollection={handleDeleteCollection}
+            onDeleteRequest={handleDeleteRequest}
+            onDuplicateCollection={handleDuplicateCollection}
+            onExportCollection={handleExportCollection}
+            onMoveRequest={moveRequestToCollection}
+            user={user}
+          />
         </div>
       )}
 
       {/* Create Collection Dialog */}
-      <Dialog 
-        open={showCreateCollectionDialog} 
-        onOpenChange={(open) => {
-          setShowCreateCollectionDialog(open);
-          if (!open) {
-            setNewCollectionName('');
-            setCollectionNameError('');
-            setParentCollectionId(undefined);
-          }
+      <CreateCollectionDialog
+        open={showCreateCollectionDialog}
+        onOpenChange={setShowCreateCollectionDialog}
+        collectionName={newCollectionName}
+        onCollectionNameChange={(name) => {
+          setNewCollectionName(name);
+          setCollectionNameError('');
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {parentCollectionId ? 'Create New Folder' : 'Create New Collection'}
-            </DialogTitle>
-            <DialogDescription>
-              {parentCollectionId 
-                ? `Enter a name for the new folder. The name must be unique within this collection.`
-                : 'Enter a name for your new collection. The name must be unique.'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="collection-name">
-                {parentCollectionId ? 'Folder Name' : 'Collection Name'}
-              </Label>
-              <Input
-                id="collection-name"
-                placeholder={parentCollectionId ? 'My Folder' : 'My Collection'}
-                value={newCollectionName}
-                onChange={(e) => {
-                  setNewCollectionName(e.target.value);
-                  setCollectionNameError('');
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleCreateCollection();
-                  }
-                }}
-              />
-              {collectionNameError && (
-                <p className="text-sm text-destructive">{collectionNameError}</p>
-              )}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowCreateCollectionDialog(false);
-                setNewCollectionName('');
-                setCollectionNameError('');
-                setParentCollectionId(undefined);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleCreateCollection}>
-              {parentCollectionId ? 'Create Folder' : 'Create'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        collectionNameError={collectionNameError}
+        parentCollectionId={parentCollectionId}
+        onSubmit={handleCreateCollection}
+        onCancel={() => {
+          setNewCollectionName('');
+          setCollectionNameError('');
+          setParentCollectionId(undefined);
+        }}
+      />
 
       {/* Save Request Dialog */}
-      <Dialog open={showSaveRequestDialog} onOpenChange={setShowSaveRequestDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Save Request</DialogTitle>
-            <DialogDescription>
-              Save this request to a collection. The collection will be created if it doesn't exist.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="save-collection-select">Collection</Label>
-              {!showNewCollectionInput ? (
-                <>
-                  <div className="flex gap-2">
-                    <Select
-                      value={saveCollectionId}
-                      onValueChange={(value) => {
-                        setSaveCollectionId(value);
-                        setSaveRequestErrors({ ...saveRequestErrors, collection: undefined });
-                      }}
-                    >
-                      <SelectTrigger id="save-collection-select" className="flex-1">
-                        <SelectValue placeholder="Select a collection" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[300px]">
-                        {renderCollectionOptions(collections)}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setShowNewCollectionInput(true);
-                        setSaveCollectionId('');
-                        setSaveCollectionName('');
-                        setSaveRequestErrors({ ...saveRequestErrors, collection: undefined });
-                      }}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  {collections.length === 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      No collections yet. Click the + button to create one.
-                    </p>
-                  )}
-                </>
-              ) : (
-                <>
-                  <div className="flex gap-2">
-                    <Input
-                      id="save-collection-name"
-                      placeholder="New collection name"
-                      value={saveCollectionName}
-                      onChange={(e) => {
-                        setSaveCollectionName(e.target.value);
-                        setSaveRequestErrors({ ...saveRequestErrors, collection: undefined });
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setShowNewCollectionInput(false);
-                        setSaveCollectionName('');
-                        if (collections.length > 0) {
-                          setSaveCollectionId(collections[0].id);
-                        }
-                        setSaveRequestErrors({ ...saveRequestErrors, collection: undefined });
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </>
-              )}
-              {saveRequestErrors.collection && (
-                <p className="text-sm text-destructive">{saveRequestErrors.collection}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="save-request-name">Request Name</Label>
-              <Input
-                id="save-request-name"
-                placeholder="Untitled Request"
-                value={saveRequestName}
-                onChange={(e) => {
-                  setSaveRequestName(e.target.value);
-                  setSaveRequestErrors({ ...saveRequestErrors, request: undefined });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && e.ctrlKey) {
-                    handleSaveRequest();
-                  }
-                }}
-              />
-              {saveRequestErrors.request && (
-                <p className="text-sm text-destructive">{saveRequestErrors.request}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                The request name must be unique within the selected collection.
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowSaveRequestDialog(false);
-                setSaveCollectionId('');
-                setSaveCollectionName('');
-                setSaveRequestName('');
-                setSaveRequestErrors({});
-                setShowNewCollectionInput(false);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleSaveRequest}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <SaveRequestDialog
+        open={showSaveRequestDialog}
+        onOpenChange={setShowSaveRequestDialog}
+        collections={collections}
+        collectionId={saveCollectionId}
+        onCollectionIdChange={(id) => {
+          setSaveCollectionId(id);
+          setSaveRequestErrors({ ...saveRequestErrors, collection: undefined });
+        }}
+        collectionName={saveCollectionName}
+        onCollectionNameChange={(name) => {
+          setSaveCollectionName(name);
+          setSaveRequestErrors({ ...saveRequestErrors, collection: undefined });
+        }}
+        requestName={saveRequestName}
+        onRequestNameChange={(name) => {
+          setSaveRequestName(name);
+          setSaveRequestErrors({ ...saveRequestErrors, request: undefined });
+        }}
+        showNewCollectionInput={showNewCollectionInput}
+        onShowNewCollectionInputChange={(show) => {
+          setShowNewCollectionInput(show);
+          if (!show && collections.length > 0) {
+            setSaveCollectionId(collections[0].id);
+          }
+          setSaveRequestErrors({ ...saveRequestErrors, collection: undefined });
+        }}
+        errors={saveRequestErrors}
+        onSubmit={handleSaveRequest}
+        onCancel={() => {
+          setSaveCollectionId('');
+          setSaveCollectionName('');
+          setSaveRequestName('');
+          setSaveRequestErrors({});
+          setShowNewCollectionInput(false);
+        }}
+      />
 
       {/* Delete Collection Confirmation Dialog */}
       <AlertDialog open={deleteCollectionId !== null} onOpenChange={(open) => !open && setDeleteCollectionId(null)}>
@@ -2925,6 +2400,41 @@ function ApiGrid() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Environment Manager Dialog */}
+      {user?.uid && (
+        <EnvironmentManager
+          open={showEnvironmentManager}
+          onOpenChange={setShowEnvironmentManager}
+          environments={environments}
+          onSaveEnvironment={handleSaveEnvironment}
+          onDeleteEnvironment={handleDeleteEnvironment}
+          onSetDefault={handleSetDefaultEnvironment}
+        />
+      )}
+
+      {/* Import Modal */}
+      <ImportModal
+        open={showImportModal}
+        onOpenChange={setShowImportModal}
+        onImportCurl={handleImportCurl}
+        onImportHar={handleImportHar}
+        onImportOpenAPI={handleImportOpenAPI}
+      />
+
+      {/* History Panel */}
+      {user?.uid && (
+        <HistoryPanel
+          history={requestHistory}
+          isLoading={isLoadingHistory}
+          onRerun={rerunHistoryRequest}
+          onClearAll={clearAllHistory}
+          onClearRange={clearHistoryByRange}
+          open={showHistory}
+          onOpenChange={setShowHistory}
+        />
+      )}
+
     </div>
   );
 }

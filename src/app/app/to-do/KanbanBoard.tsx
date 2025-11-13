@@ -128,7 +128,7 @@ export default function KanbanBoard({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 h-full">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 h-full" role="main" aria-label="Kanban board">
         {columns.map((column) => (
           <KanbanColumn
             key={column.id}
@@ -144,7 +144,7 @@ export default function KanbanBoard({
 
       <DragOverlay>
         {activeTask ? (
-          <div className="opacity-90">
+          <div className="opacity-95 rotate-2 scale-105 shadow-2xl">
             <KanbanCard task={activeTask} onUpdateTask={onUpdateTask} onDeleteTask={onDeleteTask} />
           </div>
         ) : null}

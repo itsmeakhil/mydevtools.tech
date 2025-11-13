@@ -9,7 +9,117 @@ import { Badge } from "@/components/ui/badge";
 import DeleteButton from "@/components/ui/DeleteButton";
 import { Task } from "@/app/app/to-do/types/Task";
 import TaskEditDialog from "./TaskEditDialog";
-import { differenceInDays, isPast, parseISO } from "date-fns";
+import { differenceInDays, isPast, parseISO, format, isValid, parse } from "date-fns";
+import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+// Helper to safely parse and format dates
+const safeFormatDate = (dateString: string | undefined, formatStr: string): string => {
+  if (!dateString || dateString === "Unknown") return dateString || "Unknown";
+  
+  // Try parsing as ISO first (for new data)
+  try {
+    const isoDate = parseISO(dateString);
+    if (isValid(isoDate)) {
+      return format(isoDate, formatStr);
+    }
+  } catch {
+    // Not an ISO string, continue
+  }
+  
+  // Try parsing the formatted date string from TaskContext: "dd MMM yyyy, hh:mm a"
+  try {
+    const parsedDate = parse(dateString, "dd MMM yyyy, hh:mm a", new Date());
+    if (isValid(parsedDate)) {
+      return format(parsedDate, formatStr);
+    }
+  } catch {
+    // Not in that format, continue
+  }
+  
+  // Try parsing just the date part "dd MMM yyyy"
+  try {
+    const parts = dateString.split(',');
+    if (parts.length > 0) {
+      const datePart = parts[0].trim(); // "dd MMM yyyy"
+      const parsedDate = parse(datePart, "dd MMM yyyy", new Date());
+      if (isValid(parsedDate)) {
+        return format(parsedDate, formatStr);
+      }
+    }
+  } catch {
+    // Fall through
+  }
+  
+  // Try parsing as Date object (fallback)
+  try {
+    const date = new Date(dateString);
+    if (isValid(date)) {
+      return format(date, formatStr);
+    }
+  } catch {
+    // Not a valid date string
+  }
+  
+  // If all parsing fails, return a shortened version of the string
+  return dateString.length > 15 ? dateString.substring(0, 15) + "..." : dateString;
+};
+
+// Helper to safely parse date for calculations
+const safeParseDate = (dateString: string | undefined): Date | null => {
+  if (!dateString) return null;
+  
+  // Try parsing as ISO first
+  try {
+    const isoDate = parseISO(dateString);
+    if (isValid(isoDate)) {
+      return isoDate;
+    }
+  } catch {
+    // Not an ISO string
+  }
+  
+  // Try parsing the formatted date string from TaskContext: "dd MMM yyyy, hh:mm a"
+  try {
+    const parsedDate = parse(dateString, "dd MMM yyyy, hh:mm a", new Date());
+    if (isValid(parsedDate)) {
+      return parsedDate;
+    }
+  } catch {
+    // Not in that format
+  }
+  
+  // Try parsing just the date part "dd MMM yyyy"
+  try {
+    const parts = dateString.split(',');
+    if (parts.length > 0) {
+      const datePart = parts[0].trim();
+      const parsedDate = parse(datePart, "dd MMM yyyy", new Date());
+      if (isValid(parsedDate)) {
+        return parsedDate;
+      }
+    }
+  } catch {
+    // Fall through
+  }
+  
+  // Try parsing as Date object (fallback)
+  try {
+    const date = new Date(dateString);
+    if (isValid(date)) {
+      return date;
+    }
+  } catch {
+    // Not a valid date
+  }
+  
+  return null;
+};
 
 interface KanbanCardProps {
   task: Task;
@@ -79,8 +189,9 @@ export default function KanbanCard({ task, onUpdateTask, onDeleteTask }: KanbanC
   };
 
   // Check if task is overdue
-  const isOverdue = task.dueDate && isPast(parseISO(task.dueDate)) && task.status !== "completed";
-  const dueInDays = task.dueDate ? differenceInDays(parseISO(task.dueDate), new Date()) : null;
+  const dueDateObj = task.dueDate ? safeParseDate(task.dueDate) : null;
+  const isOverdue = dueDateObj && isPast(dueDateObj) && task.status !== "completed";
+  const dueInDays = dueDateObj ? differenceInDays(dueDateObj, new Date()) : null;
 
   const handleSaveEdit = async (updates: Partial<Task>) => {
     await onUpdateTask(task.id, updates);
@@ -93,50 +204,72 @@ export default function KanbanCard({ task, onUpdateTask, onDeleteTask }: KanbanC
         style={style}
         {...attributes}
         {...listeners}
-        className={`group relative p-3 rounded-lg border transition-all duration-200 hover:shadow-lg bg-card cursor-grab active:cursor-grabbing border-border ${
-          isDragging ? "shadow-xl scale-105 z-50" : ""
-        }`}
+        className={cn(
+          "group relative p-4 rounded-xl border-2 transition-all duration-300",
+          "hover:shadow-xl hover:scale-[1.02] bg-card",
+          "cursor-grab active:cursor-grabbing border-border",
+          "hover:border-primary/30 focus-within:border-primary/50",
+          isDragging && "shadow-2xl scale-110 z-50 rotate-2 opacity-90",
+          task.status === "completed" && "opacity-75"
+        )}
+        role="button"
+        tabIndex={0}
+        aria-label={`Task: ${task.text}`}
       >
-        {/* Drag Handle */}
+        {/* Drag Handle - Enhanced */}
         <div
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted pointer-events-none"
+          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-1.5 rounded-md hover:bg-muted/80 pointer-events-none"
         >
           <GripVertical className="h-4 w-4 text-muted-foreground" />
         </div>
 
-        {/* Status Icon and Task Text */}
-        <div className="flex items-start gap-2 mb-2 pr-6">
+        {/* Status Icon and Task Text - Enhanced */}
+        <div className="flex items-start gap-2.5 mb-3 pr-8">
           <div
-            className={`flex items-center justify-center p-1.5 rounded ${statusConfig.bgColor} flex-shrink-0`}
+            className={cn(
+              "flex items-center justify-center p-2 rounded-lg transition-all flex-shrink-0",
+              statusConfig.bgColor,
+              "group-hover:scale-110"
+            )}
           >
-            <StatusIcon className={`h-3.5 w-3.5 ${statusConfig.textColor}`} />
+            <StatusIcon className={cn("h-4 w-4", statusConfig.textColor)} />
           </div>
-          <div className="flex-1 min-w-0 space-y-1">
-            <div className="flex items-start gap-1">
-              <p
-                className={`text-sm font-medium flex-1 ${
+          <div className="flex-1 min-w-0 space-y-1.5">
+            <div className="flex items-start gap-1.5">
+              <h3
+                className={cn(
+                  "text-sm font-semibold flex-1 leading-snug",
                   task.status === "completed"
                     ? "text-muted-foreground line-through"
                     : "text-foreground"
-                }`}
+                )}
                 title={task.text}
               >
                 {task.text}
-              </p>
+              </h3>
               {task.priority && task.priority !== "medium" && (
-                <span className={priorityConfig[task.priority].color}>
-                  {React.createElement(priorityConfig[task.priority].icon, { className: "h-3 w-3 flex-shrink-0" })}
-                </span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className={cn(priorityConfig[task.priority].color, "flex-shrink-0")}>
+                        {React.createElement(priorityConfig[task.priority].icon, { className: "h-3.5 w-3.5" })}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{priorityConfig[task.priority].label} Priority</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
 
             {task.description && (
-              <p className="text-xs text-muted-foreground line-clamp-2">
+              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                 {task.description}
               </p>
             )}
 
-            {/* Tags */}
+            {/* Tags - Enhanced */}
             {task.tags && task.tags.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {task.tags.slice(0, 2).map((tag) => (
@@ -144,52 +277,127 @@ export default function KanbanCard({ task, onUpdateTask, onDeleteTask }: KanbanC
                     key={tag.id}
                     variant="outline"
                     style={{ borderColor: tag.color, color: tag.color }}
-                    className="text-[10px] px-1 py-0 h-4 gap-0.5"
+                    className="text-[10px] px-1.5 py-0.5 h-5 gap-1 hover:bg-muted/50 transition-colors"
                   >
-                    <Tag className="h-2 w-2" />
+                    <Tag className="h-2.5 w-2.5" />
                     {tag.name}
                   </Badge>
                 ))}
                 {task.tags.length > 2 && (
-                  <span className="text-[10px] text-muted-foreground">+{task.tags.length - 2}</span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded bg-muted/50">
+                          +{task.tags.length - 2}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="flex flex-wrap gap-1">
+                          {task.tags.slice(2).map((tag) => (
+                            <Badge
+                              key={tag.id}
+                              variant="outline"
+                              style={{ borderColor: tag.color, color: tag.color }}
+                              className="text-xs"
+                            >
+                              {tag.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
             )}
 
-            {/* Subtasks Progress */}
+            {/* Subtasks Progress - Enhanced */}
             {task.subTasks && task.subTasks.length > 0 && (
-              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                <CheckCircle2 className="h-2.5 w-2.5" />
-                {task.subTasks.filter(st => st.completed).length}/{task.subTasks.length}
+              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
+                <span className="font-medium">
+                  {task.subTasks.filter(st => st.completed).length}/{task.subTasks.length}
+                </span>
+                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden max-w-[80px]">
+                  <div 
+                    className="h-full bg-primary transition-all duration-300"
+                    style={{ 
+                      width: `${(task.subTasks.filter(st => st.completed).length / task.subTasks.length) * 100}%` 
+                    }}
+                  />
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Footer with Date and Actions */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground gap-2">
+        {/* Footer with Date and Actions - Enhanced */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground gap-2 pt-2 border-t border-border/50">
           <div className="flex flex-col gap-1 truncate min-w-0 flex-1">
-            <div className="flex items-center gap-1 truncate">
-              <Clock className="h-3 w-3 flex-shrink-0" />
-              <span className="truncate text-[10px]">{task.createdAt}</span>
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1.5 truncate">
+                    <Clock className="h-3 w-3 flex-shrink-0" />
+                    <span className="truncate text-[10px]">
+                      {safeFormatDate(task.createdAt, "MMM d")}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Created: {task.createdAt}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             {task.dueDate && (
-              <div className={`flex items-center gap-1 text-[10px] ${isOverdue ? "text-red-500 font-medium" : ""}`}>
-                <Calendar className="h-3 w-3 flex-shrink-0" />
-                {isOverdue ? "Overdue" : dueInDays === 0 ? "Today" : dueInDays === 1 ? "Tomorrow" : `${dueInDays}d`}
-              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className={cn(
+                      "flex items-center gap-1.5 text-[10px]",
+                      isOverdue && "text-red-500 font-semibold"
+                    )}>
+                      <Calendar className="h-3 w-3 flex-shrink-0" />
+                      <span>
+                        {isOverdue 
+                          ? "Overdue" 
+                          : dueInDays === 0 
+                            ? "Today" 
+                            : dueInDays === 1 
+                              ? "Tomorrow" 
+                              : dueInDays !== null && dueInDays > 0
+                                ? `${dueInDays}d`
+                                : `${Math.abs(dueInDays!)}d ago`
+                        }
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Due: {task.dueDate}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
-          <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 flex-shrink-0">
+          <div 
+            onClick={(e) => e.stopPropagation()} 
+            className="flex items-center gap-1 flex-shrink-0"
+          >
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => setIsEditDialogOpen(true)}
+              className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditDialogOpen(true);
+              }}
+              aria-label="Edit task"
             >
-              <Edit className="h-3 w-3" />
+              <Edit className="h-3.5 w-3.5" />
             </Button>
-            <DeleteButton onDelete={() => onDeleteTask(task.id)} />
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+              <DeleteButton onDelete={() => onDeleteTask(task.id)} />
+            </div>
           </div>
         </div>
       </div>
