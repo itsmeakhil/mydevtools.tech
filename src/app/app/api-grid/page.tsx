@@ -63,7 +63,6 @@ import { EnvironmentSwitcher } from '@/components/api-grid/environment-switcher'
 import { EnvironmentManager } from '@/components/api-grid/environment-manager';
 import { ImportModal } from '@/components/api-grid/import-modal';
 import { HistoryPanel } from '@/components/api-grid/history-panel';
-import { CodeSnippetsPanel } from '@/components/api-grid/code-snippets-panel';
 import { parseHAR, parseOpenAPI } from '@/lib/api-grid/parsers';
 
 // Dynamically import BodyEditor for code-splitting
@@ -135,7 +134,6 @@ function ApiGrid() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [historyInitialized, setHistoryInitialized] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [showCodeSnippets, setShowCodeSnippets] = useState(false);
   const { toast } = useToast();
 
   // Memoize activeTab to avoid recalculating on every render
@@ -2046,7 +2044,6 @@ function ApiGrid() {
               onSend={handleSendRequest}
               onCancel={cancelRequest}
               onSave={openSaveRequestDialog}
-              onShowCodeSnippets={() => setShowCodeSnippets(!showCodeSnippets)}
             />
 
             {/* Request Tabs - Params, Body, Headers, Auth */}
@@ -2129,14 +2126,6 @@ function ApiGrid() {
                 />
               </TabsContent>
             </Tabs>
-
-            {/* Code Snippets Panel */}
-            <CodeSnippetsPanel
-              activeTab={activeTab}
-              baseUrl={typeof window !== 'undefined' ? window.location.origin : ''}
-              open={showCodeSnippets}
-              onOpenChange={setShowCodeSnippets}
-            />
 
             {/* Response Section */}
             {response && <ResponsePanel response={response} />}

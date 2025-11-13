@@ -278,12 +278,29 @@ function CollectionsSidebarComponent({
     })
   );
 
+  // Helper function to sort collections alphabetically (recursively)
+  const sortCollections = useCallback((cols: Collection[]): Collection[] => {
+    return [...cols]
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+      .map((col) => ({
+        ...col,
+        collections: col.collections ? sortCollections(col.collections) : undefined,
+      }));
+  }, []);
+
   const filteredCollections = useMemo(() => {
-    if (!searchQuery) return collections;
-    return collections
-      .map((col) => filterCollection(col, searchQuery))
-      .filter((col): col is Collection => col !== null);
-  }, [collections, searchQuery]);
+    let result = collections;
+    
+    // Apply search filter if query exists
+    if (searchQuery) {
+      result = collections
+        .map((col) => filterCollection(col, searchQuery))
+        .filter((col): col is Collection => col !== null);
+    }
+    
+    // Sort alphabetically
+    return sortCollections(result);
+  }, [collections, searchQuery, sortCollections]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveDragId(event.active.id as string);
@@ -431,7 +448,9 @@ function CollectionsSidebarComponent({
               {/* Render nested collections */}
               {col.collections && col.collections.length > 0 && (
                 <div className="space-y-0">
-                  {col.collections.map((nestedCol) => renderCollection(nestedCol, depth + 1))}
+                  {[...col.collections]
+                    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+                    .map((nestedCol) => renderCollection(nestedCol, depth + 1))}
                 </div>
               )}
               {/* Render requests */}
@@ -459,7 +478,7 @@ function CollectionsSidebarComponent({
   };
 
   return (
-    <div className="w-80 border-l bg-background flex flex-col shadow-lg">
+    <div className="w-80 border-l bg-background flex flex-col shadow-lg h-full">
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-base">Collections</h2>
@@ -489,7 +508,7 @@ function CollectionsSidebarComponent({
           New
         </Button>
       </div>
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}

@@ -3,7 +3,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Save, X, Code2 } from 'lucide-react';
+import { Send, Save, X } from 'lucide-react';
 import { MethodSelect } from './method-select';
 import { HttpMethod, RequestTab, Environment } from '@/lib/api-grid/types';
 import { interpolateVariables } from '@/lib/api-grid/helpers';
@@ -18,7 +18,6 @@ interface UrlBarProps {
   onSend: () => void;
   onCancel: () => void;
   onSave: () => void;
-  onShowCodeSnippets?: () => void;
 }
 
 function UrlBarComponent({
@@ -31,7 +30,6 @@ function UrlBarComponent({
   onSend,
   onCancel,
   onSave,
-  onShowCodeSnippets,
 }: UrlBarProps) {
   const isSendDisabled = useMemo(
     () => !isLoading && !activeTab.url.trim(),
@@ -74,18 +72,6 @@ function UrlBarComponent({
             </div>
           )}
         </div>
-        {onShowCodeSnippets && (
-          <Button
-            onClick={onShowCodeSnippets}
-            variant="outline"
-            className="h-11 px-4 shadow-sm hover:shadow-md transition-all"
-            size="default"
-            title="Show code snippets"
-          >
-            <Code2 className="h-4 w-4 mr-2" />
-            Code
-          </Button>
-        )}
         <Button
           onClick={isLoading ? onCancel : onSend}
           disabled={isSendDisabled}
