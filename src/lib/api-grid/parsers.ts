@@ -169,8 +169,8 @@ export function parseOpenAPI(openApiData: any, collectionName?: string): Collect
   for (const [path, pathItem] of Object.entries(openApiData.paths)) {
     if (!pathItem || typeof pathItem !== 'object') continue;
 
-    // Iterate through HTTP methods
-    const methods: HttpMethod[] = ['get', 'post', 'put', 'delete', 'patch', 'head', 'options'];
+    // Iterate through HTTP methods (OpenAPI uses lowercase)
+    const methods = ['get', 'post', 'put', 'delete', 'patch', 'head', 'options'] as const;
     
     for (const method of methods) {
       const operation = (pathItem as any)[method];
