@@ -99,24 +99,16 @@ export const sidebarData: SidebarData = {
             },
 
             {
-              title: 'Encrypt / Decrypt Text',
-              url: '/app/encrypt-decrypt-text',
-              description: 'Encrypt or decrypt text for secure communication.',
+              title: 'Encryption & Hashing',
+              url: '/app/encryption',
+              description: 'Encrypt text and generate hashes securely.',
               icon: IconShieldCode
             },
-
             {
               title: 'Hash Generator',
               url: '/app/hash-generator',
               description: 'Generate hashes using popular algorithms.',
               icon: IconHash
-            },
-            {
-              title: 'Bcrypt',
-              url: '/app/bcrypt',
-              description: 'Encrypt passwords securely with Bcrypt.',
-              icon: IconShieldCode
-
             },
             {
               title: 'Token / Password Generator',
