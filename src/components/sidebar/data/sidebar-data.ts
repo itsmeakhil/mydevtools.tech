@@ -88,7 +88,7 @@ export const sidebarData: SidebarData = {
       title: 'Specific Tools',
       items: [
         {
-          title: 'Util Tools',
+          title: 'Crypto Tools',
           icon: IconTool,
           items: [
             {
@@ -123,59 +123,10 @@ export const sidebarData: SidebarData = {
           icon: IconArrowsExchange,
           items: [
             {
-              title: 'JSON to XML',
-              url: '/app/json-xml',
-              description: 'Convert JSON data to XML format.',
-              icon: IconFileTypeXml
-            },
-            {
-              title: 'JSON to TOML',
-              url: '/app/json-toml',
-              description: 'Convert JSON data to TOML format.',
-              icon: IconToml
-            },
-            {
-              title: 'JSON to YAML',
-              url: '/app/json-yaml',
-              description: 'Convert JSON data to YAML format.',
-              icon: IconSquareRoundedLetterY
-            },
-            {
-              title: 'JSON to CSV',
-              url: '/app/json-csv',
-              description: 'Convert JSON data to CSV format.',
-              icon: IconFileTypeCsv
-            },
-            {
-              title: 'TOML to JSON',
-              url: '/app/toml-json',
-              description: 'Convert TOML data to JSON format.',
+              title: 'JSON Converter',
+              url: '/app/converters',
+              description: 'Convert between JSON, XML, YAML, TOML, and CSV.',
               icon: IconJson
-            },
-            {
-              title: 'TOML to YAML',
-              url: '/app/toml-yaml',
-              description: 'Convert TOML data to YAML format.',
-              icon: IconSquareRoundedLetterY
-
-            },
-            {
-              title: 'XML to JSON',
-              url: '/app/xml-json',
-              description: 'Convert XML data to JSON format.',
-              icon: IconJson
-            },
-            {
-              title: 'YAML to JSON',
-              url: '/app/yaml-json',
-              description: 'Convert YAML data to JSON format.',
-              icon: IconJson
-            },
-            {
-              title: 'YAML to TOML',
-              url: '/app/yaml-toml',
-              description: 'Convert YAML data to TOML format.',
-              icon: IconToml
             },
           ],
         },
