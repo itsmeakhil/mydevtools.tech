@@ -104,12 +104,7 @@ export const sidebarData: SidebarData = {
               description: 'Encrypt or decrypt text for secure communication.',
               icon: IconShieldCode
             },
-            {
-              title: 'Token Generator',
-              url: '/app/token-generator',
-              description: 'Generate secure tokens for authentication.',
-              icon: IconPasswordFingerprint
-            },
+
             {
               title: 'Hash Generator',
               url: '/app/hash-generator',
@@ -124,9 +119,9 @@ export const sidebarData: SidebarData = {
 
             },
             {
-              title: 'Password Generator',
+              title: 'Token / Password Generator',
               url: '/app/password-generator',
-              description: 'Generate strong, secure passwords with custom options.',
+              description: 'Generate secure tokens and passwords with custom options.',
               icon: IconLock
             },
           ],

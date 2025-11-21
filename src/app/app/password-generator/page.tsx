@@ -24,7 +24,7 @@ function PasswordGenerator() {
   const [length, setLength] = useState(16);
   const [password, setPassword] = useState('');
   const [copied, setCopied] = useState(false);
-  
+
   const [options, setOptions] = useState({
     uppercase: true,
     lowercase: true,
@@ -45,7 +45,7 @@ function PasswordGenerator() {
     };
 
     let availableChars = '';
-    
+
     if (options.lowercase) availableChars += chars.lowercase;
     if (options.uppercase) availableChars += chars.uppercase;
     if (options.numbers) availableChars += chars.numbers;
@@ -66,7 +66,7 @@ function PasswordGenerator() {
     let newPassword = '';
     const array = new Uint8Array(length);
     crypto.getRandomValues(array);
-    
+
     for (let i = 0; i < length; i++) {
       newPassword += availableChars[array[i] % availableChars.length];
     }
@@ -90,7 +90,7 @@ function PasswordGenerator() {
 
   const calculateStrength = (pwd: string) => {
     if (!pwd) return { strength: 0, label: 'Empty', color: 'bg-gray-500' };
-    
+
     let score = 0;
     if (pwd.length >= 8) score++;
     if (pwd.length >= 12) score++;
@@ -116,10 +116,10 @@ function PasswordGenerator() {
             <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
               <Lock className="h-5 w-5 text-primary" />
             </div>
-            Password Generator
+            Token / Password Generator
           </CardTitle>
           <CardDescription>
-            Customize your password requirements and generate a secure password
+            Customize your requirements and generate secure tokens or passwords
           </CardDescription>
         </div>
       </CardHeader>
@@ -144,11 +144,11 @@ function PasswordGenerator() {
               <RefreshCw className="h-5 w-5" />
             </Button>
           </div>
-          
+
           {/* Strength Bar */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">Password Strength</span>
+              <span className="font-medium">Strength</span>
               <Badge variant={strength.strength < 3 ? 'destructive' : strength.strength < 5 ? 'secondary' : 'default'}>
                 {strength.label}
               </Badge>
@@ -171,14 +171,14 @@ function PasswordGenerator() {
           <Slider
             id="length"
             min={4}
-            max={64}
+            max={512}
             step={1}
             value={[length]}
             onValueChange={(value) => setLength(value[0])}
           />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>4</span>
-            <span>64</span>
+            <span>512</span>
           </div>
         </div>
 
@@ -294,7 +294,7 @@ function PasswordGenerator() {
 
         {/* Info Section */}
         <div className="bg-muted/50 rounded-lg p-4 border border-border">
-          <h3 className="text-sm font-semibold mb-2">Password Security Tips</h3>
+          <h3 className="text-sm font-semibold mb-2">Security Tips</h3>
           <ul className="text-sm text-muted-foreground space-y-1">
             <li>• Use at least 12-16 characters for better security</li>
             <li>• Include uppercase, lowercase, numbers, and symbols</li>
