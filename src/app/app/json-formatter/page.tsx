@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tab';
@@ -55,6 +55,51 @@ export default function JsonEditorPage() {
   const [queryPanel, setQueryPanel] = useState<'left' | 'right'>('left');
   const [schemaValidatorOpen, setSchemaValidatorOpen] = useState(false);
   const [validatePanel, setValidatePanel] = useState<'left' | 'right'>('left');
+
+  // Panel resizing
+  const [leftWidth, setLeftWidth] = useState(50); // percentage
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging) return;
+
+    const container = document.querySelector('.editor-container');
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const newLeftWidth = ((e.clientX - rect.left) / rect.width) * 100;
+
+    // Constrain between 20% and 80%
+    if (newLeftWidth >= 20 && newLeftWidth <= 80) {
+      setLeftWidth(newLeftWidth);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Add mouse event listeners
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
+    }
+  }, [isDragging]);
 
   const handleModeChange = (panel: 'left' | 'right', mode: EditorMode) => {
     if (panel === 'left') {
@@ -203,7 +248,9 @@ export default function JsonEditorPage() {
         </Card>
 
         {/* Main Editor Area */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 flex-1 overflow-hidden relative">
+        <div className="editor-container grid gap-3 flex-1 overflow-hidden relative" style={{
+          gridTemplateColumns: `${leftWidth}% 8px ${100 - leftWidth}%`,
+        }}>
           {/* Left Panel */}
           <EditorPanel
             label="Left Panel"
@@ -215,27 +262,43 @@ export default function JsonEditorPage() {
             onRepair={(content) => handleContentChange('left', content)}
           />
 
-          {/* Center Actions */}
-          <div className="hidden lg:flex flex-col items-center justify-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-            <Button
-              size="icon"
-              variant="outline"
-              className="h-10 w-10 rounded-full bg-background shadow-lg"
-              title="Copy left to right"
-              onClick={copyToOtherPanel}
-            >
-              <ArrowLeftRight className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="outline"
-              className="h-10 w-10 rounded-full bg-background shadow-lg"
-              title="Compare JSON"
-              onClick={() => setCompareDialogOpen(true)}
-              disabled={!leftPanel.content && !rightPanel.content}
-            >
-              <Code className="h-4 w-4" />
-            </Button>
+          {/* Draggable Divider */}
+          <div
+            className={`relative flex items-center justify-center group cursor-col-resize ${isDragging ? 'bg-primary/20' : 'hover:bg-primary/10'
+              } transition-colors`}
+            onMouseDown={handleMouseDown}
+          >
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-1 bg-border group-hover:bg-primary/30 transition-colors" />
+            <div className="absolute top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="w-1 h-1 rounded-full bg-primary/40" />
+              <div className="w-1 h-1 rounded-full bg-primary/40" />
+              <div className="w-1 h-1 rounded-full bg-primary/40" />
+            </div>
+          </div>
+
+          {/* Center Actions - Positioned Absolutely */}
+          <div className="hidden lg:flex flex-col items-center justify-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
+            <div className="flex flex-col gap-2 pointer-events-auto">
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-10 w-10 rounded-full bg-background shadow-lg"
+                title="Copy left to right"
+                onClick={copyToOtherPanel}
+              >
+                <ArrowLeftRight className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-10 w-10 rounded-full bg-background shadow-lg"
+                title="Compare JSON"
+                onClick={() => setCompareDialogOpen(true)}
+                disabled={!leftPanel.content && !rightPanel.content}
+              >
+                <Code className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Right Panel */}
