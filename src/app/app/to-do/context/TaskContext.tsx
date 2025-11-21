@@ -30,12 +30,12 @@ import { toast } from "sonner";
 // Helper function to safely convert Firestore timestamps to formatted strings
 const formatFirestoreDate = (dateValue: any): string | undefined => {
   if (!dateValue) return undefined;
-  
+
   // If it's already a string, return it
   if (typeof dateValue === 'string') {
     return dateValue;
   }
-  
+
   // If it's a Firestore Timestamp, convert it
   if (dateValue && typeof dateValue.toDate === 'function') {
     try {
@@ -45,7 +45,7 @@ const formatFirestoreDate = (dateValue: any): string | undefined => {
       return undefined;
     }
   }
-  
+
   // If it's a Date object, format it
   if (dateValue instanceof Date) {
     try {
@@ -55,7 +55,7 @@ const formatFirestoreDate = (dateValue: any): string | undefined => {
       return undefined;
     }
   }
-  
+
   return undefined;
 };
 
@@ -176,9 +176,9 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       async (snapshot) => {
         const actualCount = snapshot.size;
         const calculatedPages = Math.max(1, Math.ceil(actualCount / tasksPerPage));
-        
+
         setTotalTaskCount(actualCount);
-        
+
         // Calculate stats from all tasks
         const stats = {
           total: actualCount,
@@ -186,14 +186,14 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
           ongoing: 0,
           notStarted: 0,
         };
-        
+
         snapshot.forEach((doc) => {
           const status = doc.data().status;
           if (status === "completed") stats.completed++;
           else if (status === "ongoing") stats.ongoing++;
           else if (status === "not-started") stats.notStarted++;
         });
-        
+
         setAllTaskStats(stats);
 
         if (calculatedPages !== totalPages) {
@@ -372,7 +372,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
   const fetchNextPage = useCallback(() => {
     if (currentPage >= totalPages || !lastDoc || !user || !user.uid) return;
-    
+
     const constraints = [
       where("created_by", "==", user.uid),
     ];
@@ -411,7 +411,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
   const fetchPreviousPage = useCallback(() => {
     if (currentPage <= 1 || !firstDoc || !user || !user.uid) return;
-    
+
     const constraints = [
       where("created_by", "==", user.uid),
     ];
@@ -571,15 +571,30 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const updateData: any = { ...updates };
-      
+
       // If status is being updated and completedAt is not explicitly set
       if (updates.status === "completed" && !updates.completedAt) {
         updateData.completedAt = serverTimestamp();
       }
-      
-      // Remove the id field as it's not stored in Firestore document data
+
+      // Remove fields that shouldn't be updated directly in Firestore
       delete updateData.id;
-      
+      delete updateData.created_by;
+      delete updateData.createdAt; // Don't allow updating creation timestamp
+
+      // Filter out undefined values - Firestore doesn't accept undefined
+      // Instead, we need to use deleteField() or just omit them
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === undefined) {
+          delete updateData[key];
+        }
+      });
+
+      // Only update if there are fields to update
+      if (Object.keys(updateData).length === 0) {
+        return;
+      }
+
       await updateDoc(doc(db, "tasks", taskId), updateData);
       toast.success("Task updated successfully");
     } catch (error) {
@@ -608,17 +623,17 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         "ongoing": "Ongoing",
         "completed": "Completed",
       };
-      
+
       const updates: Partial<Task> = {
         status: newStatus,
         statusOrder: statusOrder[newStatus],
       };
-      
+
       // Add completedAt timestamp when marking as completed
       if (newStatus === "completed") {
         updates.completedAt = format(new Date(), "dd MMM yyyy, hh:mm a");
       }
-      
+
       try {
         await updateTask(taskId, updates);
         if (task) {
@@ -654,7 +669,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         onClick: async () => {
           // Cancel the deletion
           clearTimeout(deleteTimeout);
-          
+
           // Restore the task in UI
           setTasks((currentTasks) => {
             // Find the correct position to insert the task back

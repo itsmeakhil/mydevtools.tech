@@ -18,6 +18,7 @@ function Calendar({
   className,
   selected,
   onSelect,
+  initialFocus,
   ...props
 }: CalendarProps) {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,6 +38,7 @@ function Calendar({
         value={dateValue}
         onChange={handleChange}
         className="w-full p-2 border rounded-md bg-background text-foreground"
+        autoFocus={initialFocus}
         {...props}
       />
     </div>
