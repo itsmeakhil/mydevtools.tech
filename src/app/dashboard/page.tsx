@@ -1,17 +1,13 @@
 'use client';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { sidebarData } from "../../components/sidebar/data/sidebar-data";
 import useAuth from "@/utils/useAuth";
 import Link, { LinkProps } from "next/link";
-import { Heart, Search, X, Clock } from 'lucide-react';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Heart, Clock } from 'lucide-react';
 import { requiresAuth } from '@/lib/tool-config';
 import { useFavoriteTool } from '@/hooks/use-favorite-tool';
 import { useToolUsage } from '@/hooks/use-tool-usage';
-import { searchTools, filterToolsByCategory, getAllCategories, getAllToolsMetadata } from '@/lib/tools-registry';
 
 // Define types for our items
 interface ToolItem {
@@ -68,13 +64,7 @@ const DashboardPage: React.FC = () => {
   const { favorites, isFavorite, toggleFavorite } = useFavoriteTool();
   const { getRecentlyUsedTools } = useToolUsage();
   const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [recentlyUsedItems, setRecentlyUsedItems] = useState<FavoriteItem[]>([]);
-
-  // Get all tools metadata
-  const allToolsMetadata = useMemo(() => getAllToolsMetadata(), []);
-  const categories = useMemo(() => getAllCategories(), []);
 
   // Update favoriteItems whenever favorites change
   useEffect(() => {
@@ -97,67 +87,6 @@ const DashboardPage: React.FC = () => {
     setRecentlyUsedItems(items);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount, getRecentlyUsedTools reads from localStorage which doesn't trigger re-renders
-
-  // Filter tools based on search and category
-  const filteredGroups = useMemo(() => {
-    let filtered = sidebarData.navGroups;
-
-    // If search query exists, filter by search
-    if (searchQuery.trim()) {
-      const searchResults = searchTools(searchQuery, allToolsMetadata);
-      const searchUrls = new Set(searchResults.map(t => t.url));
-
-      filtered = sidebarData.navGroups.map(group => ({
-        ...group,
-        items: group.items.map(item => {
-          if (!item.items) {
-            // Top-level item
-            if (item.url && searchUrls.has(item.url.toString())) {
-              return item;
-            }
-            return null;
-          } else {
-            // Nested items
-            const filteredSubItems = item.items.filter(subItem =>
-              subItem.url && searchUrls.has(subItem.url.toString())
-            );
-            if (filteredSubItems.length > 0) {
-              return { ...item, items: filteredSubItems };
-            }
-            return null;
-          }
-        }).filter(Boolean) as typeof group.items,
-      })).filter(group => group.items.length > 0);
-    }
-
-    // Filter by category if selected
-    if (selectedCategory) {
-      const categoryResults = filterToolsByCategory(selectedCategory, allToolsMetadata);
-      const categoryUrls = new Set(categoryResults.map(t => t.url));
-
-      filtered = filtered.map(group => ({
-        ...group,
-        items: group.items.map(item => {
-          if (!item.items) {
-            if (item.url && categoryUrls.has(item.url.toString())) {
-              return item;
-            }
-            return null;
-          } else {
-            const filteredSubItems = item.items.filter(subItem =>
-              subItem.url && categoryUrls.has(subItem.url.toString())
-            );
-            if (filteredSubItems.length > 0) {
-              return { ...item, items: filteredSubItems };
-            }
-            return null;
-          }
-        }).filter(Boolean) as typeof group.items,
-      })).filter(group => group.items.length > 0);
-    }
-
-    return filtered;
-  }, [searchQuery, selectedCategory, allToolsMetadata]);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -221,7 +150,7 @@ const DashboardPage: React.FC = () => {
     <div className="min-h-screen p-6 bg-background dark:bg-background text-foreground dark:text-foreground transition-colors duration-200">
       <div className="max-w-7xl mx-auto">
         {/* Recently Used Tools - Only for authenticated users */}
-        {user && recentlyUsedItems.length > 0 && !searchQuery && !selectedCategory && (
+        {user && recentlyUsedItems.length > 0 && (
           <section className="space-y-4 mb-12">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-1 w-6 bg-muted dark:bg-muted rounded-full" />
@@ -239,7 +168,7 @@ const DashboardPage: React.FC = () => {
         )}
 
         {/* Favorites Section - Only for authenticated users */}
-        {user && favorites.length > 0 && !searchQuery && !selectedCategory && (
+        {user && favorites.length > 0 && (
           <section className="space-y-4 mb-12">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-1 w-6 bg-muted dark:bg-muted rounded-full" />
@@ -257,58 +186,40 @@ const DashboardPage: React.FC = () => {
         )}
 
         {/* All Tools Section */}
-        {filteredGroups.length > 0 ? (
-          <div className="space-y-8">
-            {filteredGroups.map((group, groupIndex) => (
-              <section key={groupIndex} className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="h-1 w-6 bg-muted dark:bg-muted rounded-full" />
-                  <h2 className="text-xl font-semibold text-foreground dark:text-foreground">
-                    {group.title}
-                  </h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {group.items.map((item, itemIndex) => (
-                    <React.Fragment key={`${groupIndex}-${itemIndex}`}>
-                      {/* Render top-level items */}
-                      {!item.items && (
-                        <ToolCard
-                          item={item}
-                          id={createItemId(groupIndex, itemIndex)}
-                        />
-                      )}
+        <div className="space-y-8">
+          {sidebarData.navGroups.map((group, groupIndex) => (
+            <section key={groupIndex} className="space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="h-1 w-6 bg-muted dark:bg-muted rounded-full" />
+                <h2 className="text-xl font-semibold text-foreground dark:text-foreground">
+                  {group.title}
+                </h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {group.items.map((item, itemIndex) => (
+                  <React.Fragment key={`${groupIndex}-${itemIndex}`}>
+                    {/* Render top-level items */}
+                    {!item.items && (
+                      <ToolCard
+                        item={item}
+                        id={createItemId(groupIndex, itemIndex)}
+                      />
+                    )}
 
-                      {/* Render nested items directly in the grid */}
-                      {item.items && item.items.map((subItem, subIndex) => (
-                        <ToolCard
-                          key={`${groupIndex}-${itemIndex}-${subIndex}`}
-                          item={{ ...subItem, icon: item.icon }}
-                          id={createItemId(groupIndex, itemIndex, subIndex)}
-                        />
-                      ))}
-                    </React.Fragment>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg">
-              No tools found matching your search criteria.
-            </p>
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedCategory('');
-              }}
-            >
-              Clear filters
-            </Button>
-          </div>
-        )}
+                    {/* Render nested items directly in the grid */}
+                    {item.items && item.items.map((subItem, subIndex) => (
+                      <ToolCard
+                        key={`${groupIndex}-${itemIndex}-${subIndex}`}
+                        item={{ ...subItem, icon: item.icon }}
+                        id={createItemId(groupIndex, itemIndex, subIndex)}
+                      />
+                    ))}
+                  </React.Fragment>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       </div>
     </div>
   );
