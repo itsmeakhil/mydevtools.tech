@@ -22,6 +22,12 @@ import TextEditor from '@/components/json-editor/TextEditor';
 import RepairDialog from '@/components/json-editor/RepairDialog';
 import TreeView from '@/components/json-editor/TreeView';
 import TableView from '@/components/json-editor/TableView';
+import CompareDialog from '@/components/json-editor/CompareDialog';
+import {
+  importJSONFromFile,
+  exportJSONToFile,
+  exportJSONAsCSV
+} from '@/lib/json-utils/import-export';
 
 export default function JsonEditorPage() {
   const [leftPanel, setLeftPanel] = useState<EditorState>({
@@ -39,6 +45,8 @@ export default function JsonEditorPage() {
     error: null,
     parsed: null,
   });
+
+  const [compareDialogOpen, setCompareDialogOpen] = useState(false);
 
   const handleModeChange = (panel: 'left' | 'right', mode: EditorMode) => {
     if (panel === 'left') {
@@ -91,6 +99,30 @@ export default function JsonEditorPage() {
     handleContentChange('right', leftPanel.content);
   };
 
+  const handleImport = async () => {
+    try {
+      const content = await importJSONFromFile();
+      handleContentChange('left', content);
+    } catch (err) {
+      console.error('Import failed:', err);
+    }
+  };
+
+  const handleExport = () => {
+    const content = leftPanel.content || rightPanel.content;
+    if (!content) return;
+    exportJSONToFile(content, 'data.json');
+  };
+
+  const handleExportCSV = () => {
+    const content = leftPanel.content || rightPanel.content;
+    if (!content) return;
+    const result = exportJSONAsCSV(content, 'data.csv');
+    if (!result.success) {
+      alert(result.error);
+    }
+  };
+
   return (
     <div className="h-screen bg-gradient-to-br from-background via-background to-muted/20 p-3 md:p-4 lg:p-6 flex flex-col overflow-hidden">
       <div className="max-w-[1800px] mx-auto w-full flex flex-col gap-3 flex-1 overflow-hidden">
@@ -112,13 +144,24 @@ export default function JsonEditorPage() {
 
               {/* Global Actions */}
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 gap-1.5 text-xs"
+                  onClick={handleImport}
+                >
                   <Upload className="h-3 w-3" />
                   Import
                 </Button>
-                <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 gap-1.5 text-xs"
+                  onClick={handleExport}
+                  disabled={!leftPanel.content && !rightPanel.content}
+                >
                   <Download className="h-3 w-3" />
-                  Export
+                  Export JSON
                 </Button>
               </div>
             </div>
@@ -149,6 +192,16 @@ export default function JsonEditorPage() {
             >
               <ArrowLeftRight className="h-4 w-4" />
             </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              className="h-10 w-10 rounded-full bg-background shadow-lg"
+              title="Compare JSON"
+              onClick={() => setCompareDialogOpen(true)}
+              disabled={!leftPanel.content && !rightPanel.content}
+            >
+              <Code className="h-4 w-4" />
+            </Button>
           </div>
 
           {/* Right Panel */}
@@ -163,6 +216,13 @@ export default function JsonEditorPage() {
           />
         </div>
       </div>
+
+      <CompareDialog
+        open={compareDialogOpen}
+        onOpenChange={setCompareDialogOpen}
+        leftContent={leftPanel.content}
+        rightContent={rightPanel.content}
+      />
     </div>
   );
 }
