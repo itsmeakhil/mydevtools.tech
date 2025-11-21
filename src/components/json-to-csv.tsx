@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { FileSpreadsheet } from "lucide-react"
+import { FileSpreadsheet, Download } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -66,55 +66,72 @@ export function JsonToCsv() {
     }
 
     return (
-        <Card className="border-2 shadow-lg w-full">
-            <CardHeader>
-                <div className="text-center">
-                    <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
-                        <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
-                            <FileSpreadsheet className="h-5 w-5 text-primary" />
-                        </div>
-                        Convert JSON to CSV
-                    </CardTitle>
-                    <CardDescription className="mt-2">
-                        Convert JSON data to CSV format with a live preview.
-                    </CardDescription>
+        <Card className="border-2 shadow-xl w-full bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden">
+            <CardHeader className="pb-6 bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+                <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                        <CardTitle className="text-2xl font-bold">Convert JSON to CSV</CardTitle>
+                        <CardDescription className="mt-1.5 text-base">
+                            Convert JSON data to CSV format with a live preview.
+                        </CardDescription>
+                    </div>
+                    <div className="hidden sm:flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full">
+                        <FileSpreadsheet className="h-6 w-6 text-primary" />
+                    </div>
                 </div>
             </CardHeader>
-            <CardContent className="space-y-6">
-
-                <div className="min-h-[400px] font-mono text-sm p-4 bg-muted rounded-lg relative">
-                    <textarea
-                        className={`w-full h-full absolute inset-0 p-4 bg-transparent resize-none focus:outline-none ${error ? 'border-red-500 border-2' : ''
-                            }`}
-                        value={jsonInput}
-                        onChange={(e) => {
-                            setJsonInput(e.target.value)
-                            processJson(e.target.value)
-                        }}
-                        placeholder="Paste your JSON here..."
-                    />
+            <CardContent className="p-6 space-y-6">
+                {/* JSON Input */}
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                        <label className="text-sm font-semibold text-foreground">
+                            Your JSON content
+                        </label>
+                        <span className="text-xs text-muted-foreground">Input</span>
+                    </div>
+                    <div className="relative">
+                        <textarea
+                            className={`w-full font-mono text-sm p-4 bg-muted/30 rounded-lg resize-none focus:outline-none border-2 transition-colors min-h-[300px] ${error ? 'border-destructive' : 'border-border focus:border-primary/50'
+                                }`}
+                            value={jsonInput}
+                            onChange={(e) => {
+                                setJsonInput(e.target.value)
+                                processJson(e.target.value)
+                            }}
+                            placeholder='{"users": [{"name": "John", "age": 30}, {"name": "Jane", "age": 25}]}'
+                        />
+                    </div>
                 </div>
 
+                {/* Error Message */}
                 {error && (
-                    <div className="p-4 text-red-500 bg-red-50 rounded-lg border border-red-200">
-                        {error}
+                    <div className="p-4 bg-destructive/10 border-2 border-destructive/20 rounded-lg">
+                        <p className="text-sm text-destructive font-medium">⚠️ {error}</p>
                     </div>
                 )}
 
+                {/* Preview and Download */}
                 {previewData.length > 0 && (
-                    <>
-                        <div className="flex justify-center">
-                            <Button variant="outline" onClick={downloadCsv}>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-sm font-semibold text-foreground">CSV Preview</h3>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    {previewData.length} row{previewData.length !== 1 ? 's' : ''} • {headers.length} column{headers.length !== 1 ? 's' : ''}
+                                </p>
+                            </div>
+                            <Button onClick={downloadCsv} className="gap-2">
+                                <Download className="h-4 w-4" />
                                 Download CSV
                             </Button>
                         </div>
 
-                        <div className="rounded-lg border">
+                        <div className="rounded-lg border-2 overflow-auto max-h-[400px] bg-muted/30">
                             <Table>
                                 <TableHeader>
-                                    <TableRow>
+                                    <TableRow className="bg-muted/50">
                                         {headers.map((header) => (
-                                            <TableHead key={header}>{header}</TableHead>
+                                            <TableHead key={header} className="font-semibold">{header}</TableHead>
                                         ))}
                                     </TableRow>
                                 </TableHeader>
@@ -122,7 +139,7 @@ export function JsonToCsv() {
                                     {previewData.map((row, i) => (
                                         <TableRow key={i}>
                                             {headers.map((header) => (
-                                                <TableCell key={header}>
+                                                <TableCell key={header} className="font-mono text-sm">
                                                     {Array.isArray(row[header]) ? row[header].join("; ") : String(row[header])}
                                                 </TableCell>
                                             ))}
@@ -131,7 +148,7 @@ export function JsonToCsv() {
                                 </TableBody>
                             </Table>
                         </div>
-                    </>
+                    </div>
                 )}
             </CardContent>
         </Card>
