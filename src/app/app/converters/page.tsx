@@ -34,36 +34,36 @@ export default function ConvertersPage() {
     const [selectedConverter, setSelectedConverter] = React.useState<ConverterOption>("json-xml")
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-6 lg:p-8">
-            <div className="max-w-7xl mx-auto space-y-6">
+        <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-3 md:p-4 lg:p-6">
+            <div className="max-w-6xl mx-auto space-y-4">
                 {/* Header Section */}
-                <div className="text-center space-y-4">
-                    <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-2xl shadow-sm mb-2">
-                        <ArrowLeftRight className="h-8 w-8 text-primary" />
+                <div className="text-center space-y-2">
+                    <div className="inline-flex items-center justify-center p-2 bg-primary/10 rounded-xl shadow-sm">
+                        <ArrowLeftRight className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                        <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                             Format Converters
                         </h1>
-                        <p className="text-muted-foreground mt-3 text-lg max-w-2xl mx-auto">
+                        <p className="text-muted-foreground mt-1 text-sm max-w-xl mx-auto">
                             Seamlessly convert between JSON, XML, YAML, TOML, and CSV formats
                         </p>
                     </div>
                 </div>
 
                 {/* Converter Selector Card */}
-                <Card className="border-2 shadow-lg bg-gradient-to-br from-card to-card/50 backdrop-blur">
-                    <div className="p-6">
-                        <div className="flex flex-col md:flex-row items-center gap-4">
+                <Card className="border shadow-md bg-gradient-to-br from-card to-card/50 backdrop-blur">
+                    <div className="p-4">
+                        <div className="flex flex-col md:flex-row items-center gap-3">
                             <div className="flex-1 w-full md:w-auto">
-                                <label className="text-sm font-semibold text-muted-foreground mb-2 block">
+                                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                                     Select Conversion Type
                                 </label>
                                 <Select
                                     value={selectedConverter}
                                     onValueChange={(value) => setSelectedConverter(value as ConverterOption)}
                                 >
-                                    <SelectTrigger className="h-12 text-base border-2 hover:border-primary/50 transition-colors">
+                                    <SelectTrigger className="h-9 text-sm border hover:border-primary/50 transition-colors">
                                         <SelectValue placeholder="Select converter" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -71,7 +71,7 @@ export default function ConvertersPage() {
                                             <SelectItem
                                                 key={option.value}
                                                 value={option.value}
-                                                className="text-base py-3"
+                                                className="text-sm"
                                             >
                                                 {option.label}
                                             </SelectItem>
@@ -79,8 +79,8 @@ export default function ConvertersPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="hidden md:flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full">
-                                <ArrowLeftRight className="h-5 w-5 text-primary" />
+                            <div className="hidden md:flex items-center justify-center w-9 h-9 bg-primary/10 rounded-full">
+                                <ArrowLeftRight className="h-4 w-4 text-primary" />
                             </div>
                         </div>
                     </div>

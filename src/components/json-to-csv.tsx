@@ -66,32 +66,32 @@ export function JsonToCsv() {
     }
 
     return (
-        <Card className="border-2 shadow-xl w-full bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden">
-            <CardHeader className="pb-6 bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+        <Card className="border shadow-lg w-full bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden">
+            <CardHeader className="pb-3 bg-gradient-to-r from-primary/5 to-primary/10 border-b">
                 <div className="flex items-center justify-between">
                     <div className="flex-1">
-                        <CardTitle className="text-2xl font-bold">Convert JSON to CSV</CardTitle>
-                        <CardDescription className="mt-1.5 text-base">
+                        <CardTitle className="text-lg font-bold">Convert JSON to CSV</CardTitle>
+                        <CardDescription className="mt-0.5 text-sm">
                             Convert JSON data to CSV format with a live preview.
                         </CardDescription>
                     </div>
-                    <div className="hidden sm:flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full">
-                        <FileSpreadsheet className="h-6 w-6 text-primary" />
+                    <div className="hidden sm:flex items-center justify-center w-9 h-9 bg-primary/10 rounded-full">
+                        <FileSpreadsheet className="h-4 w-4 text-primary" />
                     </div>
                 </div>
             </CardHeader>
-            <CardContent className="p-6 space-y-6">
+            <CardContent className="p-4 space-y-4">
                 {/* JSON Input */}
-                <div className="space-y-3">
+                <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                        <label className="text-sm font-semibold text-foreground">
+                        <label className="text-xs font-semibold text-foreground">
                             Your JSON content
                         </label>
                         <span className="text-xs text-muted-foreground">Input</span>
                     </div>
                     <div className="relative">
                         <textarea
-                            className={`w-full font-mono text-sm p-4 bg-muted/30 rounded-lg resize-none focus:outline-none border-2 transition-colors min-h-[300px] ${error ? 'border-destructive' : 'border-border focus:border-primary/50'
+                            className={`w-full font-mono text-xs p-3 bg-muted/30 rounded-lg resize-none focus:outline-none border transition-colors min-h-[250px] ${error ? 'border-destructive' : 'border-border focus:border-primary/50'
                                 }`}
                             value={jsonInput}
                             onChange={(e) => {
@@ -105,33 +105,33 @@ export function JsonToCsv() {
 
                 {/* Error Message */}
                 {error && (
-                    <div className="p-4 bg-destructive/10 border-2 border-destructive/20 rounded-lg">
-                        <p className="text-sm text-destructive font-medium">⚠️ {error}</p>
+                    <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                        <p className="text-xs text-destructive font-medium">⚠️ {error}</p>
                     </div>
                 )}
 
                 {/* Preview and Download */}
                 {previewData.length > 0 && (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-sm font-semibold text-foreground">CSV Preview</h3>
-                                <p className="text-xs text-muted-foreground mt-1">
+                                <h3 className="text-xs font-semibold text-foreground">CSV Preview</h3>
+                                <p className="text-xs text-muted-foreground mt-0.5">
                                     {previewData.length} row{previewData.length !== 1 ? 's' : ''} • {headers.length} column{headers.length !== 1 ? 's' : ''}
                                 </p>
                             </div>
-                            <Button onClick={downloadCsv} className="gap-2">
-                                <Download className="h-4 w-4" />
+                            <Button onClick={downloadCsv} size="sm" className="gap-1.5 h-8 text-xs">
+                                <Download className="h-3.5 w-3.5" />
                                 Download CSV
                             </Button>
                         </div>
 
-                        <div className="rounded-lg border-2 overflow-auto max-h-[400px] bg-muted/30">
+                        <div className="rounded-lg border overflow-auto max-h-[350px] bg-muted/30">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/50">
                                         {headers.map((header) => (
-                                            <TableHead key={header} className="font-semibold">{header}</TableHead>
+                                            <TableHead key={header} className="font-semibold text-xs h-8">{header}</TableHead>
                                         ))}
                                     </TableRow>
                                 </TableHeader>
@@ -139,7 +139,7 @@ export function JsonToCsv() {
                                     {previewData.map((row, i) => (
                                         <TableRow key={i}>
                                             {headers.map((header) => (
-                                                <TableCell key={header} className="font-mono text-sm">
+                                                <TableCell key={header} className="font-mono text-xs py-2">
                                                     {Array.isArray(row[header]) ? row[header].join("; ") : String(row[header])}
                                                 </TableCell>
                                             ))}

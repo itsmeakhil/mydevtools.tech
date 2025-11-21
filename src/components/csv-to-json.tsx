@@ -61,33 +61,33 @@ export function CsvToJson() {
     }
 
     return (
-        <Card className="border-2 shadow-xl w-full bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden">
-            <CardHeader className="pb-6 bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+        <Card className="border shadow-lg w-full bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden">
+            <CardHeader className="pb-3 bg-gradient-to-r from-primary/5 to-primary/10 border-b">
                 <div className="flex items-center justify-between">
                     <div className="flex-1">
-                        <CardTitle className="text-2xl font-bold">Convert CSV to JSON</CardTitle>
-                        <CardDescription className="mt-1.5 text-base">
+                        <CardTitle className="text-lg font-bold">Convert CSV to JSON</CardTitle>
+                        <CardDescription className="mt-0.5 text-sm">
                             Convert CSV data to JSON format.
                         </CardDescription>
                     </div>
-                    <div className="hidden sm:flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full">
-                        <ArrowRight className="h-6 w-6 text-primary" />
+                    <div className="hidden sm:flex items-center justify-center w-9 h-9 bg-primary/10 rounded-full">
+                        <ArrowRight className="h-4 w-4 text-primary" />
                     </div>
                 </div>
             </CardHeader>
-            <CardContent className="p-6">
-                <div className="grid gap-6 lg:grid-cols-2">
+            <CardContent className="p-4">
+                <div className="grid gap-4 lg:grid-cols-2">
                     {/* Input Section */}
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                            <label className="text-sm font-semibold text-foreground">
+                            <label className="text-xs font-semibold text-foreground">
                                 Your CSV content
                             </label>
                             <span className="text-xs text-muted-foreground">Input</span>
                         </div>
                         <Textarea
                             placeholder="name,age,city&#10;John,30,New York&#10;Jane,25,London"
-                            className="font-mono text-sm min-h-[500px] resize-none border-2 focus:border-primary/50 bg-muted/30 transition-colors"
+                            className="font-mono text-xs min-h-[400px] resize-none border focus:border-primary/50 bg-muted/30 transition-colors"
                             value={csvInput}
                             onChange={(e) => {
                                 setCsvInput(e.target.value)
@@ -97,9 +97,9 @@ export function CsvToJson() {
                     </div>
 
                     {/* Output Section */}
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                            <label className="text-sm font-semibold text-foreground">
+                            <label className="text-xs font-semibold text-foreground">
                                 Converted JSON
                             </label>
                             <div className="flex items-center gap-2">
@@ -109,9 +109,9 @@ export function CsvToJson() {
                                         variant="outline"
                                         size="sm"
                                         onClick={handleCopy}
-                                        className="h-8 gap-1.5"
+                                        className="h-7 gap-1 text-xs"
                                     >
-                                        <Copy className="h-3.5 w-3.5" />
+                                        <Copy className="h-3 w-3" />
                                         Copy
                                     </Button>
                                 )}
@@ -121,12 +121,12 @@ export function CsvToJson() {
                             <Textarea
                                 readOnly
                                 placeholder="Enter your CSV to see the JSON conversion"
-                                className={`font-mono text-sm min-h-[500px] resize-none border-2 bg-muted/30 ${error ? 'border-destructive text-destructive' : 'border-border'
+                                className={`font-mono text-xs min-h-[400px] resize-none border bg-muted/30 ${error ? 'border-destructive text-destructive' : 'border-border'
                                     }`}
                                 value={error || jsonOutput}
                             />
                             {error && (
-                                <div className="absolute bottom-4 left-4 right-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                                <div className="absolute bottom-3 left-3 right-3 p-2 bg-destructive/10 border border-destructive/20 rounded-md">
                                     <p className="text-xs text-destructive font-medium">⚠️ Conversion Error</p>
                                 </div>
                             )}
