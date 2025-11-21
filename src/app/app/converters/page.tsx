@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select"
 import { FormatConverter } from "@/components/format-converter"
 import { JsonToCsv } from "@/components/json-to-csv"
+import { CsvToJson } from "@/components/csv-to-json"
 import { conversionConfigs, ConversionType } from "../types/converter"
 
 const CONVERTER_OPTIONS = [
@@ -22,6 +23,7 @@ const CONVERTER_OPTIONS = [
     { value: "yaml-toml", label: "YAML to TOML" },
     { value: "toml-yaml", label: "TOML to YAML" },
     { value: "json-csv", label: "JSON to CSV" },
+    { value: "csv-json", label: "CSV to JSON" },
 ] as const
 
 type ConverterOption = typeof CONVERTER_OPTIONS[number]["value"]
@@ -59,6 +61,8 @@ export default function ConvertersPage() {
 
                 {selectedConverter === "json-csv" ? (
                     <JsonToCsv />
+                ) : selectedConverter === "csv-json" ? (
+                    <CsvToJson />
                 ) : (
                     <FormatConverter
                         type={selectedConverter as ConversionType}
