@@ -93,7 +93,7 @@ const DashboardPage: React.FC = () => {
       const item = findItemById(usage.toolId);
       return item ? { id: usage.toolId, ...item } : null;
     }).filter((item): item is FavoriteItem => item !== null);
-    
+
     setRecentlyUsedItems(items);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount, getRecentlyUsedTools reads from localStorage which doesn't trigger re-renders
@@ -106,7 +106,7 @@ const DashboardPage: React.FC = () => {
     if (searchQuery.trim()) {
       const searchResults = searchTools(searchQuery, allToolsMetadata);
       const searchUrls = new Set(searchResults.map(t => t.url));
-      
+
       filtered = sidebarData.navGroups.map(group => ({
         ...group,
         items: group.items.map(item => {
@@ -118,7 +118,7 @@ const DashboardPage: React.FC = () => {
             return null;
           } else {
             // Nested items
-            const filteredSubItems = item.items.filter(subItem => 
+            const filteredSubItems = item.items.filter(subItem =>
               subItem.url && searchUrls.has(subItem.url.toString())
             );
             if (filteredSubItems.length > 0) {
@@ -134,7 +134,7 @@ const DashboardPage: React.FC = () => {
     if (selectedCategory) {
       const categoryResults = filterToolsByCategory(selectedCategory, allToolsMetadata);
       const categoryUrls = new Set(categoryResults.map(t => t.url));
-      
+
       filtered = filtered.map(group => ({
         ...group,
         items: group.items.map(item => {
@@ -144,7 +144,7 @@ const DashboardPage: React.FC = () => {
             }
             return null;
           } else {
-            const filteredSubItems = item.items.filter(subItem => 
+            const filteredSubItems = item.items.filter(subItem =>
               subItem.url && categoryUrls.has(subItem.url.toString())
             );
             if (filteredSubItems.length > 0) {
@@ -220,86 +220,6 @@ const DashboardPage: React.FC = () => {
   return (
     <div className="min-h-screen p-6 bg-background dark:bg-background text-foreground dark:text-foreground transition-colors duration-200">
       <div className="max-w-7xl mx-auto">
-        {/* Search and Filter Section */}
-        <section className="mb-8 space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              type="text"
-              placeholder="Search tools by name, description, or keywords..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10"
-            />
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8"
-                onClick={() => setSearchQuery('')}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-
-          {/* Category Filter */}
-          <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-sm text-muted-foreground">Filter by category:</span>
-            <Button
-              variant={selectedCategory === '' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedCategory('')}
-            >
-              All
-            </Button>
-            {categories.slice(0, 8).map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCategory(category)}
-              >
-                {category}
-              </Button>
-            ))}
-            {categories.length > 8 && (
-              <Badge variant="secondary" className="ml-2">
-                +{categories.length - 8} more
-              </Badge>
-            )}
-          </div>
-
-          {/* Active filters display */}
-          {(searchQuery || selectedCategory) && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-muted-foreground">Active filters:</span>
-              {searchQuery && (
-                <Badge variant="secondary" className="gap-1">
-                  Search: &quot;{searchQuery}&quot;
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="ml-1 hover:text-foreground"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              )}
-              {selectedCategory && (
-                <Badge variant="secondary" className="gap-1">
-                  Category: {selectedCategory}
-                  <button
-                    onClick={() => setSelectedCategory('')}
-                    className="ml-1 hover:text-foreground"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              )}
-            </div>
-          )}
-        </section>
-
         {/* Recently Used Tools - Only for authenticated users */}
         {user && recentlyUsedItems.length > 0 && !searchQuery && !selectedCategory && (
           <section className="space-y-4 mb-12">
