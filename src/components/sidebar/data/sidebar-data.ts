@@ -92,17 +92,12 @@ export const sidebarData: SidebarData = {
           icon: IconTool,
           items: [
             {
-              title: 'UUID Generator',
+              title: 'UUID / ULID Generator',
               url: '/app/uuid-generator',
-              description: 'Generate and validate unique identifiers for your projects.',
+              description: 'Generate and validate unique identifiers (UUID/ULID).',
               icon: IconElevator
             },
-            {
-              title: 'ULID Generator',
-              url: '/app/ulid-generator',
-              description: 'Generate and validate time-based unique identifiers.',
-              icon: IconElevatorFilled
-            },
+
             {
               title: 'Encrypt / Decrypt Text',
               url: '/app/encrypt-decrypt-text',
@@ -125,14 +120,14 @@ export const sidebarData: SidebarData = {
               title: 'Bcrypt',
               url: '/app/bcrypt',
               description: 'Encrypt passwords securely with Bcrypt.',
-              icon:IconShieldCode
+              icon: IconShieldCode
 
             },
             {
               title: 'Password Generator',
               url: '/app/password-generator',
               description: 'Generate strong, secure passwords with custom options.',
-              icon:IconLock
+              icon: IconLock
             },
           ],
         },
@@ -144,56 +139,56 @@ export const sidebarData: SidebarData = {
               title: 'JSON to XML',
               url: '/app/json-xml',
               description: 'Convert JSON data to XML format.',
-              icon:IconFileTypeXml
+              icon: IconFileTypeXml
             },
             {
               title: 'JSON to TOML',
               url: '/app/json-toml',
               description: 'Convert JSON data to TOML format.',
-              icon:IconToml
+              icon: IconToml
             },
             {
               title: 'JSON to YAML',
               url: '/app/json-yaml',
               description: 'Convert JSON data to YAML format.',
-              icon:IconSquareRoundedLetterY
+              icon: IconSquareRoundedLetterY
             },
             {
               title: 'JSON to CSV',
               url: '/app/json-csv',
               description: 'Convert JSON data to CSV format.',
-              icon:IconFileTypeCsv
+              icon: IconFileTypeCsv
             },
             {
               title: 'TOML to JSON',
               url: '/app/toml-json',
               description: 'Convert TOML data to JSON format.',
-              icon:IconJson
+              icon: IconJson
             },
             {
               title: 'TOML to YAML',
               url: '/app/toml-yaml',
               description: 'Convert TOML data to YAML format.',
-              icon:IconSquareRoundedLetterY
+              icon: IconSquareRoundedLetterY
 
             },
             {
               title: 'XML to JSON',
               url: '/app/xml-json',
               description: 'Convert XML data to JSON format.',
-              icon:IconJson
+              icon: IconJson
             },
             {
               title: 'YAML to JSON',
               url: '/app/yaml-json',
               description: 'Convert YAML data to JSON format.',
-              icon:IconJson
+              icon: IconJson
             },
             {
               title: 'YAML to TOML',
               url: '/app/yaml-toml',
               description: 'Convert YAML data to TOML format.',
-              icon:IconToml
+              icon: IconToml
             },
           ],
         },
@@ -205,73 +200,73 @@ export const sidebarData: SidebarData = {
               title: 'Encode/Decode URL',
               url: '/app/url-encoder',
               description: 'Encode or decode URLs for secure data handling.',
-              icon:IconFileCode
+              icon: IconFileCode
             },
             {
               title: 'Escape HTML Entities',
               url: '/app/html-entity-converter',
               description: 'Convert special characters to HTML entities.',
-              icon:IconFileTypeHtml
+              icon: IconFileTypeHtml
             },
             {
               title: 'URL Parser',
               url: '/app/url-parser',
               description: 'Extract details from URLs easily.',
-              icon:IconForms
+              icon: IconForms
             },
             {
               title: 'Device Information',
               url: '/app/device-info',
               description: 'Retrieve detailed information about your device.',
-              icon:IconDevices
+              icon: IconDevices
             },
             {
               title: 'OTP Generator',
               url: '/app/otp-generator',
               description: 'Generate one-time passwords for secure authentication.',
-              icon:IconTimeDuration30
+              icon: IconTimeDuration30
             },
             {
               title: 'JWT Parser',
               url: '/app/jwt-parser',
               description: 'Parse and decode JSON Web Tokens.',
-              icon:IconKey
+              icon: IconKey
             },
             {
               title: 'HTTP Status Codes',
               url: '/app/http-status-codes',
               description: 'Reference for HTTP status codes and their meanings.',
-              icon:IconWorldWww
+              icon: IconWorldWww
             },
             {
               title: 'JSON Diff',
               url: '/app/json-diff',
               description: 'Compare and find differences between JSON objects.',
-              icon:IconBraces
+              icon: IconBraces
             },
             {
               title: 'Base64 Encoder/Decoder',
               url: '/app/base64-encoder',
               description: 'Encode and decode text to/from Base64 format.',
-              icon:IconCode
+              icon: IconCode
             },
             {
               title: 'JSON Formatter',
               url: '/app/json-formatter',
               description: 'Beautify, validate, and minify JSON data.',
-              icon:IconJson
+              icon: IconJson
             },
             {
               title: 'Timestamp Converter',
               url: '/app/timestamp-converter',
               description: 'Convert between Unix timestamps and readable dates.',
-              icon:IconClock
+              icon: IconClock
             },
             {
               title: 'Color Converter',
               url: '/app/color-converter',
               description: 'Convert colors between HEX, RGB, HSL, and CMYK.',
-              icon:IconPalette
+              icon: IconPalette
             },
           ],
         },
@@ -283,13 +278,13 @@ export const sidebarData: SidebarData = {
               title: 'QR Code Generator',
               url: '/app/qr-code-generator',
               description: 'Generate QR codes for URLs, text, or data.',
-              icon:IconQrcode
+              icon: IconQrcode
             },
             {
               title: 'Wifi QR Code Generator',
               url: '/app/wifi-qr-generator',
               description: 'Create QR codes for sharing Wi-Fi credentials.',
-              icon:IconQrcode
+              icon: IconQrcode
             },
           ],
         },
@@ -301,25 +296,25 @@ export const sidebarData: SidebarData = {
               title: 'Git Commands',
               url: '/app/git-commands',
               description: 'View essential Git commands for version control.',
-              icon:IconGitFork
+              icon: IconGitFork
             },
             {
               title: 'Crontab Generator',
               url: '/app/crontab-generator',
               description: 'Generate cron job schedules easily.',
-              icon:IconPasswordMobilePhone
+              icon: IconPasswordMobilePhone
             },
             {
               title: 'Chmod Calculator',
               url: '/app/chmod-calculator',
               description: 'Calculate and understand chmod permissions.',
-              icon:IconCodeAsterisk
+              icon: IconCodeAsterisk
             },
             {
               title: 'Regex Cheatsheet',
               url: '/app/regex-cheatsheet',
               description: 'Quick reference guide for regular expressions.',
-              icon:IconRegex
+              icon: IconRegex
             },
           ],
         },
@@ -331,20 +326,20 @@ export const sidebarData: SidebarData = {
               title: 'IPv4 Subnet Calculator',
               url: '/app/ipv4-subnet-calculator',
               description: 'Calculate subnet details for IPv4 addresses.',
-              icon:IconRouter
+              icon: IconRouter
             },
             {
               title: 'IPv4 Address Converter',
               url: '/app/ipv4-address-converter',
               description: 'Convert IPv4 addresses between formats.',
-              icon:IconRouter
+              icon: IconRouter
 
             },
             {
               title: 'IPv4 Range Expander',
               url: '/app/ipv4-range-expander',
               description: 'Expand IPv4 address ranges for network configurations.',
-              icon:IconRouter
+              icon: IconRouter
             },
           ],
         },
@@ -356,50 +351,50 @@ export const sidebarData: SidebarData = {
               title: 'Lorem Ipsum Generator',
               url: '/app/lorem-ipsum-generator',
               description: 'Generate placeholder text for design mockups.',
-              icon:IconBlockquote
+              icon: IconBlockquote
             },
             {
               title: 'Text Statistics',
               url: '/app/text-statistics',
               description: 'Analyze text word counts, length, and more.',
-              icon:IconAlignBoxBottomCenter
+              icon: IconAlignBoxBottomCenter
             },
             {
               title: 'Emoji Picker',
               url: '/app/emoji-picker',
               description: 'Pick and copy emojis for messages or designs.',
-              icon:IconMoodSmile
+              icon: IconMoodSmile
             },
             {
               title: 'String Obfuscator',
               url: '/app/string-obfuscator',
               description: 'Obfuscate strings to enhance security.',
-              icon:IconStrikethrough
+              icon: IconStrikethrough
             },
             {
               title: 'Numeronym Generator',
               url: '/app/numeronym-generator',
               description: 'Generate abbreviations with numbers.',
-              icon:IconNumber123
+              icon: IconNumber123
 
             },
             {
               title: 'ASCII Art Text Generator',
               url: '/app/ASCII-art-text-generator',
               description: 'Simple text-to-ASCII converter.',
-              icon:IconFileDescription
+              icon: IconFileDescription
             },
             {
               title: 'Text diff',
               url: '/app/text-diff',
               description: 'Compare two texts and see the differences between them.',
-              icon:IconLayersDifference
+              icon: IconLayersDifference
             },
             {
               title: 'String Case Converter',
               url: '/app/string-case-converter',
               description: 'Convert text between camelCase, kebab-case, snake_case, and more.',
-              icon:IconAlignJustified
+              icon: IconAlignJustified
             },
           ],
         },
