@@ -182,9 +182,9 @@ export const sidebarData: SidebarData = {
               icon: IconJson
             },
             {
-              title: 'JSON Formatter',
+              title: 'JSON Editor',
               url: '/app/json-formatter',
-              description: 'Beautify, validate, and minify JSON data.',
+              description: 'Advanced JSON editor with Text, Tree, and Table modes. Format, validate, compare, and transform JSON.',
               icon: IconJson
             },
             {

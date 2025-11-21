@@ -1,290 +1,330 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Copy, FileCode, Check, Sparkles, AlertCircle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tab';
+import {
+  Code,
+  TreePine,
+  Table2,
+  Sparkles,
+  Minimize2,
+  CheckCircle2,
+  Copy,
+  Download,
+  Upload,
+  ArrowLeftRight,
+  Wrench
+} from 'lucide-react';
+import { EditorMode, EditorState } from '@/components/json-editor/types';
+import TextEditor from '@/components/json-editor/TextEditor';
+import RepairDialog from '@/components/json-editor/RepairDialog';
+import TreeView from '@/components/json-editor/TreeView';
+import TableView from '@/components/json-editor/TableView';
 
-export default function JsonFormatterPage() {
+export default function JsonEditorPage() {
+  const [leftPanel, setLeftPanel] = useState<EditorState>({
+    content: '',
+    mode: 'text',
+    isValid: false,
+    error: null,
+    parsed: null,
+  });
+
+  const [rightPanel, setRightPanel] = useState<EditorState>({
+    content: '',
+    mode: 'text',
+    isValid: false,
+    error: null,
+    parsed: null,
+  });
+
+  const handleModeChange = (panel: 'left' | 'right', mode: EditorMode) => {
+    if (panel === 'left') {
+      setLeftPanel({ ...leftPanel, mode });
+    } else {
+      setRightPanel({ ...rightPanel, mode });
+    }
+  };
+
+  const handleContentChange = (panel: 'left' | 'right', content: string) => {
+    let parsed: any = null;
+    let isValid = false;
+    let error: string | null = null;
+
+    try {
+      if (content.trim()) {
+        parsed = JSON.parse(content);
+        isValid = true;
+      }
+    } catch (err) {
+      error = err instanceof Error ? err.message : 'Invalid JSON';
+      isValid = false;
+    }
+
+    if (panel === 'left') {
+      setLeftPanel({ ...leftPanel, content, parsed, isValid, error });
+    } else {
+      setRightPanel({ ...rightPanel, content, parsed, isValid, error });
+    }
+  };
+
+  const formatJSON = (panel: 'left' | 'right') => {
+    const state = panel === 'left' ? leftPanel : rightPanel;
+    if (!state.parsed) return;
+
+    const formatted = JSON.stringify(state.parsed, null, 2);
+    handleContentChange(panel, formatted);
+  };
+
+  const minifyJSON = (panel: 'left' | 'right') => {
+    const state = panel === 'left' ? leftPanel : rightPanel;
+    if (!state.parsed) return;
+
+    const minified = JSON.stringify(state.parsed);
+    handleContentChange(panel, minified);
+  };
+
+  const copyToOtherPanel = () => {
+    setRightPanel({ ...rightPanel, content: leftPanel.content });
+    handleContentChange('right', leftPanel.content);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        {/* Main Formatter */}
-        <JsonFormatter />
+    <div className="h-screen bg-gradient-to-br from-background via-background to-muted/20 p-3 md:p-4 lg:p-6 flex flex-col overflow-hidden">
+      <div className="max-w-[1800px] mx-auto w-full flex flex-col gap-3 flex-1 overflow-hidden">
+        {/* Header */}
+        <Card className="border shadow-lg">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-primary/10 rounded-lg">
+                  <Code className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold">JSON Editor</h1>
+                  <p className="text-xs text-muted-foreground">
+                    Edit, format, validate, and compare JSON with multiple view modes
+                  </p>
+                </div>
+              </div>
+
+              {/* Global Actions */}
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs">
+                  <Upload className="h-3 w-3" />
+                  Import
+                </Button>
+                <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs">
+                  <Download className="h-3 w-3" />
+                  Export
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Main Editor Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 flex-1 overflow-hidden relative">
+          {/* Left Panel */}
+          <EditorPanel
+            label="Left Panel"
+            state={leftPanel}
+            onModeChange={(mode) => handleModeChange('left', mode)}
+            onContentChange={(content) => handleContentChange('left', content)}
+            onFormat={() => formatJSON('left')}
+            onMinify={() => minifyJSON('left')}
+            onRepair={(content) => handleContentChange('left', content)}
+          />
+
+          {/* Center Actions */}
+          <div className="hidden lg:flex flex-col items-center justify-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+            <Button
+              size="icon"
+              variant="outline"
+              className="h-10 w-10 rounded-full bg-background shadow-lg"
+              title="Copy left to right"
+              onClick={copyToOtherPanel}
+            >
+              <ArrowLeftRight className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Right Panel */}
+          <EditorPanel
+            label="Right Panel"
+            state={rightPanel}
+            onModeChange={(mode) => handleModeChange('right', mode)}
+            onContentChange={(content) => handleContentChange('right', content)}
+            onFormat={() => formatJSON('right')}
+            onMinify={() => minifyJSON('right')}
+            onRepair={(content) => handleContentChange('right', content)}
+          />
+        </div>
       </div>
     </div>
   );
 }
 
-function JsonFormatter() {
-  const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
-  const [indent, setIndent] = useState(2);
+interface EditorPanelProps {
+  label: string;
+  state: EditorState;
+  onModeChange: (mode: EditorMode) => void;
+  onContentChange: (content: string) => void;
+  onFormat: () => void;
+  onMinify: () => void;
+  onRepair: (repairedContent: string) => void;
+}
+
+function EditorPanel({
+  label,
+  state,
+  onModeChange,
+  onContentChange,
+  onFormat,
+  onMinify,
+  onRepair,
+}: EditorPanelProps) {
   const [copied, setCopied] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isValid, setIsValid] = useState<boolean | null>(null);
-
-  const formatJSON = (indentSize: number) => {
-    setError(null);
-    
-    if (!input.trim()) {
-      setOutput('');
-      setIsValid(null);
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(input);
-      const formatted = JSON.stringify(parsed, null, indentSize);
-      setOutput(formatted);
-      setIsValid(true);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Invalid JSON';
-      setError(`JSON Parse Error: ${errorMessage}`);
-      setOutput('');
-      setIsValid(false);
-    }
-  };
-
-  const minifyJSON = () => {
-    setError(null);
-    
-    if (!input.trim()) {
-      setOutput('');
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(input);
-      const minified = JSON.stringify(parsed);
-      setOutput(minified);
-      setIsValid(true);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Invalid JSON';
-      setError(`JSON Parse Error: ${errorMessage}`);
-      setOutput('');
-      setIsValid(false);
-    }
-  };
-
-  const validateJSON = () => {
-    setError(null);
-    
-    if (!input.trim()) {
-      setIsValid(null);
-      return;
-    }
-
-    try {
-      JSON.parse(input);
-      setIsValid(true);
-      setOutput('✓ Valid JSON');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Invalid JSON';
-      setError(`Validation Error: ${errorMessage}`);
-      setIsValid(false);
-      setOutput('');
-    }
-  };
+  const [repairDialogOpen, setRepairDialogOpen] = useState(false);
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(output);
+      await navigator.clipboard.writeText(state.content);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      setError('Failed to copy to clipboard');
+      console.error('Failed to copy');
     }
   };
-
-  const handleClear = () => {
-    setInput('');
-    setOutput('');
-    setError(null);
-    setIsValid(null);
-  };
-
-  const countStats = (jsonString: string) => {
-    try {
-      const parsed = JSON.parse(jsonString);
-      return {
-        keys: Object.keys(parsed).length,
-        size: new Blob([jsonString]).size,
-        lines: jsonString.split('\n').length,
-      };
-    } catch {
-      return null;
-    }
-  };
-
-  const stats = countStats(input);
 
   return (
-    <Card className="border-2 shadow-lg">
-      <CardHeader>
-        <div className="text-center">
-          <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
-            <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
-              <FileCode className="h-5 w-5 text-primary" />
-            </div>
-            JSON Formatter & Validator
-          </CardTitle>
-          <CardDescription className="mt-2">
-            Beautify, validate, minify, and format JSON data with syntax highlighting.
-          </CardDescription>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Action Buttons */}
-        <div className="flex gap-2 flex-wrap">
-          <Button onClick={() => formatJSON(indent)} size="lg" className="flex-1">
-            <Sparkles className="w-5 h-5 mr-2" />
-            Format
-          </Button>
-          <Button onClick={minifyJSON} variant="outline" size="lg" className="flex-1">
-            Minify
-          </Button>
-          <Button onClick={validateJSON} variant="outline" size="lg" className="flex-1">
-            <AlertCircle className="w-5 h-5 mr-2" />
-            Validate
-          </Button>
-          <Button onClick={handleClear} variant="outline" size="lg">
-            Clear
-          </Button>
-        </div>
+    <Card className="border shadow-lg flex flex-col h-full overflow-hidden">
+      <CardContent className="p-3 flex flex-col flex-1 overflow-hidden">
+        {/* Toolbar */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Mode Tabs */}
+          <Tabs value={state.mode} onValueChange={(v) => onModeChange(v as EditorMode)}>
+            <TabsList className="h-8 p-0.5">
+              <TabsTrigger value="text" className="h-7 px-2.5 text-xs gap-1">
+                <Code className="h-3 w-3" />
+                <span className="hidden sm:inline">Text</span>
+              </TabsTrigger>
+              <TabsTrigger value="tree" className="h-7 px-2.5 text-xs gap-1">
+                <TreePine className="h-3 w-3" />
+                <span className="hidden sm:inline">Tree</span>
+              </TabsTrigger>
+              <TabsTrigger value="table" className="h-7 px-2.5 text-xs gap-1">
+                <Table2 className="h-3 w-3" />
+                <span className="hidden sm:inline">Table</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-        {/* Indent Selector */}
-        <div className="flex items-center gap-4">
-          <Label>Indentation: {indent} spaces</Label>
-          <div className="flex gap-2">
-            {[2, 3, 4, 0].map((size) => (
-              <Button
-                key={size}
-                variant={indent === size ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  setIndent(size);
-                  if (input.trim()) formatJSON(size);
-                }}
-              >
-                {size === 0 ? 'None' : `${size}sp`}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* Validation Status */}
-        {isValid !== null && (
-          <Alert variant={isValid ? 'default' : 'destructive'} className="animate-in fade-in-50">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {isValid ? (
-                <span className="flex items-center gap-2">
-                  <Check className="h-4 w-4" />
-                  JSON is valid
-                </span>
+          {/* Actions */}
+          <div className="flex items-center gap-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onFormat}
+              className="h-7 px-2 text-xs gap-1"
+              disabled={!state.isValid}
+            >
+              <Sparkles className="h-3 w-3" />
+              <span className="hidden sm:inline">Format</span>
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onMinify}
+              className="h-7 px-2 text-xs gap-1"
+              disabled={!state.isValid}
+            >
+              <Minimize2 className="h-3 w-3" />
+              <span className="hidden sm:inline">Minify</span>
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleCopy}
+              className="h-7 px-2 text-xs gap-1"
+            >
+              {copied ? (
+                <>
+                  <CheckCircle2 className="h-3 w-3" />
+                  <span className="hidden sm:inline">Copied</span>
+                </>
               ) : (
-                'JSON is invalid - check error details above'
+                <>
+                  <Copy className="h-3 w-3" />
+                  <span className="hidden sm:inline">Copy</span>
+                </>
               )}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Error Alert */}
-        {error && (
-          <Alert variant="destructive" className="animate-in fade-in-50">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Stats */}
-        {stats && (
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-muted/50 rounded-lg p-3 text-center">
-              <p className="text-xs text-muted-foreground">Keys</p>
-              <p className="text-2xl font-bold">{stats.keys}</p>
-            </div>
-            <div className="bg-muted/50 rounded-lg p-3 text-center">
-              <p className="text-xs text-muted-foreground">Size</p>
-              <p className="text-2xl font-bold">{stats.size} B</p>
-            </div>
-            <div className="bg-muted/50 rounded-lg p-3 text-center">
-              <p className="text-xs text-muted-foreground">Lines</p>
-              <p className="text-2xl font-bold">{stats.lines}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Input/Output Grid */}
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Input */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium flex items-center gap-2">
-                <span>Input JSON</span>
-                <Badge variant="secondary">{input.length} chars</Badge>
-              </label>
-            </div>
-            <Textarea
-              placeholder='{"name":"John","age":30}'
-              className="font-mono min-h-[400px] resize-none"
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                setError(null);
-                setIsValid(null);
-              }}
-            />
-          </div>
-
-          {/* Output */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium flex items-center gap-2">
-                <span>Output</span>
-                <Badge variant="secondary">{output.length} chars</Badge>
-              </label>
-              {output && (
-                <Button variant="ghost" size="sm" onClick={handleCopy}>
-                  {copied ? (
-                    <>
-                      <Check className="w-4 h-4 mr-2" />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copy
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
-            <Textarea
-              readOnly
-              placeholder="Formatted JSON will appear here..."
-              className="font-mono min-h-[400px] resize-none bg-muted/50"
-              value={output}
-            />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setRepairDialogOpen(true)}
+              className="h-7 px-2 text-xs gap-1"
+              disabled={!state.error}
+              title="Auto-repair JSON errors"
+            >
+              <Wrench className="h-3 w-3" />
+              <span className="hidden sm:inline">Repair</span>
+            </Button>
           </div>
         </div>
 
-        {/* Info Section */}
-        <div className="bg-muted/50 rounded-lg p-4 border border-border">
-          <h3 className="text-sm font-semibold mb-2">JSON Features</h3>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• Beautify: Format JSON with customizable indentation</li>
-            <li>• Minify: Remove all whitespace to reduce file size</li>
-            <li>• Validate: Check if JSON syntax is correct</li>
-            <li>• Syntax highlighting and error detection</li>
-          </ul>
+        {/* Status Bar */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+          <span>{label}</span>
+          {state.isValid && (
+            <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+              <CheckCircle2 className="h-3 w-3" />
+              <span>Valid</span>
+            </div>
+          )}
+          {state.error && (
+            <span className="text-destructive">{state.error}</span>
+          )}
+        </div>
+
+        {/* Editor Content */}
+        <div className="border rounded-lg overflow-hidden bg-muted/30 flex-1 flex flex-col">
+          {state.mode === 'text' && (
+            <TextEditor
+              value={state.content}
+              onChange={onContentChange}
+              error={state.error}
+            />
+          )}
+          {state.mode === 'tree' && (
+            <TreeView
+              value={state.content}
+              onChange={onContentChange}
+              error={state.error}
+            />
+          )}
+          {state.mode === 'table' && (
+            <TableView
+              value={state.content}
+              onChange={onContentChange}
+              error={state.error}
+            />
+          )}
         </div>
       </CardContent>
+
+      <RepairDialog
+        open={repairDialogOpen}
+        onOpenChange={setRepairDialogOpen}
+        content={state.content}
+        onRepaired={(repaired) => {
+          onRepair(repaired);
+          setRepairDialogOpen(false);
+        }}
+      />
     </Card>
   );
 }
-
