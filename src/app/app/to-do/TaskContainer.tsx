@@ -78,8 +78,8 @@ export const TaskContainer = () => {
   const completionRate = allTaskStats.total > 0 ? Math.round((allTaskStats.completed / allTaskStats.total) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 ml-0 mr-0 px-0 w-full">
-      <div className="space-y-3 px-3 md:px-4 lg:px-6 py-3 md:py-4">
+    <div className="h-screen bg-gradient-to-br from-background via-background to-muted/20 ml-0 mr-0 px-0 w-full flex flex-col overflow-hidden">
+      <div className="flex flex-col gap-3 px-3 md:px-4 lg:px-6 py-3 md:py-4 flex-1 overflow-hidden">
         {/* Enhanced Header */}
         <Card className="border shadow-lg bg-card/50 backdrop-blur-sm">
           <CardHeader className="pb-3">
@@ -202,16 +202,16 @@ export const TaskContainer = () => {
                       size="sm"
                       onClick={() => setFilterStatus(value)}
                       className={`h-7 px-2.5 text-xs font-medium transition-all ${filterStatus === value
-                          ? "shadow-sm bg-background"
-                          : "hover:bg-muted/50"
+                        ? "shadow-sm bg-background"
+                        : "hover:bg-muted/50"
                         }`}
                       aria-label={`Filter by ${label}`}
                     >
                       <Icon className="h-3 w-3 mr-1" />
                       {label}
                       <span className={`ml-1 px-1.5 py-0.5 rounded text-[9px] ${filterStatus === value
-                          ? "bg-primary/20 text-primary"
-                          : "bg-muted text-muted-foreground"
+                        ? "bg-primary/20 text-primary"
+                        : "bg-muted text-muted-foreground"
                         }`}>
                         {count}
                       </span>
@@ -242,8 +242,8 @@ export const TaskContainer = () => {
                     <Icon className="h-3 w-3 mr-1" />
                     {label}
                     <span className={`ml-1 px-1.5 py-0.5 rounded text-[9px] ${filterStatus === value
-                        ? "bg-primary/20 text-primary"
-                        : "bg-muted text-muted-foreground"
+                      ? "bg-primary/20 text-primary"
+                      : "bg-muted text-muted-foreground"
                       }`}>
                       {count}
                     </span>
@@ -268,23 +268,11 @@ export const TaskContainer = () => {
         <TaskForm onAddTask={addTask} inputRef={taskFormInputRef} />
 
         {/* Task View */}
-        {viewMode === "kanban" ? (
-          <Card className="border shadow-lg">
-            <CardContent className="p-3 md:p-4">
-              <KanbanBoard
-                tasks={sortedTasks}
-                isLoading={isLoading}
-                onUpdateStatus={updateTaskStatus}
-                onUpdateTask={updateTask}
-                onDeleteTask={deleteTask}
-              />
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            <Card className="border shadow-lg">
-              <CardContent className="p-3 md:p-4">
-                <TaskList
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {viewMode === "kanban" ? (
+            <Card className="border shadow-lg flex-1 overflow-hidden flex flex-col">
+              <CardContent className="p-3 md:p-4 flex-1 overflow-y-auto">
+                <KanbanBoard
                   tasks={sortedTasks}
                   isLoading={isLoading}
                   onUpdateStatus={updateTaskStatus}
@@ -293,25 +281,39 @@ export const TaskContainer = () => {
                 />
               </CardContent>
             </Card>
+          ) : (
+            <>
+              <Card className="border shadow-lg flex-1 overflow-hidden flex flex-col">
+                <CardContent className="p-3 md:p-4 flex-1 overflow-y-auto">
+                  <TaskList
+                    tasks={sortedTasks}
+                    isLoading={isLoading}
+                    onUpdateStatus={updateTaskStatus}
+                    onUpdateTask={updateTask}
+                    onDeleteTask={deleteTask}
+                  />
+                </CardContent>
+              </Card>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center">
-                <Card className="border">
-                  <CardContent className="p-2">
-                    <PaginationDemo
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onNextPage={fetchNextPage}
-                      onPreviousPage={fetchPreviousPage}
-                      onPageChange={handlePageChange}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </>
-        )}
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-3">
+                  <Card className="border">
+                    <CardContent className="p-2">
+                      <PaginationDemo
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onNextPage={fetchNextPage}
+                        onPreviousPage={fetchPreviousPage}
+                        onPageChange={handlePageChange}
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </>
+          )}
+        </div>
 
       </div>
     </div>

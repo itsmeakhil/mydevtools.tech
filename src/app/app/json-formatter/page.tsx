@@ -15,6 +15,8 @@ import {
   Download,
   Upload,
   ArrowLeftRight,
+  Search,
+  Shield,
   Wrench
 } from 'lucide-react';
 import { EditorMode, EditorState } from '@/components/json-editor/types';
@@ -23,6 +25,8 @@ import RepairDialog from '@/components/json-editor/RepairDialog';
 import TreeView from '@/components/json-editor/TreeView';
 import TableView from '@/components/json-editor/TableView';
 import CompareDialog from '@/components/json-editor/CompareDialog';
+import TransformDialog from '@/components/json-editor/TransformDialog';
+import SchemaValidator from '@/components/json-editor/SchemaValidator';
 import {
   importJSONFromFile,
   exportJSONToFile,
@@ -47,6 +51,10 @@ export default function JsonEditorPage() {
   });
 
   const [compareDialogOpen, setCompareDialogOpen] = useState(false);
+  const [transformDialogOpen, setTransformDialogOpen] = useState(false);
+  const [queryPanel, setQueryPanel] = useState<'left' | 'right'>('left');
+  const [schemaValidatorOpen, setSchemaValidatorOpen] = useState(false);
+  const [validatePanel, setValidatePanel] = useState<'left' | 'right'>('left');
 
   const handleModeChange = (panel: 'left' | 'right', mode: EditorMode) => {
     if (panel === 'left') {
@@ -163,6 +171,32 @@ export default function JsonEditorPage() {
                   <Download className="h-3 w-3" />
                   Export JSON
                 </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 gap-1.5 text-xs"
+                  onClick={() => {
+                    setQueryPanel('left');
+                    setTransformDialogOpen(true);
+                  }}
+                  disabled={!leftPanel.content && !rightPanel.content}
+                >
+                  <Search className="h-3 w-3" />
+                  Query
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 gap-1.5 text-xs"
+                  onClick={() => {
+                    setValidatePanel('left');
+                    setSchemaValidatorOpen(true);
+                  }}
+                  disabled={!leftPanel.content && !rightPanel.content}
+                >
+                  <Shield className="h-3 w-3" />
+                  Validate
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -222,6 +256,22 @@ export default function JsonEditorPage() {
         onOpenChange={setCompareDialogOpen}
         leftContent={leftPanel.content}
         rightContent={rightPanel.content}
+      />
+
+      <TransformDialog
+        open={transformDialogOpen}
+        onOpenChange={setTransformDialogOpen}
+        content={queryPanel === 'left' ? leftPanel.content : rightPanel.content}
+        onApply={(result) => {
+          handleContentChange(queryPanel, result);
+          setTransformDialogOpen(false);
+        }}
+      />
+
+      <SchemaValidator
+        open={schemaValidatorOpen}
+        onOpenChange={setSchemaValidatorOpen}
+        content={validatePanel === 'left' ? leftPanel.content : rightPanel.content}
       />
     </div>
   );
