@@ -12,8 +12,8 @@ import { Input } from '@/components/ui/input';
 
 export default function PasswordGeneratorPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-3 md:p-4 lg:p-6">
+      <div className="max-w-4xl mx-auto">
         <PasswordGenerator />
       </div>
     </div>
@@ -41,7 +41,7 @@ function PasswordGenerator() {
       numbers: '0123456789',
       symbols: '!@#$%^&*()_+-=[]{}|;:,.<>?',
       similar: 'il1Lo0O',
-      ambiguous: '{}[]()/\\\'"~,;.<>',
+      ambiguous: '{}[]()/\\\'\"~,;.<>',
     };
 
     let availableChars = '';
@@ -109,53 +109,53 @@ function PasswordGenerator() {
   const strength = calculateStrength(password);
 
   return (
-    <Card className="border-2 shadow-lg">
-      <CardHeader>
+    <Card className="border shadow-lg">
+      <CardHeader className="pb-3">
         <div className="text-center">
-          <CardTitle className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
-            <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
-              <Lock className="h-5 w-5 text-primary" />
+          <CardTitle className="flex items-center justify-center gap-2 text-lg font-bold text-primary">
+            <div className="p-1.5 bg-primary/10 rounded-lg shadow-sm">
+              <Lock className="h-4 w-4 text-primary" />
             </div>
             Token / Password Generator
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm mt-1">
             Customize your requirements and generate secure tokens or passwords
           </CardDescription>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4">
         {/* Generated Password */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div className="flex gap-2">
             <Input
               value={password}
               readOnly
-              className="text-center text-lg font-mono font-semibold"
+              className="text-center text-sm font-mono font-semibold h-9"
               onClick={(e) => (e.target as HTMLInputElement).select()}
             />
-            <Button size="icon" onClick={handleCopy} variant="outline">
+            <Button size="icon" onClick={handleCopy} variant="outline" className="h-9 w-9">
               {copied ? (
-                <Check className="h-5 w-5" />
+                <Check className="h-4 w-4" />
               ) : (
-                <Copy className="h-5 w-5" />
+                <Copy className="h-4 w-4" />
               )}
             </Button>
-            <Button size="icon" onClick={generatePassword} variant="outline">
-              <RefreshCw className="h-5 w-5" />
+            <Button size="icon" onClick={generatePassword} variant="outline" className="h-9 w-9">
+              <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
 
           {/* Strength Bar */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
               <span className="font-medium">Strength</span>
-              <Badge variant={strength.strength < 3 ? 'destructive' : strength.strength < 5 ? 'secondary' : 'default'}>
+              <Badge variant={strength.strength < 3 ? 'destructive' : strength.strength < 5 ? 'secondary' : 'default'} className="text-xs h-5">
                 {strength.label}
               </Badge>
             </div>
-            <div className="w-full bg-muted rounded-full h-2">
+            <div className="w-full bg-muted rounded-full h-1.5">
               <div
-                className={`h-2 rounded-full transition-all duration-300 ${strength.color}`}
+                className={`h-1.5 rounded-full transition-all duration-300 ${strength.color}`}
                 style={{ width: `${(strength.strength / 7) * 100}%` }}
               />
             </div>
@@ -163,10 +163,10 @@ function PasswordGenerator() {
         </div>
 
         {/* Length Slider */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="length">Length: {length} characters</Label>
-            <Badge variant="secondary">{length} chars</Badge>
+            <Label htmlFor="length" className="text-xs">Length: {length} characters</Label>
+            <Badge variant="secondary" className="text-xs h-5">{length} chars</Badge>
           </div>
           <Slider
             id="length"
@@ -183,15 +183,15 @@ function PasswordGenerator() {
         </div>
 
         {/* Options */}
-        <div className="space-y-4">
-          <Label className="text-base font-semibold">Character Sets</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <span className="text-lg font-bold">ABC</span>
+        <div className="space-y-3">
+          <Label className="text-sm font-semibold">Character Sets</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+            <div className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-primary/10 rounded-md">
+                  <span className="text-sm font-bold">ABC</span>
                 </div>
-                <Label htmlFor="uppercase" className="cursor-pointer">
+                <Label htmlFor="uppercase" className="cursor-pointer text-xs">
                   Uppercase Letters
                 </Label>
               </div>
@@ -204,12 +204,12 @@ function PasswordGenerator() {
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <span className="text-lg font-bold">abc</span>
+            <div className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-primary/10 rounded-md">
+                  <span className="text-sm font-bold">abc</span>
                 </div>
-                <Label htmlFor="lowercase" className="cursor-pointer">
+                <Label htmlFor="lowercase" className="cursor-pointer text-xs">
                   Lowercase Letters
                 </Label>
               </div>
@@ -222,12 +222,12 @@ function PasswordGenerator() {
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <span className="text-lg font-bold">123</span>
+            <div className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-primary/10 rounded-md">
+                  <span className="text-sm font-bold">123</span>
                 </div>
-                <Label htmlFor="numbers" className="cursor-pointer">
+                <Label htmlFor="numbers" className="cursor-pointer text-xs">
                   Numbers
                 </Label>
               </div>
@@ -240,12 +240,12 @@ function PasswordGenerator() {
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <span className="text-lg font-bold">!@#</span>
+            <div className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-primary/10 rounded-md">
+                  <span className="text-sm font-bold">!@#</span>
                 </div>
-                <Label htmlFor="symbols" className="cursor-pointer">
+                <Label htmlFor="symbols" className="cursor-pointer text-xs">
                   Symbols
                 </Label>
               </div>
@@ -261,11 +261,11 @@ function PasswordGenerator() {
         </div>
 
         {/* Advanced Options */}
-        <div className="space-y-4">
-          <Label className="text-base font-semibold">Advanced Options</Label>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
-              <Label htmlFor="exclude-similar" className="cursor-pointer">
+        <div className="space-y-3">
+          <Label className="text-sm font-semibold">Advanced Options</Label>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border">
+              <Label htmlFor="exclude-similar" className="cursor-pointer text-xs">
                 Exclude Similar Characters (i, l, 1, L, o, 0, O)
               </Label>
               <Switch
@@ -277,8 +277,8 @@ function PasswordGenerator() {
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
-              <Label htmlFor="exclude-ambiguous" className="cursor-pointer">
+            <div className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border">
+              <Label htmlFor="exclude-ambiguous" className="cursor-pointer text-xs">
                 Exclude Ambiguous Characters
               </Label>
               <Switch
@@ -293,9 +293,9 @@ function PasswordGenerator() {
         </div>
 
         {/* Info Section */}
-        <div className="bg-muted/50 rounded-lg p-4 border border-border">
-          <h3 className="text-sm font-semibold mb-2">Security Tips</h3>
-          <ul className="text-sm text-muted-foreground space-y-1">
+        <div className="bg-muted/50 rounded-lg p-3 border border-border">
+          <h3 className="text-xs font-semibold mb-1.5">Security Tips</h3>
+          <ul className="text-xs text-muted-foreground space-y-0.5">
             <li>• Use at least 12-16 characters for better security</li>
             <li>• Include uppercase, lowercase, numbers, and symbols</li>
             <li>• Avoid using personal information or dictionary words</li>
