@@ -44,7 +44,7 @@ import {
   IconClock,
   IconPalette,
   IconLock,
-  // IconNotes,
+  IconNotes,
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
@@ -63,6 +63,12 @@ export const sidebarData: SidebarData = {
           url: '/app/to-do',
           icon: IconChecklist,
           description: 'Manage your to-do lists efficiently.'
+        },
+        {
+          title: 'Notes',
+          url: '/app/notes',
+          icon: IconNotes,
+          description: 'Capture ideas and organize your thoughts.'
         },
         {
           title: 'URL Shortener',
