@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Select,
   SelectTrigger,
@@ -11,9 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import DeleteButton from "../../../components/ui/DeleteButton";
-import { 
-  Circle, Clock, TrendingUp, CheckCircle2, Edit, Calendar, 
-  Flame, AlertCircle, Zap, Tag, MoreVertical, Copy, Check, Trash2
+import {
+  Edit, Calendar, Tag, MoreVertical, Copy, Check, Trash2, CheckCircle2
 } from "lucide-react";
 import TaskEditDialog from "./TaskEditDialog";
 import { differenceInDays, isPast, parseISO, format, isValid, parse } from "date-fns";
@@ -32,11 +31,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { STATUS_CONFIG, PRIORITY_CONFIG } from "./config/constants";
 
 // Helper to safely parse and format dates
 const safeFormatDate = (dateString: string | undefined, formatStr: string): string => {
   if (!dateString || dateString === "Unknown") return dateString || "Unknown";
-  
+
   // Try parsing as ISO first (for new data)
   try {
     const isoDate = parseISO(dateString);
@@ -46,7 +46,7 @@ const safeFormatDate = (dateString: string | undefined, formatStr: string): stri
   } catch {
     // Not an ISO string, continue
   }
-  
+
   // Try parsing the formatted date string from TaskContext: "dd MMM yyyy, hh:mm a"
   try {
     const parsedDate = parse(dateString, "dd MMM yyyy, hh:mm a", new Date());
@@ -56,7 +56,7 @@ const safeFormatDate = (dateString: string | undefined, formatStr: string): stri
   } catch {
     // Not in that format, continue
   }
-  
+
   // Try parsing just the date part "dd MMM yyyy"
   try {
     const parts = dateString.split(',');
@@ -70,7 +70,7 @@ const safeFormatDate = (dateString: string | undefined, formatStr: string): stri
   } catch {
     // Fall through
   }
-  
+
   // Try parsing as Date object (fallback)
   try {
     const date = new Date(dateString);
@@ -80,7 +80,7 @@ const safeFormatDate = (dateString: string | undefined, formatStr: string): stri
   } catch {
     // Not a valid date string
   }
-  
+
   // If all parsing fails, return a shortened version of the string
   return dateString.length > 15 ? dateString.substring(0, 15) + "..." : dateString;
 };
@@ -88,7 +88,7 @@ const safeFormatDate = (dateString: string | undefined, formatStr: string): stri
 // Helper to safely parse date for calculations
 const safeParseDate = (dateString: string | undefined): Date | null => {
   if (!dateString) return null;
-  
+
   // Try parsing as ISO first
   try {
     const isoDate = parseISO(dateString);
@@ -98,7 +98,7 @@ const safeParseDate = (dateString: string | undefined): Date | null => {
   } catch {
     // Not an ISO string
   }
-  
+
   // Try parsing the formatted date string from TaskContext: "dd MMM yyyy, hh:mm a"
   try {
     const parsedDate = parse(dateString, "dd MMM yyyy, hh:mm a", new Date());
@@ -108,7 +108,7 @@ const safeParseDate = (dateString: string | undefined): Date | null => {
   } catch {
     // Not in that format
   }
-  
+
   // Try parsing just the date part "dd MMM yyyy"
   try {
     const parts = dateString.split(',');
@@ -122,7 +122,7 @@ const safeParseDate = (dateString: string | undefined): Date | null => {
   } catch {
     // Fall through
   }
-  
+
   // Try parsing as Date object (fallback)
   try {
     const date = new Date(dateString);
@@ -132,7 +132,7 @@ const safeParseDate = (dateString: string | undefined): Date | null => {
   } catch {
     // Not a valid date
   }
-  
+
   return null;
 };
 
@@ -153,54 +153,9 @@ export default function TaskItem({
   const [isHovered, setIsHovered] = useState(false);
   const [justCompleted, setJustCompleted] = useState(false);
   const [copied, setCopied] = useState(false);
-  
-  // Get status badge configuration
-  const getStatusBadge = (status: Task["status"]) => {
-    switch (status) {
-      case "not-started":
-        return {
-          variant: "outline" as const,
-          className: "border-blue-500/50 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/50",
-          icon: Clock,
-          label: "Not Started",
-          color: "blue",
-        };
-      case "ongoing":
-        return {
-          variant: "outline" as const,
-          className: "border-orange-500/50 text-orange-600 dark:text-orange-400 bg-orange-50/50 dark:bg-orange-950/50",
-          icon: TrendingUp,
-          label: "Ongoing",
-          color: "orange",
-        };
-      case "completed":
-        return {
-          variant: "outline" as const,
-          className: "border-green-500/50 text-green-600 dark:text-green-400 bg-green-50/50 dark:bg-green-950/50",
-          icon: CheckCircle2,
-          label: "Completed",
-          color: "green",
-        };
-      default:
-        return {
-          variant: "outline" as const,
-          className: "",
-          icon: Circle,
-          label: "Unknown",
-          color: "gray",
-        };
-    }
-  };
 
-  const statusConfig = getStatusBadge(task.status);
+  const statusConfig = STATUS_CONFIG[task.status];
   const StatusIcon = statusConfig.icon;
-
-  // Priority config
-  const priorityConfig = {
-    high: { label: "High", icon: Flame, color: "text-red-500", bgColor: "bg-red-50 dark:bg-red-950/30" },
-    medium: { label: "Medium", icon: AlertCircle, color: "text-orange-500", bgColor: "bg-orange-50 dark:bg-orange-950/30" },
-    low: { label: "Low", icon: Zap, color: "text-blue-500", bgColor: "bg-blue-50 dark:bg-blue-950/30" },
-  };
 
   // Check if task is overdue
   const dueDateObj = task.dueDate ? safeParseDate(task.dueDate) : null;
@@ -214,9 +169,9 @@ export default function TaskItem({
   const handleStatusChange = (newStatus: Task["status"]) => {
     const wasCompleted = task.status === "completed";
     const willComplete = newStatus === "completed";
-    
+
     onUpdateStatus(task.id, newStatus);
-    
+
     // Show completion animation
     if (!wasCompleted && willComplete) {
       setJustCompleted(true);
@@ -241,12 +196,12 @@ export default function TaskItem({
 
   return (
     <>
-      <li 
+      <li
         className={cn(
-          "group relative mb-3 p-4 rounded-xl border-2 transition-all duration-300",
-          "hover:shadow-lg hover:scale-[1.01] bg-card",
-          "hover:border-primary/30 focus-within:border-primary/50",
-          task.status === "completed" && "opacity-75",
+          "group relative mb-3 p-3 md:p-4 rounded-xl border transition-all duration-300",
+          "hover:shadow-md hover:scale-[1.005] bg-card",
+          "hover:border-primary/30",
+          task.status === "completed" && "opacity-75 bg-muted/30",
           justCompleted && "animate-pulse ring-2 ring-green-500/50"
         )}
         onMouseEnter={() => setIsHovered(true)}
@@ -254,7 +209,7 @@ export default function TaskItem({
         role="listitem"
         aria-label={`Task: ${task.text}`}
       >
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3 md:gap-4">
           {/* Status Icon - Clickable for quick toggle */}
           <TooltipProvider>
             <Tooltip>
@@ -265,8 +220,9 @@ export default function TaskItem({
                     "flex items-center justify-center p-2.5 rounded-lg transition-all duration-200",
                     "hover:scale-110 active:scale-95 cursor-pointer",
                     "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                    statusConfig.className,
-                    "min-w-[44px] h-[44px]"
+                    statusConfig.bgColor,
+                    statusConfig.color,
+                    "min-w-[40px] h-[40px] md:min-w-[44px] md:h-[44px]"
                   )}
                   aria-label={`Mark as ${task.status === "completed" ? "not completed" : "completed"}`}
                 >
@@ -280,35 +236,36 @@ export default function TaskItem({
           </TooltipProvider>
 
           {/* Task Content */}
-          <div className="flex-1 min-w-0 space-y-2.5">
-            <div className="flex items-start gap-2">
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="flex items-start gap-2 flex-wrap">
               <h3
                 className={cn(
-                  "block text-base font-semibold transition-all flex-1",
+                  "block text-sm md:text-base font-semibold transition-all flex-1 min-w-[150px]",
                   task.status === "completed"
-                    ? "text-muted-foreground line-through"
+                    ? "text-muted-foreground line-through decoration-muted-foreground/50"
                     : "text-foreground"
                 )}
               >
                 {task.text}
               </h3>
               {task.priority && task.priority !== "medium" && (
-                <Badge 
-                  variant="outline" 
+                <Badge
+                  variant="outline"
                   className={cn(
-                    priorityConfig[task.priority].color,
-                    priorityConfig[task.priority].bgColor,
-                    "gap-1.5 px-2 py-0.5 border"
+                    PRIORITY_CONFIG[task.priority].color,
+                    PRIORITY_CONFIG[task.priority].bgColor,
+                    PRIORITY_CONFIG[task.priority].borderColor,
+                    "gap-1.5 px-2 py-0.5 border flex-shrink-0"
                   )}
                 >
-                  {React.createElement(priorityConfig[task.priority].icon, { className: "h-3.5 w-3.5" })}
-                  <span className="text-xs font-medium">{priorityConfig[task.priority].label}</span>
+                  {React.createElement(PRIORITY_CONFIG[task.priority].icon, { className: "h-3.5 w-3.5" })}
+                  <span className="text-xs font-medium">{PRIORITY_CONFIG[task.priority].label}</span>
                 </Badge>
               )}
             </div>
 
             {task.description && (
-              <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+              <p className="text-xs md:text-sm text-muted-foreground line-clamp-3 leading-relaxed">
                 {task.description}
               </p>
             )}
@@ -321,7 +278,7 @@ export default function TaskItem({
                     key={tag.id}
                     variant="outline"
                     style={{ borderColor: tag.color, color: tag.color }}
-                    className="text-xs gap-1 px-2 py-0.5 hover:bg-muted/50 transition-colors"
+                    className="text-[10px] md:text-xs gap-1 px-2 py-0.5 hover:bg-muted/50 transition-colors"
                   >
                     <Tag className="h-3 w-3" />
                     {tag.name}
@@ -338,10 +295,10 @@ export default function TaskItem({
                   {task.subTasks.filter(st => st.completed).length} / {task.subTasks.length} subtasks
                 </span>
                 <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden max-w-[100px]">
-                  <div 
+                  <div
                     className="h-full bg-primary transition-all duration-300"
-                    style={{ 
-                      width: `${(task.subTasks.filter(st => st.completed).length / task.subTasks.length) * 100}%` 
+                    style={{
+                      width: `${(task.subTasks.filter(st => st.completed).length / task.subTasks.length) * 100}%`
                     }}
                   />
                 </div>
@@ -349,37 +306,23 @@ export default function TaskItem({
             )}
 
             {/* Metadata */}
-            <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5" />
-                      <span>{safeFormatDate(task.createdAt, "MMM d, yyyy")}</span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Created: {task.createdAt}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
+            <div className="flex items-center gap-2 md:gap-4 text-xs text-muted-foreground flex-wrap">
               {task.dueDate && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className={cn(
-                        "flex items-center gap-1.5",
-                        isOverdue && "text-red-500 font-semibold"
+                        "flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50",
+                        isOverdue && "text-red-500 bg-red-50 dark:bg-red-950/20 font-medium"
                       )}>
                         <Calendar className="h-3.5 w-3.5" />
                         <span>
-                          {isOverdue 
-                            ? "Overdue" 
-                            : dueInDays === 0 
-                              ? "Due today" 
-                              : dueInDays === 1 
-                                ? "Due tomorrow" 
+                          {isOverdue
+                            ? "Overdue"
+                            : dueInDays === 0
+                              ? "Due today"
+                              : dueInDays === 1
+                                ? "Due tomorrow"
                                 : dueInDays !== null && dueInDays > 0
                                   ? `Due in ${dueInDays} days`
                                   : `Due ${Math.abs(dueInDays!)} days ago`
@@ -393,9 +336,9 @@ export default function TaskItem({
                   </Tooltip>
                 </TooltipProvider>
               )}
-              
+
               {task.timeEstimate && (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50">
                   <span>⏱️</span>
                   <span>{task.timeEstimate}m</span>
                 </div>
@@ -404,109 +347,115 @@ export default function TaskItem({
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Status Dropdown */}
-            <Select
-              value={task.status}
-              onValueChange={(newStatus) => handleStatusChange(newStatus as Task["status"])}
-            >
-              <SelectTrigger 
-                className="w-[140px] border-2 h-9 text-sm focus:ring-2 focus:ring-primary"
-                aria-label="Change task status"
+          <div className="flex items-center gap-2 flex-shrink-0 self-start md:self-center">
+            {/* Status Dropdown - Hidden on mobile to save space, accessible via menu */}
+            <div className="hidden md:block">
+              <Select
+                value={task.status}
+                onValueChange={(newStatus) => handleStatusChange(newStatus as Task["status"])}
               >
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-
-              <SelectContent className="border-2">
-                <SelectItem value="not-started">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-blue-500" />
-                    <span>Not Started</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="ongoing">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-orange-500" />
-                    <span>Ongoing</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="completed">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    <span>Completed</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Context Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "h-9 w-9 p-0 transition-opacity",
-                    isHovered ? "opacity-100" : "opacity-0 group-hover:opacity-70"
-                  )}
-                  aria-label="Task options"
+                <SelectTrigger
+                  className="w-[130px] h-8 text-xs focus:ring-2 focus:ring-primary"
+                  aria-label="Change task status"
                 >
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Task
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleCopy}>
-                  {copied ? (
-                    <>
-                      <Check className="h-4 w-4 mr-2" />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-4 w-4 mr-2" />
-                      Copy Task
-                    </>
-                  )}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleQuickComplete}>
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  {task.status === "completed" ? "Mark Incomplete" : "Mark Complete"}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={() => onDeleteTask(task.id)}
-                  className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Task
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
 
-            {/* Edit Button - Visible on hover */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsEditDialogOpen(true)}
-              className={cn(
-                "h-9 w-9 p-0 transition-opacity",
+                <SelectContent>
+                  {Object.values(STATUS_CONFIG).map((config) => (
+                    <SelectItem key={config.id} value={config.id}>
+                      <div className="flex items-center gap-2">
+                        <config.icon className={cn("h-3.5 w-3.5", config.color)} />
+                        <span>{config.label}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Context Menu - Always visible on mobile, hover on desktop */}
+            <div className="md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    aria-label="Task options"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Task
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleCopy}>
+                    {copied ? (
+                      <>
+                        <Check className="h-4 w-4 mr-2" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copy Task
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <div className="p-2">
+                    <p className="text-xs font-semibold text-muted-foreground mb-2">Status</p>
+                    <div className="grid grid-cols-1 gap-1">
+                      {Object.values(STATUS_CONFIG).map((config) => (
+                        <Button
+                          key={config.id}
+                          variant={task.status === config.id ? "secondary" : "ghost"}
+                          size="sm"
+                          className="justify-start h-7 text-xs"
+                          onClick={() => handleStatusChange(config.id as Task["status"])}
+                        >
+                          <config.icon className={cn("h-3.5 w-3.5 mr-2", config.color)} />
+                          {config.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => onDeleteTask(task.id)}
+                    className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Task
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Desktop Actions */}
+            <div className="hidden md:flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditDialogOpen(true)}
+                className={cn(
+                  "h-8 w-8 p-0 transition-opacity",
+                  isHovered ? "opacity-100" : "opacity-0 group-hover:opacity-70"
+                )}
+                aria-label="Edit task"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+
+              <div className={cn(
+                "transition-opacity flex items-center justify-center",
                 isHovered ? "opacity-100" : "opacity-0 group-hover:opacity-70"
-              )}
-              aria-label="Edit task"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-
-            {/* Delete Button */}
-            <div className={cn(
-              "transition-opacity flex items-center justify-center",
-              isHovered ? "opacity-100" : "opacity-0 group-hover:opacity-70"
-            )}>
-              <DeleteButton onDelete={() => onDeleteTask(task.id)} />
+              )}>
+                <DeleteButton onDelete={() => onDeleteTask(task.id)} />
+              </div>
             </div>
           </div>
         </div>

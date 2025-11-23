@@ -3,10 +3,9 @@
 import React, { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Clock, CheckCircle2, TrendingUp, GripVertical, Edit, Calendar, Flame, AlertCircle, Zap, Tag } from "lucide-react";
+import { GripVertical, Edit, Calendar, Tag, CheckCircle2, MoreHorizontal, Trash2, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import DeleteButton from "@/components/ui/DeleteButton";
 import { Task } from "@/app/app/to-do/types/Task";
 import TaskEditDialog from "./TaskEditDialog";
 import { differenceInDays, isPast, parseISO, format, isValid, parse } from "date-fns";
@@ -17,11 +16,19 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { STATUS_CONFIG, PRIORITY_CONFIG } from "./config/constants";
 
 // Helper to safely parse and format dates
 const safeFormatDate = (dateString: string | undefined, formatStr: string): string => {
   if (!dateString || dateString === "Unknown") return dateString || "Unknown";
-  
+
   // Try parsing as ISO first (for new data)
   try {
     const isoDate = parseISO(dateString);
@@ -31,7 +38,7 @@ const safeFormatDate = (dateString: string | undefined, formatStr: string): stri
   } catch {
     // Not an ISO string, continue
   }
-  
+
   // Try parsing the formatted date string from TaskContext: "dd MMM yyyy, hh:mm a"
   try {
     const parsedDate = parse(dateString, "dd MMM yyyy, hh:mm a", new Date());
@@ -41,7 +48,7 @@ const safeFormatDate = (dateString: string | undefined, formatStr: string): stri
   } catch {
     // Not in that format, continue
   }
-  
+
   // Try parsing just the date part "dd MMM yyyy"
   try {
     const parts = dateString.split(',');
@@ -55,7 +62,7 @@ const safeFormatDate = (dateString: string | undefined, formatStr: string): stri
   } catch {
     // Fall through
   }
-  
+
   // Try parsing as Date object (fallback)
   try {
     const date = new Date(dateString);
@@ -65,7 +72,7 @@ const safeFormatDate = (dateString: string | undefined, formatStr: string): stri
   } catch {
     // Not a valid date string
   }
-  
+
   // If all parsing fails, return a shortened version of the string
   return dateString.length > 15 ? dateString.substring(0, 15) + "..." : dateString;
 };
@@ -73,7 +80,7 @@ const safeFormatDate = (dateString: string | undefined, formatStr: string): stri
 // Helper to safely parse date for calculations
 const safeParseDate = (dateString: string | undefined): Date | null => {
   if (!dateString) return null;
-  
+
   // Try parsing as ISO first
   try {
     const isoDate = parseISO(dateString);
@@ -83,7 +90,7 @@ const safeParseDate = (dateString: string | undefined): Date | null => {
   } catch {
     // Not an ISO string
   }
-  
+
   // Try parsing the formatted date string from TaskContext: "dd MMM yyyy, hh:mm a"
   try {
     const parsedDate = parse(dateString, "dd MMM yyyy, hh:mm a", new Date());
@@ -93,7 +100,7 @@ const safeParseDate = (dateString: string | undefined): Date | null => {
   } catch {
     // Not in that format
   }
-  
+
   // Try parsing just the date part "dd MMM yyyy"
   try {
     const parts = dateString.split(',');
@@ -107,7 +114,7 @@ const safeParseDate = (dateString: string | undefined): Date | null => {
   } catch {
     // Fall through
   }
-  
+
   // Try parsing as Date object (fallback)
   try {
     const date = new Date(dateString);
@@ -117,7 +124,7 @@ const safeParseDate = (dateString: string | undefined): Date | null => {
   } catch {
     // Not a valid date
   }
-  
+
   return null;
 };
 
@@ -129,6 +136,7 @@ interface KanbanCardProps {
 
 export default function KanbanCard({ task, onUpdateTask, onDeleteTask }: KanbanCardProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const {
     attributes,
     listeners,
@@ -144,49 +152,8 @@ export default function KanbanCard({ task, onUpdateTask, onDeleteTask }: KanbanC
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Get status configuration
-  const getStatusConfig = (status: Task["status"]) => {
-    switch (status) {
-      case "not-started":
-        return {
-          icon: Clock,
-          color: "blue",
-          bgColor: "bg-blue-50 dark:bg-blue-950",
-          textColor: "text-blue-700 dark:text-blue-300",
-        };
-      case "ongoing":
-        return {
-          icon: TrendingUp,
-          color: "orange",
-          bgColor: "bg-orange-50 dark:bg-orange-950",
-          textColor: "text-orange-700 dark:text-orange-300",
-        };
-      case "completed":
-        return {
-          icon: CheckCircle2,
-          color: "green",
-          bgColor: "bg-green-50 dark:bg-green-950",
-          textColor: "text-green-700 dark:text-green-300",
-        };
-      default:
-        return {
-          icon: Clock,
-          color: "gray",
-          bgColor: "bg-gray-50 dark:bg-gray-950",
-          textColor: "text-gray-700 dark:text-gray-300",
-        };
-    }
-  };
-
-  const statusConfig = getStatusConfig(task.status);
+  const statusConfig = STATUS_CONFIG[task.status];
   const StatusIcon = statusConfig.icon;
-
-  // Priority config
-  const priorityConfig = {
-    high: { label: "High", icon: Flame, color: "text-red-500" },
-    medium: { label: "Medium", icon: AlertCircle, color: "text-orange-500" },
-    low: { label: "Low", icon: Zap, color: "text-blue-500" },
-  };
 
   // Check if task is overdue
   const dueDateObj = task.dueDate ? safeParseDate(task.dueDate) : null;
@@ -197,6 +164,13 @@ export default function KanbanCard({ task, onUpdateTask, onDeleteTask }: KanbanC
     await onUpdateTask(task.id, updates);
   };
 
+  const handleCopy = async () => {
+    const taskText = `${task.text}${task.description ? `\n${task.description}` : ''}`;
+    await navigator.clipboard.writeText(taskText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <>
       <div
@@ -205,12 +179,12 @@ export default function KanbanCard({ task, onUpdateTask, onDeleteTask }: KanbanC
         {...attributes}
         {...listeners}
         className={cn(
-          "group relative p-4 rounded-xl border-2 transition-all duration-300",
-          "hover:shadow-xl hover:scale-[1.02] bg-card",
+          "group relative p-3 md:p-4 rounded-xl border transition-all duration-300",
+          "hover:shadow-md hover:scale-[1.02] bg-card",
           "cursor-grab active:cursor-grabbing border-border",
-          "hover:border-primary/30 focus-within:border-primary/50",
+          "hover:border-primary/30",
           isDragging && "shadow-2xl scale-110 z-50 rotate-2 opacity-90",
-          task.status === "completed" && "opacity-75"
+          task.status === "completed" && "opacity-75 bg-muted/30"
         )}
         role="button"
         tabIndex={0}
@@ -224,7 +198,7 @@ export default function KanbanCard({ task, onUpdateTask, onDeleteTask }: KanbanC
         </div>
 
         {/* Status Icon and Task Text - Enhanced */}
-        <div className="flex items-start gap-2.5 mb-3 pr-8">
+        <div className="flex items-start gap-2.5 mb-3 pr-6">
           <div
             className={cn(
               "flex items-center justify-center p-2 rounded-lg transition-all flex-shrink-0",
@@ -232,7 +206,7 @@ export default function KanbanCard({ task, onUpdateTask, onDeleteTask }: KanbanC
               "group-hover:scale-110"
             )}
           >
-            <StatusIcon className={cn("h-4 w-4", statusConfig.textColor)} />
+            <StatusIcon className={cn("h-4 w-4", statusConfig.color)} />
           </div>
           <div className="flex-1 min-w-0 space-y-1.5">
             <div className="flex items-start gap-1.5">
@@ -240,7 +214,7 @@ export default function KanbanCard({ task, onUpdateTask, onDeleteTask }: KanbanC
                 className={cn(
                   "text-sm font-semibold flex-1 leading-snug",
                   task.status === "completed"
-                    ? "text-muted-foreground line-through"
+                    ? "text-muted-foreground line-through decoration-muted-foreground/50"
                     : "text-foreground"
                 )}
                 title={task.text}
@@ -251,12 +225,12 @@ export default function KanbanCard({ task, onUpdateTask, onDeleteTask }: KanbanC
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className={cn(priorityConfig[task.priority].color, "flex-shrink-0")}>
-                        {React.createElement(priorityConfig[task.priority].icon, { className: "h-3.5 w-3.5" })}
+                      <span className={cn(PRIORITY_CONFIG[task.priority].color, "flex-shrink-0")}>
+                        {React.createElement(PRIORITY_CONFIG[task.priority].icon, { className: "h-3.5 w-3.5" })}
                       </span>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>{priorityConfig[task.priority].label} Priority</p>
+                      <p>{PRIORITY_CONFIG[task.priority].label} Priority</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -319,10 +293,10 @@ export default function KanbanCard({ task, onUpdateTask, onDeleteTask }: KanbanC
                   {task.subTasks.filter(st => st.completed).length}/{task.subTasks.length}
                 </span>
                 <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden max-w-[80px]">
-                  <div 
+                  <div
                     className="h-full bg-primary transition-all duration-300"
-                    style={{ 
-                      width: `${(task.subTasks.filter(st => st.completed).length / task.subTasks.length) * 100}%` 
+                    style={{
+                      width: `${(task.subTasks.filter(st => st.completed).length / task.subTasks.length) * 100}%`
                     }}
                   />
                 </div>
@@ -334,21 +308,6 @@ export default function KanbanCard({ task, onUpdateTask, onDeleteTask }: KanbanC
         {/* Footer with Date and Actions - Enhanced */}
         <div className="flex items-center justify-between text-xs text-muted-foreground gap-2 pt-2 border-t border-border/50">
           <div className="flex flex-col gap-1 truncate min-w-0 flex-1">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1.5 truncate">
-                    <Clock className="h-3 w-3 flex-shrink-0" />
-                    <span className="truncate text-[10px]">
-                      {safeFormatDate(task.createdAt, "MMM d")}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Created: {task.createdAt}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
             {task.dueDate && (
               <TooltipProvider>
                 <Tooltip>
@@ -359,12 +318,12 @@ export default function KanbanCard({ task, onUpdateTask, onDeleteTask }: KanbanC
                     )}>
                       <Calendar className="h-3 w-3 flex-shrink-0" />
                       <span>
-                        {isOverdue 
-                          ? "Overdue" 
-                          : dueInDays === 0 
-                            ? "Today" 
-                            : dueInDays === 1 
-                              ? "Tomorrow" 
+                        {isOverdue
+                          ? "Overdue"
+                          : dueInDays === 0
+                            ? "Today"
+                            : dueInDays === 1
+                              ? "Tomorrow"
                               : dueInDays !== null && dueInDays > 0
                                 ? `${dueInDays}d`
                                 : `${Math.abs(dueInDays!)}d ago`
@@ -379,24 +338,81 @@ export default function KanbanCard({ task, onUpdateTask, onDeleteTask }: KanbanC
               </TooltipProvider>
             )}
           </div>
-          <div 
-            onClick={(e) => e.stopPropagation()} 
+
+          {/* Mobile-friendly Actions */}
+          <div
+            onClick={(e) => e.stopPropagation()}
             className="flex items-center gap-1 flex-shrink-0"
           >
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsEditDialogOpen(true);
-              }}
-              aria-label="Edit task"
-            >
-              <Edit className="h-3.5 w-3.5" />
-            </Button>
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-              <DeleteButton onDelete={() => onDeleteTask(task.id)} />
+            {/* Desktop: Hover Actions */}
+            <div className="hidden md:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 hover:bg-muted"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditDialogOpen(true);
+                }}
+                aria-label="Edit task"
+              >
+                <Edit className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 hover:bg-red-50 hover:text-red-500"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteTask(task.id);
+                }}
+                aria-label="Delete task"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+
+            {/* Mobile: Menu Button */}
+            <div className="md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0"
+                    aria-label="Task options"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Task
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleCopy}>
+                    {copied ? (
+                      <>
+                        <Check className="h-4 w-4 mr-2" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copy Task
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => onDeleteTask(task.id)}
+                    className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Task
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>

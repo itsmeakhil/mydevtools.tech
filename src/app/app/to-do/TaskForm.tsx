@@ -12,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface TaskFormProps {
   onAddTask: (task: string) => void;
@@ -72,22 +73,24 @@ export default function TaskForm({ onAddTask, inputRef }: TaskFormProps) {
   };
 
   return (
-    <Card 
-      className={`transition-all duration-300 ${
-        isFocused 
-          ? 'border-primary shadow-lg ring-2 ring-primary/20 bg-card' 
-          : 'border shadow-sm hover:shadow-md bg-card'
-      }`}
+    <Card
+      className={cn(
+        "transition-all duration-300",
+        isFocused
+          ? "border-primary shadow-lg ring-2 ring-primary/20 bg-card"
+          : "border shadow-sm hover:shadow-md bg-card"
+      )}
     >
       <div className="p-4">
         <div className="flex gap-3 items-start">
           {/* Icon */}
-          <div className={`flex items-center justify-center p-2 bg-primary/10 rounded-lg min-w-[40px] h-[40px] transition-all ${
-            isFocused ? 'bg-primary/20 scale-110' : ''
-          }`}>
+          <div className={cn(
+            "flex items-center justify-center p-2 rounded-lg min-w-[40px] h-[40px] transition-all",
+            isFocused ? "bg-primary/20 scale-110" : "bg-primary/10"
+          )}>
             <Sparkles className="h-5 w-5 text-primary" />
           </div>
-          
+
           {/* Input Field */}
           <div className="flex-1 space-y-2">
             <div className="relative">
@@ -103,20 +106,21 @@ export default function TaskForm({ onAddTask, inputRef }: TaskFormProps) {
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
                 placeholder={isMultiline ? "Add task details... (Shift+Enter for new line)" : "What needs to be done? Press Enter to add"}
-                className={`min-h-[40px] max-h-[120px] resize-none border-2 text-sm transition-all ${
-                  isFocused 
-                    ? 'border-primary focus-visible:ring-2 focus-visible:ring-primary/20' 
-                    : 'border-border hover:border-primary/50'
-                }`}
+                className={cn(
+                  "min-h-[40px] max-h-[120px] resize-none text-sm transition-all",
+                  isFocused
+                    ? "border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                    : "border-border hover:border-primary/50"
+                )}
                 rows={1}
                 aria-label="Task input"
                 aria-describedby="task-hint"
               />
             </div>
-            
+
             {/* Helper text */}
             <div className="flex items-center justify-between">
-              <p 
+              <p
                 id="task-hint"
                 className="text-xs text-muted-foreground flex items-center gap-2"
               >
@@ -127,7 +131,7 @@ export default function TaskForm({ onAddTask, inputRef }: TaskFormProps) {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button 
+                      <button
                         type="button"
                         className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                         aria-label="Keyboard shortcuts"
