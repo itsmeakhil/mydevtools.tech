@@ -46,7 +46,7 @@ export function QuickModeToggle({
                   variant={notionBased ? "default" : "ghost"}
                   size="icon"
                   className="relative h-8 w-8 md:h-9 md:w-9"
-                  onClick={() => onNotionBasedChange(!notionBased)}
+                  onClick={() => onNotionBasedChange?.(!notionBased)}
                 >
                   <Image
                     src="/notion-logo.png"

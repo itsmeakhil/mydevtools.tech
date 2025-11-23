@@ -12,6 +12,7 @@ import {
 import {
   SidebarGroup,
   SidebarGroupLabel,
+  SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -37,10 +38,11 @@ import { requiresAuth } from "@/lib/tool-config";
 interface NavGroupProps {
   title: string;
   items: (NavLink | NavCollapsible)[];
+  collapsible?: boolean;
 }
 
 // Main NavGroup Component
-export function NavGroup({ title, items }: NavGroupProps) {
+export function NavGroup({ title, items, collapsible }: NavGroupProps) {
   const { state } = useSidebar();
   const pathname = usePathname();
   const { user, loading } = useAuth(false); // Check auth state with loading
@@ -58,45 +60,69 @@ export function NavGroup({ title, items }: NavGroupProps) {
     }
   };
 
-  return (
-    <SidebarGroup>
-      <SidebarGroupLabel>{title}</SidebarGroupLabel>
-      <SidebarMenu>
-        {items.map((item) => {
-          const key = `${item.title}-${item.url}`;
+  const content = (
+    <SidebarMenu>
+      {items.map((item) => {
+        const key = `${item.title}-${item.url}`;
 
-          if (!("items" in item)) {
-            const itemUrl =
-              typeof item.url === "string" ? item.url : item.url.toString();
-            return (
-              <SidebarMenuLink
-                key={key}
-                item={item as NavLink}
-                href={pathname}
-                onClick={(e) => handleClick(e, itemUrl)}
-              />
-            );
-          }
-
-          if (state === "collapsed") {
-            return (
-              <SidebarMenuCollapsedDropdown
-                key={key}
-                item={item as NavCollapsible}
-                href={pathname}
-              />
-            );
-          }
-
+        if (!("items" in item)) {
+          const itemUrl =
+            typeof item.url === "string" ? item.url : item.url.toString();
           return (
-            <SidebarMenuCollapsible
+            <SidebarMenuLink
+              key={key}
+              item={item as NavLink}
+              href={pathname}
+              onClick={(e) => handleClick(e, itemUrl)}
+            />
+          );
+        }
+
+        if (state === "collapsed") {
+          return (
+            <SidebarMenuCollapsedDropdown
               key={key}
               item={item as NavCollapsible}
               href={pathname}
             />
           );
-        })}
-      </SidebarMenu>
+        }
+
+        return (
+          <SidebarMenuCollapsible
+            key={key}
+            item={item as NavCollapsible}
+            href={pathname}
+          />
+        );
+      })}
+    </SidebarMenu>
+  );
+
+  if (collapsible) {
+    return (
+      <Collapsible asChild defaultOpen={false} className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger>
+              {title}
+              <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              {content}
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+    );
+  }
+
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel>{title}</SidebarGroupLabel>
+      {content}
     </SidebarGroup>
   );
 }
@@ -112,7 +138,7 @@ const SidebarMenuLink = ({
   onClick: (e: React.MouseEvent) => void;
 }) => {
   const { setOpenMobile } = useSidebar();
-  
+
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
@@ -241,41 +267,41 @@ const SidebarMenuCollapsedDropdown = ({
       <div suppressHydrationWarning>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-          <SidebarMenuButton
-            tooltip={item.title}
-            isActive={checkIsActive(href, item)}
-          >
-            {item.icon && <item.icon />}
-            <span>{item.title}</span>
-            {item.badge && <NavBadge>{item.badge}</NavBadge>}
-            <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-          </SidebarMenuButton>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent side="right" align="start" sideOffset={4}>
-          <DropdownMenuLabel>
-            {item.title} {item.badge ? `(${item.badge})` : ""}
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {item.items.map((sub) => {
-            const subUrl =
-              typeof sub.url === "string" ? sub.url : sub.url.toString();
-            return (
-              <DropdownMenuItem key={`${sub.title}-${sub.url}`} asChild>
-                <Link
-                  href={sub.url}
-                  className={`${checkIsActive(href, sub) ? "bg-secondary" : ""}`}
-                  onClick={(e) => handleSubLinkClick(e, subUrl)}
-                >
-                  {sub.icon && <sub.icon />}
-                  <span className="max-w-52 text-wrap">{sub.title}</span>
-                  {sub.badge && (
-                    <span className="ml-auto text-xs">{sub.badge}</span>
-                  )}
-                </Link>
-              </DropdownMenuItem>
-            );
-          })}
-        </DropdownMenuContent>
+            <SidebarMenuButton
+              tooltip={item.title}
+              isActive={checkIsActive(href, item)}
+            >
+              {item.icon && <item.icon />}
+              <span>{item.title}</span>
+              {item.badge && <NavBadge>{item.badge}</NavBadge>}
+              <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="right" align="start" sideOffset={4}>
+            <DropdownMenuLabel>
+              {item.title} {item.badge ? `(${item.badge})` : ""}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {item.items.map((sub) => {
+              const subUrl =
+                typeof sub.url === "string" ? sub.url : sub.url.toString();
+              return (
+                <DropdownMenuItem key={`${sub.title}-${sub.url}`} asChild>
+                  <Link
+                    href={sub.url}
+                    className={`${checkIsActive(href, sub) ? "bg-secondary" : ""}`}
+                    onClick={(e) => handleSubLinkClick(e, subUrl)}
+                  >
+                    {sub.icon && <sub.icon />}
+                    <span className="max-w-52 text-wrap">{sub.title}</span>
+                    {sub.badge && (
+                      <span className="ml-auto text-xs">{sub.badge}</span>
+                    )}
+                  </Link>
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
         </DropdownMenu>
       </div>
     </SidebarMenuItem>
@@ -295,6 +321,6 @@ function checkIsActive(href: string, item: NavItem, mainNav = false) {
     (mainNav &&
       href.split("/")[1] !== "" &&
       href.split("/")[1] ===
-        (typeof item.url === "string" ? item.url.split("/")[1] : ""))
+      (typeof item.url === "string" ? item.url.split("/")[1] : ""))
   );
 }
