@@ -9,10 +9,11 @@ import { Input } from "../input"
 import { Label } from "../label"
 import { Popover, PopoverContent, PopoverTrigger } from "../popover"
 import { useToast } from "./hooks/use-toast"
-import { EditorActions, useEditor } from "./index"
+import { EditorActions, useEditorDispatch, useEditorState, SelectionInfo } from "./index"
 
 export function LinkPopover() {
-  const [state, dispatch] = useEditor()
+  const state = useEditorState()
+  const dispatch = useEditorDispatch()
   const { toast } = useToast()
   const [hrefInput, setHrefInput] = useState("")
   const [isOpen, setIsOpen] = useState(false)
@@ -22,45 +23,13 @@ export function LinkPopover() {
   } | null>(null)
 
   // Store the selection in a ref so it persists when focus changes
-  const savedSelectionRef = useRef<{
-    nodeId: string
-    start: number
-    end: number
-    text: string
-    href?: string | null
-    formats: {
-      bold: boolean
-      italic: boolean
-      underline: boolean
-    }
-    elementType?:
-      | "p"
-      | "h1"
-      | "h2"
-      | "h3"
-      | "h4"
-      | "h5"
-      | "h6"
-      | "code"
-      | "blockquote"
-      | null
-    className?: string | null
-  } | null>(null)
+  const savedSelectionRef = useRef<SelectionInfo | null>(null)
 
   // Track selection and position the floating icon
   useEffect(() => {
     if (state.currentSelection && state.currentSelection.text.length > 0) {
       // Save the selection to ref so it persists when focus changes
-      savedSelectionRef.current = {
-        nodeId: state.currentSelection.nodeId,
-        start: state.currentSelection.start,
-        end: state.currentSelection.end,
-        text: state.currentSelection.text,
-        href: state.currentSelection.href,
-        formats: state.currentSelection.formats,
-        elementType: state.currentSelection.elementType,
-        className: state.currentSelection.className,
-      }
+      savedSelectionRef.current = state.currentSelection
 
       // Pre-fill the href input if selection has an existing link
       if (state.currentSelection.href && !isOpen) {
@@ -158,9 +127,8 @@ export function LinkPopover() {
           key={position.top + position.left}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className={`${
-            position ? "opacity-100" : "!opacity-0"
-          } pointer-events-auto absolute z-50 transition-opacity duration-300`}
+          className={`${position ? "opacity-100" : "!opacity-0"
+            } pointer-events-auto absolute z-50 transition-opacity duration-300`}
           style={{
             top: `${position?.top || 0}px`,
             left: `${position?.left || 0}px`,
@@ -170,11 +138,10 @@ export function LinkPopover() {
           <Popover open={isOpen} onOpenChange={setIsOpen}>
             <PopoverTrigger asChild>
               <button
-                className={`bg-background flex h-8 w-8 items-center justify-center rounded-full border-2 shadow-lg transition-all hover:scale-110 ${
-                  hasExistingLink
-                    ? "border-blue-500 text-blue-500"
-                    : "border-border hover:border-primary"
-                }`}
+                className={`bg-background flex h-8 w-8 items-center justify-center rounded-full border-2 shadow-lg transition-all hover:scale-110 ${hasExistingLink
+                  ? "border-blue-500 text-blue-500"
+                  : "border-border hover:border-primary"
+                  }`}
                 onMouseDown={(e) => {
                   // Prevent default to keep the selection
                   e.preventDefault()
