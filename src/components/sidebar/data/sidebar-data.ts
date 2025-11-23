@@ -76,6 +76,12 @@ export const sidebarData: SidebarData = {
           icon: IconUnlink,
           description: 'Shorten long URLs for easy sharing.'
         },
+        {
+          title: 'JSON Editor',
+          url: '/app/json-formatter',
+          description: 'Advanced JSON editor and formatter.',
+          icon: IconJson
+        },
       ],
     },
     {
@@ -148,12 +154,7 @@ export const sidebarData: SidebarData = {
           description: 'Convert between JSON, XML, YAML, TOML, and CSV.',
           icon: IconJson
         },
-        {
-          title: 'JSON Editor',
-          url: '/app/json-formatter',
-          description: 'Advanced JSON editor and formatter.',
-          icon: IconJson
-        },
+
         {
           title: 'Base64',
           url: '/app/base64-encoder',
