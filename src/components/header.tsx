@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Github, Wrench, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./modeToggle";
-import { ColorPicker } from "./color-picker";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,21 +16,21 @@ export function Header() {
             <Wrench className="h-6 w-6" />
             <span className="font-bold text-lg">MyDevTools</span>
           </Link>
-          
+
           <div className="hidden md:flex items-center gap-8">
             <nav className="flex items-center gap-8 text-md font-medium">
               <Link href="/" className="transition hover:text-foreground/80">
                 Home
               </Link>
               <Link href="/#features" className="transition hover:text-foreground/80">
-              Features
+                Features
               </Link>
               {/* <Link href="#docs" className="transition hover:text-foreground/80">
                 Docs
               </Link> */}
             </nav>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -41,9 +40,8 @@ export function Header() {
             >
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
-            
+
             <div className="hidden md:flex items-center gap-4">
-              <ColorPicker />
               <ModeToggle />
               <Link href="https://github.com/itsmeakhil/mydevtools.tech" target="_blank" rel="noreferrer">
                 <Button
@@ -61,7 +59,7 @@ export function Header() {
           </div>
         </div>
       </div>
-      
+
       {isMenuOpen && (
         <div className="md:hidden">
           <nav className="flex flex-col space-y-4 p-6 bg-background border-t border-border/50">
@@ -69,7 +67,7 @@ export function Header() {
               Home
             </Link>
             <Link href="#features" className="transition hover:text-foreground/80 font-medium">
-            Features
+              Features
             </Link>
             <Link href="#docs" className="transition hover:text-foreground/80 font-medium">
               Docs

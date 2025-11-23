@@ -9,7 +9,6 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ModeToggle } from "./modeToggle";
-import { ColorPicker } from "./color-picker";
 import { sidebarData } from "../components/sidebar/data/sidebar-data";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
@@ -19,7 +18,7 @@ interface SearchItem {
   title: string;
   description?: string;
   url?: string | UrlObject;
-  icon?: React.ElementType; 
+  icon?: React.ElementType;
   type: "tool" | "page";
 }
 
@@ -237,7 +236,6 @@ export function NavBar() {
                 <span className="sr-only">GitHub</span>
               </Link>
             </Button>
-            <ColorPicker />
             <ModeToggle />
           </div>
         </div>
@@ -283,10 +281,10 @@ export function NavBar() {
           <div className="overflow-y-auto max-h-[calc(80vh-130px)] p-4 space-y-3">
             {searchQuery && searchResults.length === 0 ? (
               <div className="text-center text-muted-foreground py-8">
-              No results found for &quot;
-              <span className="font-bold">{searchQuery}</span>
-              &quot;
-            </div>
+                No results found for &quot;
+                <span className="font-bold">{searchQuery}</span>
+                &quot;
+              </div>
             ) : (
               <>
                 {/* Keyboard Navigation Instructions */}
@@ -323,27 +321,24 @@ export function NavBar() {
                               e.preventDefault();
                               handleItemSelect(result);
                             }}
-                            className={`flex items-center gap-3 p-3 rounded-md transition-all cursor-pointer ${
-                              selectedIndex === combinedIndex
-                                ? "bg-primary/10 text-primary font-semibold ring-1 ring-primary"
-                                : "bg-muted/50 hover:bg-muted/70"
-                            }`}
+                            className={`flex items-center gap-3 p-3 rounded-md transition-all cursor-pointer ${selectedIndex === combinedIndex
+                              ? "bg-primary/10 text-primary font-semibold ring-1 ring-primary"
+                              : "bg-muted/50 hover:bg-muted/70"
+                              }`}
                           >
                             {result.icon && (
-                              <result.icon className={`h-5 w-5 ${
-                                selectedIndex === combinedIndex
-                                  ? "text-primary"
-                                  : "text-muted-foreground"
-                              }`} />
+                              <result.icon className={`h-5 w-5 ${selectedIndex === combinedIndex
+                                ? "text-primary"
+                                : "text-muted-foreground"
+                                }`} />
                             )}
                             <div>
                               <div className="font-medium">{result.title}</div>
                               {result.description && (
-                                <div className={`text-sm ${
-                                  selectedIndex === combinedIndex
-                                    ? "text-primary/80"
-                                    : "text-muted-foreground"
-                                }`}>
+                                <div className={`text-sm ${selectedIndex === combinedIndex
+                                  ? "text-primary/80"
+                                  : "text-muted-foreground"
+                                  }`}>
                                   {result.description}
                                 </div>
                               )}
@@ -374,11 +369,10 @@ export function NavBar() {
                               e.preventDefault();
                               handleItemSelect(result);
                             }}
-                            className={`flex items-center gap-3 p-3 rounded-md transition-all cursor-pointer ${
-                              selectedIndex === combinedIndex
-                                ? "bg-primary/10 text-primary font-semibold ring-1 ring-primary"
-                                : "bg-muted/50 hover:bg-muted/70"
-                            }`}
+                            className={`flex items-center gap-3 p-3 rounded-md transition-all cursor-pointer ${selectedIndex === combinedIndex
+                              ? "bg-primary/10 text-primary font-semibold ring-1 ring-primary"
+                              : "bg-muted/50 hover:bg-muted/70"
+                              }`}
                           >
                             <div className="font-medium">{result.title}</div>
                           </a>

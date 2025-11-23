@@ -3,7 +3,6 @@ import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Toaster } from 'sonner'
 import { ThemeProvider } from "@/components/theme-provider"
-import { ColorThemeInit } from "@/components/color-theme-init"
 import { cn } from "@/lib/utils"
 import { Geist_Mono as NextGeistMono } from 'next/font/google'
 
@@ -40,12 +39,11 @@ export default function RootLayout({
     )}>
       <body suppressHydrationWarning className="min-h-screen bg-background font-sans antialiased">
         <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-          <ColorThemeInit />
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
           {children}
           <Analytics />
           <SpeedInsights />
