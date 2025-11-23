@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerClose } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ import { Task, TaskPriority, TaskStatus, SubTask, TaskTag } from "@/app/app/to-d
 import { Calendar as CalendarIcon, Plus, X, Tag, CheckCircle2, Circle, Clock, TrendingUp, Flame, AlertCircle, Zap } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface TaskEditDialogProps {
   task: Task;
@@ -46,6 +48,7 @@ export default function TaskEditDialog({ task, open, onOpenChange, onSave }: Tas
   const [customTagColor, setCustomTagColor] = useState("#3b82f6");
   const [isSaving, setIsSaving] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const isDesktop = useMediaQuery("(min-width: 768px)");
 
   useEffect(() => {
     if (open && task) {
@@ -124,270 +127,299 @@ export default function TaskEditDialog({ task, open, onOpenChange, onSave }: Tas
     setEditedTask({ ...editedTask, tags });
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Edit Task</DialogTitle>
-          <DialogDescription>
-            Update task details, add subtasks, set priorities and more.
-          </DialogDescription>
-        </DialogHeader>
+  const FormContent = (
+    <div className="space-y-6 py-4">
+      {/* Task Title */}
+      <div className="space-y-2">
+        <Label htmlFor="task-title">Task Title *</Label>
+        <Input
+          id="task-title"
+          value={editedTask.text || ""}
+          onChange={(e) => setEditedTask({ ...editedTask, text: e.target.value })}
+          placeholder="What needs to be done?"
+          className="text-base"
+        />
+      </div>
 
-        <div className="space-y-6 py-4">
-          {/* Task Title */}
-          <div className="space-y-2">
-            <Label htmlFor="task-title">Task Title *</Label>
-            <Input
-              id="task-title"
-              value={editedTask.text || ""}
-              onChange={(e) => setEditedTask({ ...editedTask, text: e.target.value })}
-              placeholder="What needs to be done?"
-              className="text-base"
-            />
-          </div>
+      {/* Description */}
+      <div className="space-y-2">
+        <Label htmlFor="task-description">Description</Label>
+        <Textarea
+          id="task-description"
+          value={editedTask.description || ""}
+          onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
+          placeholder="Add more details about this task..."
+          className="min-h-[100px]"
+        />
+      </div>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="task-description">Description</Label>
-            <Textarea
-              id="task-description"
-              value={editedTask.description || ""}
-              onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
-              placeholder="Add more details about this task..."
-              className="min-h-[100px]"
-            />
-          </div>
-
-          {/* Status, Priority, Due Date Row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Status */}
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                value={editedTask.status}
-                onValueChange={(value: TaskStatus) => setEditedTask({ ...editedTask, status: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="not-started">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      Not Started
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="ongoing">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4" />
-                      Ongoing
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="completed">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4" />
-                      Completed
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Priority */}
-            <div className="space-y-2">
-              <Label>Priority</Label>
-              <Select
-                value={editedTask.priority || "medium"}
-                onValueChange={(value: TaskPriority) => setEditedTask({ ...editedTask, priority: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(priorityConfig).map(([key, config]) => {
-                    const Icon = config.icon;
-                    return (
-                      <SelectItem key={key} value={key}>
-                        <div className="flex items-center gap-2">
-                          <Icon className={`h-4 w-4 ${config.color}`} />
-                          {config.label}
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Due Date */}
-            <div className="space-y-2">
-              <Label>Due Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !selectedDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => {
-                      setSelectedDate(date);
-                      setEditedTask({ ...editedTask, dueDate: date ? date.toISOString() : undefined });
-                    }}
-                    initialFocus
-                  />
-                  {selectedDate && (
-                    <div className="p-3 border-t">
-                      <Button
-                        variant="ghost"
-                        className="w-full"
-                        onClick={() => {
-                          setSelectedDate(undefined);
-                          setEditedTask({ ...editedTask, dueDate: undefined });
-                        }}
-                      >
-                        Clear Date
-                      </Button>
-                    </div>
-                  )}
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-
-          {/* Time Estimate */}
-          <div className="space-y-2">
-            <Label htmlFor="time-estimate">Time Estimate (minutes)</Label>
-            <Input
-              id="time-estimate"
-              type="number"
-              min="0"
-              value={editedTask.timeEstimate || ""}
-              onChange={(e) => setEditedTask({ ...editedTask, timeEstimate: parseInt(e.target.value) || undefined })}
-              placeholder="How long will this take?"
-            />
-          </div>
-
-          {/* Tags */}
-          <div className="space-y-2">
-            <Label>Tags</Label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {(editedTask.tags || []).map((tag) => (
-                <Badge
-                  key={tag.id}
-                  style={{ backgroundColor: tag.color }}
-                  className="gap-1 text-white"
-                >
-                  {tag.name}
-                  <X
-                    className="h-3 w-3 cursor-pointer hover:opacity-70"
-                    onClick={() => removeTag(tag.id)}
-                  />
-                </Badge>
-              ))}
-            </div>
-            <div className="space-y-2">
-              <div className="flex flex-wrap gap-2">
-                {predefinedTags.map((tag) => (
-                  <Button
-                    key={tag.name}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => addTag(tag.name, tag.color)}
-                    className="gap-1"
-                    disabled={(editedTask.tags || []).some(t => t.name === tag.name)}
-                  >
-                    <Tag className="h-3 w-3" style={{ color: tag.color }} />
-                    {tag.name}
-                  </Button>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Custom tag name"
-                  value={customTagName}
-                  onChange={(e) => setCustomTagName(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addCustomTag()}
-                />
-                <Input
-                  type="color"
-                  value={customTagColor}
-                  onChange={(e) => setCustomTagColor(e.target.value)}
-                  className="w-20"
-                />
-                <Button onClick={addCustomTag} disabled={!customTagName.trim()}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Subtasks */}
-          <div className="space-y-2">
-            <Label>Subtasks</Label>
-            <div className="space-y-2">
-              {(editedTask.subTasks || []).map((subTask) => (
-                <div key={subTask.id} className="flex items-center gap-2 p-2 border rounded-md">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => toggleSubTask(subTask.id)}
-                  >
-                    {subTask.completed ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Circle className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <span className={cn("flex-1", subTask.completed && "line-through text-muted-foreground")}>
-                    {subTask.text}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => removeSubTask(subTask.id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+      {/* Status, Priority, Due Date Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Status */}
+        <div className="space-y-2">
+          <Label>Status</Label>
+          <Select
+            value={editedTask.status}
+            onValueChange={(value: TaskStatus) => setEditedTask({ ...editedTask, status: value })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="not-started">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Not Started
                 </div>
-              ))}
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add a subtask..."
-                  value={newSubTask}
-                  onChange={(e) => setNewSubTask(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addSubTask()}
-                />
-                <Button onClick={addSubTask} disabled={!newSubTask.trim()}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
+              </SelectItem>
+              <SelectItem value="ongoing">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Ongoing
+                </div>
+              </SelectItem>
+              <SelectItem value="completed">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Completed
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={!editedTask.text?.trim() || isSaving}>
-            {isSaving ? "Saving..." : "Save Changes"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        {/* Priority */}
+        <div className="space-y-2">
+          <Label>Priority</Label>
+          <Select
+            value={editedTask.priority || "medium"}
+            onValueChange={(value: TaskPriority) => setEditedTask({ ...editedTask, priority: value })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(priorityConfig).map(([key, config]) => {
+                const Icon = config.icon;
+                return (
+                  <SelectItem key={key} value={key}>
+                    <div className="flex items-center gap-2">
+                      <Icon className={`h-4 w-4 ${config.color}`} />
+                      {config.label}
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Due Date */}
+        <div className="space-y-2">
+          <Label>Due Date</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !selectedDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => {
+                  setSelectedDate(date);
+                  setEditedTask({ ...editedTask, dueDate: date ? date.toISOString() : undefined });
+                }}
+                initialFocus
+              />
+              {selectedDate && (
+                <div className="p-3 border-t">
+                  <Button
+                    variant="ghost"
+                    className="w-full"
+                    onClick={() => {
+                      setSelectedDate(undefined);
+                      setEditedTask({ ...editedTask, dueDate: undefined });
+                    }}
+                  >
+                    Clear Date
+                  </Button>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+
+      {/* Time Estimate */}
+      <div className="space-y-2">
+        <Label htmlFor="time-estimate">Time Estimate (minutes)</Label>
+        <Input
+          id="time-estimate"
+          type="number"
+          min="0"
+          value={editedTask.timeEstimate || ""}
+          onChange={(e) => setEditedTask({ ...editedTask, timeEstimate: parseInt(e.target.value) || undefined })}
+          placeholder="How long will this take?"
+        />
+      </div>
+
+      {/* Tags */}
+      <div className="space-y-2">
+        <Label>Tags</Label>
+        <div className="flex flex-wrap gap-2 mb-2">
+          {(editedTask.tags || []).map((tag) => (
+            <Badge
+              key={tag.id}
+              style={{ backgroundColor: tag.color }}
+              className="gap-1 text-white"
+            >
+              {tag.name}
+              <X
+                className="h-3 w-3 cursor-pointer hover:opacity-70"
+                onClick={() => removeTag(tag.id)}
+              />
+            </Badge>
+          ))}
+        </div>
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
+            {predefinedTags.map((tag) => (
+              <Button
+                key={tag.name}
+                variant="outline"
+                size="sm"
+                onClick={() => addTag(tag.name, tag.color)}
+                className="gap-1"
+                disabled={(editedTask.tags || []).some(t => t.name === tag.name)}
+              >
+                <Tag className="h-3 w-3" style={{ color: tag.color }} />
+                {tag.name}
+              </Button>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Custom tag name"
+              value={customTagName}
+              onChange={(e) => setCustomTagName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addCustomTag()}
+            />
+            <Input
+              type="color"
+              value={customTagColor}
+              onChange={(e) => setCustomTagColor(e.target.value)}
+              className="w-20"
+            />
+            <Button onClick={addCustomTag} disabled={!customTagName.trim()}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Subtasks */}
+      <div className="space-y-2">
+        <Label>Subtasks</Label>
+        <div className="space-y-2">
+          {(editedTask.subTasks || []).map((subTask) => (
+            <div key={subTask.id} className="flex items-center gap-2 p-2 border rounded-md">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
+                onClick={() => toggleSubTask(subTask.id)}
+              >
+                {subTask.completed ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Circle className="h-4 w-4" />
+                )}
+              </Button>
+              <span className={cn("flex-1", subTask.completed && "line-through text-muted-foreground")}>
+                {subTask.text}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
+                onClick={() => removeSubTask(subTask.id)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <div className="flex gap-2">
+            <Input
+              placeholder="Add a subtask..."
+              value={newSubTask}
+              onChange={(e) => setNewSubTask(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addSubTask()}
+            />
+            <Button onClick={addSubTask} disabled={!newSubTask.trim()}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (isDesktop) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Task</DialogTitle>
+            <DialogDescription>
+              Update task details, add subtasks, set priorities and more.
+            </DialogDescription>
+          </DialogHeader>
+          {FormContent}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={!editedTask.text?.trim() || isSaving}>
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent>
+        <div className="mx-auto w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DrawerHeader>
+            <DrawerTitle>Edit Task</DrawerTitle>
+            <DrawerDescription>
+              Update task details, add subtasks, set priorities and more.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4">
+            {FormContent}
+          </div>
+          <DrawerFooter>
+            <Button onClick={handleSave} disabled={!editedTask.text?.trim() || isSaving}>
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+            <DrawerClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </div>
+      </DrawerContent>
+    </Drawer>
   );
 }
-

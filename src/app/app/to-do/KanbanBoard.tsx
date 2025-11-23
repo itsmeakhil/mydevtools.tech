@@ -132,7 +132,7 @@ export default function KanbanBoard({
       {/* Mobile View: Tabs */}
       <div className="md:hidden h-full flex flex-col">
         <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as Status)} className="h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
+          <TabsList className="grid w-full grid-cols-3 mb-4 h-12 bg-muted/50 p-1 rounded-xl">
             {columns.map((col) => {
               const config = STATUS_CONFIG[col.id];
               return (
@@ -140,12 +140,16 @@ export default function KanbanBoard({
                   key={col.id}
                   value={col.id}
                   className={cn(
-                    "text-xs px-1",
+                    "text-xs sm:text-sm font-medium rounded-lg transition-all duration-200",
+                    "data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:scale-[1.02]",
                     activeTab === col.id && config.color
                   )}
                 >
                   <span className="truncate">{col.title}</span>
-                  <span className="ml-1.5 text-[10px] opacity-70 bg-muted px-1.5 py-0.5 rounded-full">
+                  <span className={cn(
+                    "ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full transition-colors",
+                    activeTab === col.id ? "bg-primary/10" : "bg-muted-foreground/10"
+                  )}>
                     {tasksByStatus[col.id].length}
                   </span>
                 </TabsTrigger>

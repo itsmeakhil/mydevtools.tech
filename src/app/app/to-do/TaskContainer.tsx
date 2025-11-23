@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import TaskForm from "@/app/app/to-do/TaskForm";
@@ -8,15 +8,26 @@ import TaskList from "@/app/app/to-do/TaskList";
 import KanbanBoard from "@/app/app/to-do/KanbanBoard";
 import PaginationDemo from "@/app/app/to-do/PaginationS";
 import { useTaskContext } from "@/app/app/to-do/context/TaskContext";
-import { ListTodo, Circle, LayoutGrid, List, Search, X } from "lucide-react";
+import { ListTodo, Circle, LayoutGrid, List, Search, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { STATUS_CONFIG } from "./config/constants";
 import { cn } from "@/lib/utils";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerClose,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 
 export const TaskContainer = () => {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const taskFormInputRef = useRef<HTMLInputElement>(null);
   const {
@@ -79,8 +90,13 @@ export const TaskContainer = () => {
   // Calculate statistics using all tasks stats
   const completionRate = allTaskStats.total > 0 ? Math.round((allTaskStats.completed / allTaskStats.total) * 100) : 0;
 
+  const handleAddTask = (taskText: string) => {
+    addTask(taskText);
+    setIsDrawerOpen(false);
+  };
+
   return (
-    <div className="h-screen bg-gradient-to-br from-background via-background to-muted/20 ml-0 mr-0 px-0 w-full flex flex-col overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-background via-background to-muted/20 ml-0 mr-0 px-0 w-full flex flex-col overflow-hidden relative">
       <div className="flex flex-col gap-3 px-2 md:px-4 lg:px-6 py-2 md:py-4 flex-1 overflow-hidden">
         {/* Enhanced Header */}
         <Card className="border shadow-lg bg-card/50 backdrop-blur-sm">
@@ -256,8 +272,10 @@ export const TaskContainer = () => {
           </CardHeader>
         </Card>
 
-        {/* Task Form */}
-        <TaskForm onAddTask={addTask} inputRef={taskFormInputRef} />
+        {/* Task Form - Hidden on mobile, visible on desktop */}
+        <div className="hidden md:block">
+          <TaskForm onAddTask={addTask} inputRef={taskFormInputRef} />
+        </div>
 
         {/* Task View */}
         <div className="flex-1 overflow-hidden flex flex-col">
@@ -306,7 +324,37 @@ export const TaskContainer = () => {
             </>
           )}
         </div>
+      </div>
 
+      {/* Floating Action Button (FAB) - Mobile Only */}
+      <div className="md:hidden fixed bottom-6 right-6 z-50">
+        <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+          <DrawerTrigger asChild>
+            <Button
+              size="icon"
+              className="h-14 w-14 rounded-full shadow-xl bg-primary hover:bg-primary/90 text-primary-foreground transition-transform active:scale-95"
+            >
+              <Plus className="h-6 w-6" />
+              <span className="sr-only">Add Task</span>
+            </Button>
+          </DrawerTrigger>
+          <DrawerContent>
+            <div className="mx-auto w-full max-w-sm">
+              <DrawerHeader>
+                <DrawerTitle>Add New Task</DrawerTitle>
+                <DrawerDescription>Create a new task to track your progress.</DrawerDescription>
+              </DrawerHeader>
+              <div className="p-4 pb-0">
+                <TaskForm onAddTask={handleAddTask} />
+              </div>
+              <DrawerFooter>
+                <DrawerClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DrawerClose>
+              </DrawerFooter>
+            </div>
+          </DrawerContent>
+        </Drawer>
       </div>
     </div>
   );

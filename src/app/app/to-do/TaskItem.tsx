@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import DeleteButton from "../../../components/ui/DeleteButton";
 import {
-  Edit, Calendar, Tag, MoreVertical, Copy, Check, Trash2, CheckCircle2
+  Edit, Calendar, Tag, MoreVertical, Copy, Check, Trash2, CheckCircle2, Archive
 } from "lucide-react";
 import TaskEditDialog from "./TaskEditDialog";
 import { differenceInDays, isPast, parseISO, format, isValid, parse } from "date-fns";
@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { STATUS_CONFIG, PRIORITY_CONFIG } from "./config/constants";
+import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 
 // Helper to safely parse and format dates
 const safeFormatDate = (dateString: string | undefined, formatStr: string): string => {
@@ -162,6 +163,25 @@ export default function TaskItem({
   const isOverdue = dueDateObj && isPast(dueDateObj) && task.status !== "completed";
   const dueInDays = dueDateObj ? differenceInDays(dueDateObj, new Date()) : null;
 
+  // Swipe logic
+  const x = useMotionValue(0);
+  const opacityRight = useTransform(x, [50, 100], [0, 1]);
+  const opacityLeft = useTransform(x, [-50, -100], [0, 1]);
+  const bgRight = useTransform(x, [0, 100], ["rgba(34, 197, 94, 0)", "rgba(34, 197, 94, 0.2)"]); // Green
+  const bgLeft = useTransform(x, [0, -100], ["rgba(239, 68, 68, 0)", "rgba(239, 68, 68, 0.2)"]); // Red
+
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (info.offset.x > 100) {
+      // Swipe Right -> Complete
+      handleQuickComplete();
+    } else if (info.offset.x < -100) {
+      // Swipe Left -> Delete
+      if (window.confirm("Are you sure you want to delete this task?")) {
+        onDeleteTask(task.id);
+      }
+    }
+  };
+
   const handleSaveEdit = async (updates: Partial<Task>) => {
     await onUpdateTask(task.id, updates);
   };
@@ -176,6 +196,11 @@ export default function TaskItem({
     if (!wasCompleted && willComplete) {
       setJustCompleted(true);
       setTimeout(() => setJustCompleted(false), 2000);
+
+      // Haptic feedback
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(50);
+      }
     }
   };
 
@@ -197,268 +222,296 @@ export default function TaskItem({
   return (
     <>
       <li
-        className={cn(
-          "group relative mb-3 p-3 md:p-4 rounded-xl border transition-all duration-300",
-          "hover:shadow-md hover:scale-[1.005] bg-card",
-          "hover:border-primary/30",
-          task.status === "completed" && "opacity-75 bg-muted/30",
-          justCompleted && "animate-pulse ring-2 ring-green-500/50"
-        )}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        className="relative mb-3 group"
         role="listitem"
         aria-label={`Task: ${task.text}`}
       >
-        <div className="flex items-start gap-3 md:gap-4">
-          {/* Status Icon - Clickable for quick toggle */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={handleQuickComplete}
-                  className={cn(
-                    "flex items-center justify-center p-2.5 rounded-lg transition-all duration-200",
-                    "hover:scale-110 active:scale-95 cursor-pointer",
-                    "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                    statusConfig.bgColor,
-                    statusConfig.color,
-                    "min-w-[40px] h-[40px] md:min-w-[44px] md:h-[44px]"
-                  )}
-                  aria-label={`Mark as ${task.status === "completed" ? "not completed" : "completed"}`}
-                >
-                  <StatusIcon className="h-5 w-5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Click to toggle completion</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+        {/* Swipe Backgrounds */}
+        <div className="absolute inset-0 rounded-xl overflow-hidden flex pointer-events-none">
+          {/* Left Background (Complete) */}
+          <motion.div
+            style={{ opacity: opacityRight, backgroundColor: bgRight }}
+            className="flex-1 flex items-center justify-start pl-6"
+          >
+            <CheckCircle2 className="h-6 w-6 text-green-600" />
+          </motion.div>
 
-          {/* Task Content */}
-          <div className="flex-1 min-w-0 space-y-2">
-            <div className="flex items-start gap-2 flex-wrap">
-              <h3
-                className={cn(
-                  "block text-sm md:text-base font-semibold transition-all flex-1 min-w-[150px]",
-                  task.status === "completed"
-                    ? "text-muted-foreground line-through decoration-muted-foreground/50"
-                    : "text-foreground"
-                )}
-              >
-                {task.text}
-              </h3>
-              {task.priority && task.priority !== "medium" && (
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    PRIORITY_CONFIG[task.priority].color,
-                    PRIORITY_CONFIG[task.priority].bgColor,
-                    PRIORITY_CONFIG[task.priority].borderColor,
-                    "gap-1.5 px-2 py-0.5 border flex-shrink-0"
-                  )}
-                >
-                  {React.createElement(PRIORITY_CONFIG[task.priority].icon, { className: "h-3.5 w-3.5" })}
-                  <span className="text-xs font-medium">{PRIORITY_CONFIG[task.priority].label}</span>
-                </Badge>
-              )}
-            </div>
-
-            {task.description && (
-              <p className="text-xs md:text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-                {task.description}
-              </p>
-            )}
-
-            {/* Tags */}
-            {task.tags && task.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {task.tags.map((tag) => (
-                  <Badge
-                    key={tag.id}
-                    variant="outline"
-                    style={{ borderColor: tag.color, color: tag.color }}
-                    className="text-[10px] md:text-xs gap-1 px-2 py-0.5 hover:bg-muted/50 transition-colors"
-                  >
-                    <Tag className="h-3 w-3" />
-                    {tag.name}
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            {/* Subtasks Progress */}
-            {task.subTasks && task.subTasks.length > 0 && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                <span className="font-medium">
-                  {task.subTasks.filter(st => st.completed).length} / {task.subTasks.length} subtasks
-                </span>
-                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden max-w-[100px]">
-                  <div
-                    className="h-full bg-primary transition-all duration-300"
-                    style={{
-                      width: `${(task.subTasks.filter(st => st.completed).length / task.subTasks.length) * 100}%`
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Metadata */}
-            <div className="flex items-center gap-2 md:gap-4 text-xs text-muted-foreground flex-wrap">
-              {task.dueDate && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className={cn(
-                        "flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50",
-                        isOverdue && "text-red-500 bg-red-50 dark:bg-red-950/20 font-medium"
-                      )}>
-                        <Calendar className="h-3.5 w-3.5" />
-                        <span>
-                          {isOverdue
-                            ? "Overdue"
-                            : dueInDays === 0
-                              ? "Due today"
-                              : dueInDays === 1
-                                ? "Due tomorrow"
-                                : dueInDays !== null && dueInDays > 0
-                                  ? `Due in ${dueInDays} days`
-                                  : `Due ${Math.abs(dueInDays!)} days ago`
-                          }
-                        </span>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Due: {task.dueDate}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-
-              {task.timeEstimate && (
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50">
-                  <span>⏱️</span>
-                  <span>{task.timeEstimate}m</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-2 flex-shrink-0 self-start md:self-center">
-            {/* Status Dropdown - Hidden on mobile to save space, accessible via menu */}
-            <div className="hidden md:block">
-              <Select
-                value={task.status}
-                onValueChange={(newStatus) => handleStatusChange(newStatus as Task["status"])}
-              >
-                <SelectTrigger
-                  className="w-[130px] h-8 text-xs focus:ring-2 focus:ring-primary"
-                  aria-label="Change task status"
-                >
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-
-                <SelectContent>
-                  {Object.values(STATUS_CONFIG).map((config) => (
-                    <SelectItem key={config.id} value={config.id}>
-                      <div className="flex items-center gap-2">
-                        <config.icon className={cn("h-3.5 w-3.5", config.color)} />
-                        <span>{config.label}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Context Menu - Always visible on mobile, hover on desktop */}
-            <div className="md:hidden">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    aria-label="Task options"
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Task
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleCopy}>
-                    {copied ? (
-                      <>
-                        <Check className="h-4 w-4 mr-2" />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-4 w-4 mr-2" />
-                        Copy Task
-                      </>
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <div className="p-2">
-                    <p className="text-xs font-semibold text-muted-foreground mb-2">Status</p>
-                    <div className="grid grid-cols-1 gap-1">
-                      {Object.values(STATUS_CONFIG).map((config) => (
-                        <Button
-                          key={config.id}
-                          variant={task.status === config.id ? "secondary" : "ghost"}
-                          size="sm"
-                          className="justify-start h-7 text-xs"
-                          onClick={() => handleStatusChange(config.id as Task["status"])}
-                        >
-                          <config.icon className={cn("h-3.5 w-3.5 mr-2", config.color)} />
-                          {config.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => onDeleteTask(task.id)}
-                    className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Task
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            {/* Desktop Actions */}
-            <div className="hidden md:flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsEditDialogOpen(true)}
-                className={cn(
-                  "h-8 w-8 p-0 transition-opacity",
-                  isHovered ? "opacity-100" : "opacity-0 group-hover:opacity-70"
-                )}
-                aria-label="Edit task"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-
-              <div className={cn(
-                "transition-opacity flex items-center justify-center",
-                isHovered ? "opacity-100" : "opacity-0 group-hover:opacity-70"
-              )}>
-                <DeleteButton onDelete={() => onDeleteTask(task.id)} />
-              </div>
-            </div>
-          </div>
+          {/* Right Background (Delete) */}
+          <motion.div
+            style={{ opacity: opacityLeft, backgroundColor: bgLeft }}
+            className="flex-1 flex items-center justify-end pr-6"
+          >
+            <Trash2 className="h-6 w-6 text-red-600" />
+          </motion.div>
         </div>
+
+        {/* Draggable Content */}
+        <motion.div
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          onDragEnd={handleDragEnd}
+          style={{ x }}
+          className={cn(
+            "relative p-3 md:p-4 rounded-xl border transition-shadow duration-300 bg-card",
+            "hover:shadow-md hover:scale-[1.005]",
+            "hover:border-primary/30",
+            task.status === "completed" && "opacity-75 bg-muted/30",
+            justCompleted && "animate-pulse ring-2 ring-green-500/50"
+          )}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <div className="flex items-start gap-3 md:gap-4">
+            {/* Status Icon - Clickable for quick toggle */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleQuickComplete}
+                    className={cn(
+                      "flex items-center justify-center p-2.5 rounded-lg transition-all duration-200",
+                      "hover:scale-110 active:scale-95 cursor-pointer",
+                      "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                      statusConfig.bgColor,
+                      statusConfig.color,
+                      "min-w-[40px] h-[40px] md:min-w-[44px] md:h-[44px]"
+                    )}
+                    aria-label={`Mark as ${task.status === "completed" ? "not completed" : "completed"}`}
+                  >
+                    <StatusIcon className="h-5 w-5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Click to toggle completion</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Task Content */}
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex items-start gap-2 flex-wrap">
+                <h3
+                  className={cn(
+                    "block text-sm md:text-base font-semibold transition-all flex-1 min-w-[150px]",
+                    task.status === "completed"
+                      ? "text-muted-foreground line-through decoration-muted-foreground/50"
+                      : "text-foreground"
+                  )}
+                >
+                  {task.text}
+                </h3>
+                {task.priority && task.priority !== "medium" && (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      PRIORITY_CONFIG[task.priority].color,
+                      PRIORITY_CONFIG[task.priority].bgColor,
+                      PRIORITY_CONFIG[task.priority].borderColor,
+                      "gap-1.5 px-2 py-0.5 border flex-shrink-0"
+                    )}
+                  >
+                    {React.createElement(PRIORITY_CONFIG[task.priority].icon, { className: "h-3.5 w-3.5" })}
+                    <span className="text-xs font-medium">{PRIORITY_CONFIG[task.priority].label}</span>
+                  </Badge>
+                )}
+              </div>
+
+              {task.description && (
+                <p className="text-xs md:text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                  {task.description}
+                </p>
+              )}
+
+              {/* Tags */}
+              {task.tags && task.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {task.tags.map((tag) => (
+                    <Badge
+                      key={tag.id}
+                      variant="outline"
+                      style={{ borderColor: tag.color, color: tag.color }}
+                      className="text-[10px] md:text-xs gap-1 px-2 py-0.5 hover:bg-muted/50 transition-colors"
+                    >
+                      <Tag className="h-3 w-3" />
+                      {tag.name}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
+              {/* Subtasks Progress */}
+              {task.subTasks && task.subTasks.length > 0 && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span className="font-medium">
+                    {task.subTasks.filter(st => st.completed).length} / {task.subTasks.length} subtasks
+                  </span>
+                  <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden max-w-[100px]">
+                    <div
+                      className="h-full bg-primary transition-all duration-300"
+                      style={{
+                        width: `${(task.subTasks.filter(st => st.completed).length / task.subTasks.length) * 100}%`
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Metadata */}
+              <div className="flex items-center gap-2 md:gap-4 text-xs text-muted-foreground flex-wrap">
+                {task.dueDate && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className={cn(
+                          "flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50",
+                          isOverdue && "text-red-500 bg-red-50 dark:bg-red-950/20 font-medium"
+                        )}>
+                          <Calendar className="h-3.5 w-3.5" />
+                          <span>
+                            {isOverdue
+                              ? "Overdue"
+                              : dueInDays === 0
+                                ? "Due today"
+                                : dueInDays === 1
+                                  ? "Due tomorrow"
+                                  : dueInDays !== null && dueInDays > 0
+                                    ? `Due in ${dueInDays} days`
+                                    : `Due ${Math.abs(dueInDays!)} days ago`
+                            }
+                          </span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Due: {task.dueDate}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+
+                {task.timeEstimate && (
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50">
+                    <span>⏱️</span>
+                    <span>{task.timeEstimate}m</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 flex-shrink-0 self-start md:self-center">
+              {/* Status Dropdown - Hidden on mobile to save space, accessible via menu */}
+              <div className="hidden md:block">
+                <Select
+                  value={task.status}
+                  onValueChange={(newStatus) => handleStatusChange(newStatus as Task["status"])}
+                >
+                  <SelectTrigger
+                    className="w-[130px] h-8 text-xs focus:ring-2 focus:ring-primary"
+                    aria-label="Change task status"
+                  >
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    {Object.values(STATUS_CONFIG).map((config) => (
+                      <SelectItem key={config.id} value={config.id}>
+                        <div className="flex items-center gap-2">
+                          <config.icon className={cn("h-3.5 w-3.5", config.color)} />
+                          <span>{config.label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Context Menu - Always visible on mobile, hover on desktop */}
+              <div className="md:hidden">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      aria-label="Task options"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Task
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleCopy}>
+                      {copied ? (
+                        <>
+                          <Check className="h-4 w-4 mr-2" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copy Task
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <div className="p-2">
+                      <p className="text-xs font-semibold text-muted-foreground mb-2">Status</p>
+                      <div className="grid grid-cols-1 gap-1">
+                        {Object.values(STATUS_CONFIG).map((config) => (
+                          <Button
+                            key={config.id}
+                            variant={task.status === config.id ? "secondary" : "ghost"}
+                            size="sm"
+                            className="justify-start h-7 text-xs"
+                            onClick={() => handleStatusChange(config.id as Task["status"])}
+                          >
+                            <config.icon className={cn("h-3.5 w-3.5 mr-2", config.color)} />
+                            {config.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => onDeleteTask(task.id)}
+                      className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Task
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {/* Desktop Actions */}
+              <div className="hidden md:flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsEditDialogOpen(true)}
+                  className={cn(
+                    "h-8 w-8 p-0 transition-opacity",
+                    isHovered ? "opacity-100" : "opacity-0 group-hover:opacity-70"
+                  )}
+                  aria-label="Edit task"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+
+                <div className={cn(
+                  "transition-opacity flex items-center justify-center",
+                  isHovered ? "opacity-100" : "opacity-0 group-hover:opacity-70"
+                )}>
+                  <DeleteButton onDelete={() => onDeleteTask(task.id)} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </li>
 
       <TaskEditDialog
