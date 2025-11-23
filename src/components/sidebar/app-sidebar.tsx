@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/sidebar'
 import { NavGroup } from './nav-group'
 import { NavUser } from './nav-user'
-import { Wrench } from 'lucide-react'
+import { Logo } from '../logo'
 import { sidebarData } from './data/sidebar-data'
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth'
 import { auth } from '../../database/firebase'
@@ -23,7 +23,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   })
 
   const router = useRouter();
-  
+
   const handleSignOut = async () => {
     try {
       await firebaseSignOut(auth);
@@ -50,11 +50,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible='icon' variant='floating' {...props}>
       <SidebarHeader className="border-b border-border/40 pb-3">
-        <div 
+        <div
           className="flex items-center space-x-3 px-3 py-2 transition-all duration-200 hover:cursor-pointer hover:bg-accent/50 rounded-md bg-accent/20"
           onClick={() => router.push('/dashboard')}
         >
-          <Wrench className="h-8 w-8 text-primary hover:scale-105 transition-transform duration-200 group-data-[state=collapsed]:hidden" />
+          <div className="group-data-[state=collapsed]:hidden">
+            <Logo size={32} showText={false} />
+          </div>
           <div className="group-data-[state=collapsed]:hidden">
             <h2 className="text-lg font-semibold tracking-tight text-primary/90 drop-shadow-sm">MyDevTools</h2>
             <p className="text-xs text-muted-foreground/70 font-medium tracking-wide">Developer&apos;s Toolkit</p>
@@ -67,7 +69,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ))}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user} onSignout={handleSignOut}/>
+        <NavUser user={user} onSignout={handleSignOut} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

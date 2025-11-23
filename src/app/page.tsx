@@ -102,35 +102,48 @@ export default function Page() {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative py-24 lg:py-32 overflow-hidden">
-        <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]">
-          <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-primary/20 opacity-20 blur-[100px]"></div>
+      <section className="relative py-16 md:py-24 lg:py-32 overflow-hidden">
+        {/* OpenStatus-inspired Background */}
+        <div className="absolute inset-0 -z-10 h-full w-full bg-background">
+          {/* Fine Dot Grid Pattern */}
+          <div
+            className="absolute inset-0 opacity-30"
+            style={{
+              backgroundImage: `radial-gradient(circle, hsl(var(--foreground) / 0.15) 1px, transparent 1px)`,
+              backgroundSize: '32px 32px'
+            }}
+          />
+
+          {/* Large Animated Gradient Blurs - Optimized for mobile */}
+          <div className="absolute top-0 left-1/4 w-[500px] md:w-[800px] h-[500px] md:h-[800px] rounded-full bg-primary/40 opacity-40 blur-[100px] md:blur-[120px] animate-float" />
+          <div className="absolute top-1/4 right-1/4 w-[400px] md:w-[600px] h-[400px] md:h-[600px] rounded-full bg-blue-500/30 opacity-40 blur-[80px] md:blur-[100px] animate-float-delayed" />
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[450px] md:w-[700px] h-[450px] md:h-[700px] rounded-full bg-purple-500/25 opacity-50 blur-[90px] md:blur-[110px] animate-pulse-glow" />
         </div>
 
         <div className="container px-4 md:px-6 mx-auto text-center">
-          <div className="space-y-4 max-w-3xl mx-auto">
-            <Badge variant="secondary" className="px-4 py-2 text-sm font-medium rounded-full border border-primary/20 bg-primary/5 text-primary animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <Sparkles className="w-4 h-4 mr-2 inline-block" />
+          <div className="space-y-6 md:space-y-4 max-w-3xl mx-auto">
+            <Badge variant="secondary" className="px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full border border-primary/20 bg-primary/5 text-primary animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <Sparkles className="w-3 md:w-4 h-3 md:h-4 mr-1.5 md:mr-2 inline-block" />
               The Ultimate Developer Toolkit
             </Badge>
 
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-foreground animate-in fade-in slide-in-from-bottom-6 duration-700">
-              Simplify Your <br className="hidden md:block" />
+            <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-foreground animate-in fade-in slide-in-from-bottom-6 duration-700 leading-tight">
+              Simplify Your <br className="hidden sm:block" />
               <span className="text-primary bg-clip-text">Development Workflow</span>
             </h1>
 
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 px-2">
               Access a comprehensive suite of developer tools in one place.
               From formatters to generators, we've got everything you need to code faster.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 animate-in fade-in slide-in-from-bottom-10 duration-1000">
-              <Button size="lg" className="h-12 px-8 text-base rounded-full" asChild>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 md:gap-4 pt-6 md:pt-8 animate-in fade-in slide-in-from-bottom-10 duration-1000 px-4 sm:px-0">
+              <Button size="lg" className="h-11 md:h-12 px-6 md:px-8 text-sm md:text-base rounded-full w-full sm:w-auto" asChild>
                 <Link href="/dashboard">
                   Get Started <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="h-12 px-8 text-base rounded-full" asChild>
+              <Button size="lg" variant="outline" className="h-11 md:h-12 px-6 md:px-8 text-sm md:text-base rounded-full w-full sm:w-auto" asChild>
                 <Link href="https://github.com/itsmeakhil/mydevtools.tech" target="_blank">
                   View on GitHub
                 </Link>
@@ -141,19 +154,30 @@ export default function Page() {
       </section>
 
       {/* Features Grid */}
-      <section className="py-20 bg-muted/30">
+      <section className="py-12 md:py-20 relative overflow-hidden">
+        {/* Subtle background with dot pattern */}
+        <div className="absolute inset-0 -z-10 bg-muted/30">
+          <div
+            className="absolute inset-0 opacity-20"
+            style={{
+              backgroundImage: `radial-gradient(circle, hsl(var(--foreground) / 0.1) 1px, transparent 1px)`,
+              backgroundSize: '32px 32px'
+            }}
+          />
+        </div>
+
         <div className="container px-4 md:px-6 mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
             {features.map((feature, index) => (
               <Card key={index} className="border-none shadow-none bg-transparent">
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                    <feature.icon className="w-6 h-6 text-primary" />
+                <CardHeader className="pb-3 md:pb-6">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-3 md:mb-4">
+                    <feature.icon className="w-5 h-5 md:w-6 md:h-6 text-primary" />
                   </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  <CardTitle className="text-lg md:text-xl">{feature.title}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">{feature.description}</p>
+                <CardContent className="pt-0">
+                  <p className="text-sm md:text-base text-muted-foreground">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -162,29 +186,29 @@ export default function Page() {
       </section>
 
       {/* Tools Showcase */}
-      <section id="features" className="py-24">
+      <section id="features" className="py-16 md:py-24">
         <div className="container px-4 md:px-6 mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">Popular Tools</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-3 md:mb-4">Popular Tools</h2>
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
               Discover our most used utilities designed to boost your productivity.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {tools.map((tool, index) => (
               <Link key={index} href={tool.href}>
                 <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-border/50 hover:border-primary/50 group cursor-pointer">
-                  <CardHeader>
-                    <div className={`w-12 h-12 rounded-lg ${tool.bgColor} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-300`}>
-                      <tool.icon className={`w-6 h-6 ${tool.color}`} />
+                  <CardHeader className="pb-3 md:pb-6">
+                    <div className={`w-10 h-10 md:w-12 md:h-12 rounded-lg ${tool.bgColor} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-300`}>
+                      <tool.icon className={`w-5 h-5 md:w-6 md:h-6 ${tool.color}`} />
                     </div>
-                    <CardTitle className="text-xl group-hover:text-primary transition-colors">
+                    <CardTitle className="text-lg md:text-xl group-hover:text-primary transition-colors">
                       {tool.title}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground leading-relaxed">
+                  <CardContent className="pt-0">
+                    <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                       {tool.description}
                     </p>
                   </CardContent>
@@ -193,8 +217,8 @@ export default function Page() {
             ))}
           </div>
 
-          <div className="mt-12 text-center">
-            <Button variant="secondary" size="lg" className="rounded-full" asChild>
+          <div className="mt-8 md:mt-12 text-center">
+            <Button variant="secondary" size="lg" className="rounded-full h-11 md:h-12 px-6 md:px-8 text-sm md:text-base" asChild>
               <Link href="/dashboard">
                 Explore All Tools <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -204,24 +228,31 @@ export default function Page() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-primary/5 relative overflow-hidden">
+      <section className="py-16 md:py-24 bg-primary/5 relative overflow-hidden">
         <div className="container px-4 md:px-6 mx-auto text-center relative z-10">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6">Ready to Boost Your Productivity?</h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4 md:mb-6 px-2">Ready to Boost Your Productivity?</h2>
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 md:mb-10 px-4">
             Join thousands of developers who use MyDevTools to streamline their daily tasks.
             Open source, free, and privacy-focused.
           </p>
-          <Button size="lg" className="h-14 px-10 text-lg rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300" asChild>
+          <Button size="lg" className="h-12 md:h-14 px-8 md:px-10 text-base md:text-lg rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto max-w-sm sm:max-w-none" asChild>
             <Link href="/dashboard">
               Start Using Tools Now
             </Link>
           </Button>
         </div>
 
-        {/* Decorative elements */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 opacity-30">
-          <div className="absolute -top-[50%] -left-[20%] w-[70%] h-[70%] rounded-full bg-primary/20 blur-[120px]" />
-          <div className="absolute -bottom-[50%] -right-[20%] w-[70%] h-[70%] rounded-full bg-primary/20 blur-[120px]" />
+        {/* OpenStatus-style Decorative Background - Optimized for mobile */}
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          <div
+            className="absolute inset-0 opacity-20"
+            style={{
+              backgroundImage: `radial-gradient(circle, hsl(var(--foreground) / 0.1) 1px, transparent 1px)`,
+              backgroundSize: '32px 32px'
+            }}
+          />
+          <div className="absolute top-1/2 left-1/4 w-[400px] md:w-[700px] h-[400px] md:h-[700px] rounded-full bg-primary/25 blur-[100px] md:blur-[140px] animate-float" />
+          <div className="absolute bottom-1/2 right-1/4 w-[350px] md:w-[600px] h-[350px] md:h-[600px] rounded-full bg-blue-500/20 blur-[90px] md:blur-[120px] animate-float-delayed" />
         </div>
       </section>
 

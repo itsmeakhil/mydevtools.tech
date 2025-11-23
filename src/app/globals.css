@@ -42,8 +42,9 @@ body {
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
     --sidebar-width: 247px;
-  --main-content-width: calc(100% - var(--sidebar-width));
+    --main-content-width: calc(100% - var(--sidebar-width));
   }
+
   .dark {
     /* Blue-tinted dark theme - deep blue slate backgrounds */
     --background: 222 18% 8%;
@@ -94,43 +95,43 @@ body {
     --primary-foreground: 0 0% 98%;
     --ring: 217.2 91.2% 59.8%;
   }
-  
+
   :root.purple {
     --primary: 258.3 89.5% 66.3%;
     --primary-foreground: 0 0% 98%;
     --ring: 258.3 89.5% 66.3%;
   }
-  
+
   :root.green {
     --primary: 142.1 76.2% 36.3%;
     --primary-foreground: 0 0% 98%;
     --ring: 142.1 76.2% 36.3%;
   }
-  
+
   :root.orange {
     --primary: 24.6 95% 53.1%;
     --primary-foreground: 0 0% 98%;
     --ring: 24.6 95% 53.1%;
   }
-  
+
   :root.red {
     --primary: 0 72.2% 50.6%;
     --primary-foreground: 0 0% 98%;
     --ring: 0 72.2% 50.6%;
   }
-  
+
   :root.pink {
     --primary: 340.7 82.1% 52.7%;
     --primary-foreground: 0 0% 98%;
     --ring: 340.7 82.1% 52.7%;
   }
-  
+
   :root.cyan {
     --primary: 199.1 89.1% 48.2%;
     --primary-foreground: 0 0% 98%;
     --ring: 199.1 89.1% 48.2%;
   }
-  
+
   :root.indigo {
     --primary: 239.4 83.9% 66.7%;
     --primary-foreground: 0 0% 98%;
@@ -142,37 +143,37 @@ body {
     --primary: 217.2 91.2% 59.8%;
     --sidebar-primary: 217.2 91.2% 59.8%;
   }
-  
+
   .dark.purple {
     --primary: 258.3 89.5% 66.3%;
     --sidebar-primary: 258.3 89.5% 66.3%;
   }
-  
+
   .dark.green {
     --primary: 142.1 70.6% 45.3%;
     --sidebar-primary: 142.1 70.6% 45.3%;
   }
-  
+
   .dark.orange {
     --primary: 24.6 95% 53.1%;
     --sidebar-primary: 24.6 95% 53.1%;
   }
-  
+
   .dark.red {
     --primary: 0 72.2% 50.6%;
     --sidebar-primary: 0 72.2% 50.6%;
   }
-  
+
   .dark.pink {
     --primary: 340.7 82.1% 52.7%;
     --sidebar-primary: 340.7 82.1% 52.7%;
   }
-  
+
   .dark.cyan {
     --primary: 199.1 89.1% 48.2%;
     --sidebar-primary: 199.1 89.1% 48.2%;
   }
-  
+
   .dark.indigo {
     --primary: 239.4 83.9% 66.7%;
     --sidebar-primary: 239.4 83.9% 66.7%;
@@ -208,6 +209,7 @@ body {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -219,63 +221,61 @@ body {
     /* Smooth transitions for theme changes */
     transition: background-color 0.3s ease, color 0.3s ease;
   }
-  
+
   /* Enhanced card shadows in dark mode */
   .dark .shadow {
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
   }
-  
+
   .dark .shadow-md {
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
   }
-  
+
   .dark .shadow-lg {
     box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
   }
-  
+
   .dark .shadow-xl {
     box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.4);
   }
-  
+
   /* Subtle border glow for interactive elements */
   .dark .border-primary\/20 {
     border-color: hsl(var(--primary) / 0.2);
   }
-  
+
   /* Enhanced gradient backgrounds with blue tint */
   .dark .bg-gradient-to-br {
-    background-image: linear-gradient(
-      135deg,
-      hsl(222 18% 8%),
-      hsl(222 16% 6%),
-      hsl(222 12% 10% / 0.3)
-    );
+    background-image: linear-gradient(135deg,
+        hsl(222 18% 8%),
+        hsl(222 16% 6%),
+        hsl(222 12% 10% / 0.3));
   }
-  
+
   /* Gradient background for body */
   .dark body {
     background: linear-gradient(135deg, hsl(222 18% 8%) 0%, hsl(222 18% 6%) 100%);
   }
-  
+
   /* Custom scrollbar for tabs */
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar {
     height: 6px;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background-color: hsl(var(--muted-foreground) / 0.3);
     border-radius: 3px;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background-color: hsl(var(--muted-foreground) / 0.5);
   }
@@ -286,6 +286,7 @@ body {
       opacity: 0;
       transform: translateY(-10px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -296,6 +297,7 @@ body {
     from {
       opacity: 0;
     }
+
     to {
       opacity: 1;
     }
@@ -306,6 +308,7 @@ body {
       opacity: 0;
       transform: scale(0.95);
     }
+
     to {
       opacity: 1;
       transform: scale(1);
@@ -317,6 +320,7 @@ body {
       opacity: 0;
       transform: translateX(-10px);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);
@@ -349,6 +353,7 @@ body {
 
   /* Reduced motion support */
   @media (prefers-reduced-motion: reduce) {
+
     *,
     *::before,
     *::after {
@@ -357,6 +362,77 @@ body {
       transition-duration: 0.01ms !important;
     }
   }
+
+  /* Landing page background animations - Enhanced for visibility */
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+      transform: translate(60px, -60px) scale(1.15);
+    }
+
+    66% {
+      transform: translate(-50px, 50px) scale(0.85);
+    }
+  }
+
+  @keyframes float-delayed {
+
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+      transform: translate(-55px, 55px) scale(1.1);
+    }
+
+    66% {
+      transform: translate(55px, -55px) scale(0.9);
+    }
+  }
+
+  @keyframes pulse-glow {
+
+    0%,
+    100% {
+      opacity: 0.3;
+      transform: scale(1);
+    }
+
+    50% {
+      opacity: 0.6;
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+
+  .animate-float {
+    animation: float 15s ease-in-out infinite;
+  }
+
+  .animate-float-delayed {
+    animation: float-delayed 18s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 8s linear infinite;
+  }
 }
-
-
