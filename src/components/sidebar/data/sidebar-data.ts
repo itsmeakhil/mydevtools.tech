@@ -71,6 +71,12 @@ export const sidebarData: SidebarData = {
           description: 'Capture ideas and organize your thoughts.'
         },
         {
+          title: 'Password Manager',
+          url: '/app/password-manager',
+          icon: IconLock,
+          description: 'Securely store and manage your passwords.'
+        },
+        {
           title: 'URL Shortener',
           url: '/app/url-shortener',
           icon: IconUnlink,

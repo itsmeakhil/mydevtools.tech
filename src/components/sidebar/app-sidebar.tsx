@@ -14,8 +14,10 @@ import { sidebarData } from './data/sidebar-data'
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth'
 import { auth } from '../../database/firebase'
 import { useRouter } from 'next/navigation'
+import { usePasswordStore } from '@/store/password-store'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { lockVault } = usePasswordStore()
   const [user, setUser] = useState({
     name: '',
     email: '',
@@ -24,8 +26,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const router = useRouter();
 
+  // ...
+
   const handleSignOut = async () => {
     try {
+      lockVault() // Clear in-memory state immediately
+
+      // Clear encryption key from IndexedDB
+      if (typeof window !== 'undefined' && window.indexedDB) {
+        await new Promise<void>((resolve) => {
+          const req = window.indexedDB.open("PasswordManagerDB", 1)
+          req.onsuccess = (e: any) => {
+            const db = e.target.result
+            if (db.objectStoreNames.contains("keys")) {
+              const tx = db.transaction("keys", "readwrite")
+              tx.objectStore("keys").delete("vaultKey")
+              tx.oncomplete = () => resolve()
+              tx.onerror = () => resolve()
+            } else {
+              resolve()
+            }
+          }
+          req.onerror = () => resolve()
+        })
+      }
+
       await firebaseSignOut(auth);
       router.push('/login');
     } catch (error) {

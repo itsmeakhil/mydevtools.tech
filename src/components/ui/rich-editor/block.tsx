@@ -160,12 +160,7 @@ export const Block = React.memo(
     // Thanks to structural sharing, this only causes re-render when THIS node changes
     const node = useBlockNode(nodeId)
 
-    // If node not found, return null (shouldn't happen but safe guard)
-    if (!node) {
-      console.warn(`Block: Node ${nodeId} not found`)
-      return null
-    }
-
+    // All hooks must be called before any conditional returns
     const localRef = useRef<HTMLElement | null>(null)
     const isComposingRef = useRef(false)
     const shouldPreserveSelectionRef = useRef(false)
@@ -195,6 +190,12 @@ export const Block = React.memo(
     // Touch/drag state for mobile
     const touchStartRef = useRef<{ x: number; y: number } | null>(null)
     const [isDraggingTouch, setIsDraggingTouch] = useState(false)
+
+    // If node not found, return null AFTER all hooks are called
+    if (!node) {
+      console.warn(`Block: Node ${nodeId} not found`)
+      return null
+    }
 
     // Determine how to render this node
     const renderType = getNodeRenderType(node)
@@ -500,7 +501,7 @@ export const Block = React.memo(
         // ✅ Pass getter function - only called when needed, doesn't cause re-renders
         currentContainer: () =>
           useEditorStore.getState().history[
-            useEditorStore.getState().historyIndex
+          useEditorStore.getState().historyIndex
           ],
         dispatch,
         localRef,
@@ -790,11 +791,10 @@ export const Block = React.memo(
           currentBackgroundColor={backgroundColor}
         >
           <div
-            className={`group relative transition-all ${
-              isDraggingTouch || draggingNodeId === textNode?.id
+            className={`group relative transition-all ${isDraggingTouch || draggingNodeId === textNode?.id
                 ? "scale-95 opacity-50"
                 : ""
-            }`}
+              }`}
             onMouseEnter={() => !readOnly && setIsHovering(true)}
             onMouseLeave={() => !readOnly && setIsHovering(false)}
             style={{

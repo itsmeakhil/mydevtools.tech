@@ -1103,10 +1103,10 @@ export function Editor({
                 <div
                   data-editor-content
                   className={`${notionBased && coverImage
-                      ? "pt-[280px] lg:pt-[420px]"
-                      : notionBased
-                        ? "pt-[30px]"
-                        : "pt-4"
+                    ? "pt-[280px] lg:pt-[420px]"
+                    : notionBased
+                      ? "pt-[30px]"
+                      : "pt-4"
                     } relative px-10 transition-all duration-300`}
                 >
                   {container.children.map((node, index) => {
@@ -1145,10 +1145,10 @@ export function Editor({
                           onDragLeave={handleDragLeave}
                           onDrop={(e) => handleDrop(e, node.id)}
                           className={`relative transition-all ${dragOverNodeId === node.id &&
-                              dropPosition === "before" &&
-                              draggingNodeId !== node.id
-                              ? "before:bg-primary/30 before:absolute before:inset-x-0 before:-top-1 before:z-10 before:h-1 before:rounded-full"
-                              : ""
+                            dropPosition === "before" &&
+                            draggingNodeId !== node.id
+                            ? "before:bg-primary/30 before:absolute before:inset-x-0 before:-top-1 before:z-10 before:h-1 before:rounded-full"
+                            : ""
                             } ${dragOverNodeId === node.id &&
                               dropPosition === "after" &&
                               draggingNodeId !== node.id
