@@ -10,6 +10,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { toast } from "sonner"
 import { doc, deleteDoc } from "firebase/firestore"
 import { db, auth } from "@/database/firebase"
+import { clearKey } from "@/lib/key-storage"
 
 export function PasswordList() {
     const { passwords, deletePassword, lockVault, isLoading } = usePasswordStore()
@@ -51,8 +52,10 @@ export function PasswordList() {
         }
     }
 
-    const handleLock = () => {
+    const handleLock = async () => {
+        await clearKey()
         lockVault()
+        toast.success("Vault locked")
     }
 
     if (isLoading) {
