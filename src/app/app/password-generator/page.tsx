@@ -10,6 +10,9 @@ import { Copy, RefreshCw, Check, Lock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 
+// Note: Metadata must be exported from a Server Component parent
+// This is handled by creating a separate layout.tsx or moving metadata to parent
+
 export default function PasswordGeneratorPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-3 md:p-4 lg:p-6">

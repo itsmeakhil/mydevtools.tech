@@ -14,18 +14,58 @@ const geistMono = NextGeistMono({
   display: 'swap'
 })
 
+import { siteMetadata } from "@/lib/metadata"
+
 export const metadata: Metadata = {
-  title: "MyDevTools - Essential tools for Developers",
-  keywords: [
-    "Developer Tools",
-    "JSON Formatter",
-    "YAML to JSON Converter",
-    "To-Do App",
-    "Note-Taking",
-    "Developer Productivity",
-    "MyDevTools",
-  ],
-  description: "Your Ultimate Developer Toolkit Streamline your development workflow with MyDevTools, an all-in-one platform built for developers. From intuitive to-do lists and random note-taking features to essential utilities like JSON/YAML converters, formatters, and more, MyDevTools simplifies your daily coding tasks. Boost productivity, stay organized, and access a growing suite of tools tailored to meet the needs of modern developers—all in one place.",
+  metadataBase: new URL(siteMetadata.url),
+  title: {
+    default: siteMetadata.title,
+    template: '%s | MyDevTools'
+  },
+  description: siteMetadata.description,
+  keywords: siteMetadata.keywords,
+  authors: [{ name: 'MyDevTools' }],
+  creator: 'MyDevTools',
+  publisher: 'MyDevTools',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: siteMetadata.url,
+    title: siteMetadata.title,
+    description: siteMetadata.description,
+    siteName: siteMetadata.name,
+    images: [
+      {
+        url: siteMetadata.ogImage,
+        width: 1200,
+        height: 630,
+        alt: siteMetadata.title,
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: siteMetadata.title,
+    description: siteMetadata.description,
+    images: [siteMetadata.ogImage],
+    creator: '@mydevtools',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 export default function RootLayout({
