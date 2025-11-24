@@ -9,14 +9,17 @@ import { Lock, KeyRound, AlertTriangle, Unlock, ShieldCheck } from "lucide-react
 import { usePasswordStore } from "@/store/password-store"
 import { deriveKey, generateSalt, createKeyVerifier, verifyKey } from "@/lib/encryption"
 import { auth, db } from "@/database/firebase"
-import { doc, getDoc, setDoc } from "firebase/firestore"
+import { doc, getDoc, setDoc, collection, getDocs } from "firebase/firestore"
 import { onAuthStateChanged } from "firebase/auth"
 import { loadKey, saveKey } from "@/lib/key-storage"
+import { decryptData } from "@/lib/encryption"
+import { PasswordEntry } from "@/store/password-store"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 export function VaultLockScreen() {
-    const { isUnlocked, setKey } = usePasswordStore()
+    const { isUnlocked, setKey, setPasswords, setLoading: setPasswordsLoading } = usePasswordStore()
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [error, setError] = useState("")
@@ -40,6 +43,38 @@ export function VaultLockScreen() {
         return () => unsubscribe()
     }, [])
 
+    const fetchAndSetPasswords = async (uid: string, key: CryptoKey) => {
+        try {
+            setPasswordsLoading(true)
+            const querySnapshot = await getDocs(collection(db, "user_passwords", uid, "entries"))
+            const loadedPasswords: PasswordEntry[] = []
+
+            for (const doc of querySnapshot.docs) {
+                const data = doc.data()
+                try {
+                    const decryptedData = await decryptData(key, data.encryptedData, data.iv)
+                    const parsedData = JSON.parse(decryptedData)
+
+                    loadedPasswords.push({
+                        id: doc.id,
+                        ...parsedData,
+                        createdAt: data.createdAt,
+                        updatedAt: data.updatedAt
+                    })
+                } catch (e) {
+                    console.error(`Failed to decrypt password ${doc.id}:`, e)
+                }
+            }
+
+            setPasswords(loadedPasswords)
+        } catch (error) {
+            console.error("Failed to fetch passwords:", error)
+            toast.error("Failed to load passwords")
+        } finally {
+            setPasswordsLoading(false)
+        }
+    }
+
     const checkVaultStatus = async (uid: string) => {
         try {
             const docRef = doc(db, "user_settings", uid, "security", "vault")
@@ -58,6 +93,7 @@ export function VaultLockScreen() {
                         const isValid = await verifyKey(savedKey, data.verifier.encrypted, data.verifier.iv)
                         if (isValid) {
                             setKey(savedKey)
+                            await fetchAndSetPasswords(uid, savedKey)
                             return
                         }
                     }
@@ -92,6 +128,9 @@ export function VaultLockScreen() {
             if (isValid) {
                 setKey(key)
                 await saveKey(key)
+                if (userId) {
+                    await fetchAndSetPasswords(userId, key)
+                }
                 setPassword("")
             } else {
                 setError("Incorrect Master Password")

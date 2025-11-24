@@ -10,9 +10,10 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { toast } from "sonner"
 import { doc, deleteDoc } from "firebase/firestore"
 import { db, auth } from "@/database/firebase"
+import { clearKey } from "@/lib/key-storage"
 
 export function PasswordList() {
-    const { passwords, deletePassword, lockVault } = usePasswordStore()
+    const { passwords, deletePassword, lockVault, isLoading } = usePasswordStore()
     const [searchTerm, setSearchTerm] = useState("")
     const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set())
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
@@ -51,8 +52,19 @@ export function PasswordList() {
         }
     }
 
-    const handleLock = () => {
+    const handleLock = async () => {
+        await clearKey()
         lockVault()
+        toast.success("Vault locked")
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <p className="text-muted-foreground">Loading your passwords...</p>
+            </div>
+        )
     }
 
     if (passwords.length === 0 && !searchTerm) {
