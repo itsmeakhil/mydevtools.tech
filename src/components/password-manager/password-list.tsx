@@ -5,18 +5,26 @@ import { usePasswordStore } from "@/store/password-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Search, Copy, Eye, EyeOff, Trash2, ExternalLink, LayoutGrid, List, Lock } from "lucide-react"
+import { Search, Copy, Eye, EyeOff, Trash2, ExternalLink, LayoutGrid, List, Lock, Pencil, MoreVertical } from "lucide-react"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { toast } from "sonner"
 import { doc, deleteDoc } from "firebase/firestore"
 import { db, auth } from "@/database/firebase"
 import { clearKey } from "@/lib/key-storage"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { EditPasswordDialog } from "./edit-password-dialog"
+import { PasswordEntry } from "@/store/password-store"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 export function PasswordList() {
     const { passwords, deletePassword, lockVault, isLoading } = usePasswordStore()
     const [searchTerm, setSearchTerm] = useState("")
     const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set())
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+    const [passwordToDelete, setPasswordToDelete] = useState<string | null>(null)
+    const [editingPassword, setEditingPassword] = useState<PasswordEntry | null>(null)
 
     const filteredPasswords = passwords.filter(p =>
         p.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -38,17 +46,24 @@ export function PasswordList() {
         toast.success("Password copied to clipboard")
     }
 
-    const handleDelete = async (id: string) => {
-        if (!auth.currentUser) return
-        if (!confirm("Are you sure you want to delete this password?")) return
+    const handleDeleteClick = (id: string) => {
+        setPasswordToDelete(id)
+        setDeleteConfirmOpen(true)
+    }
+
+    const handleDeleteConfirm = async () => {
+        if (!auth.currentUser || !passwordToDelete) return
 
         try {
-            await deleteDoc(doc(db, "user_settings", auth.currentUser.uid, "passwords", id))
-            deletePassword(id)
+            await deleteDoc(doc(db, "user_passwords", auth.currentUser.uid, "entries", passwordToDelete))
+            deletePassword(passwordToDelete)
             toast.success("Password deleted")
         } catch (error) {
             console.error("Error deleting password:", error)
             toast.error("Failed to delete password")
+        } finally {
+            setDeleteConfirmOpen(false)
+            setPasswordToDelete(null)
         }
     }
 
@@ -115,44 +130,60 @@ export function PasswordList() {
             ) : viewMode === "grid" ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {filteredPasswords.map((entry) => (
-                        <Card key={entry.id} className="group hover:shadow-lg transition-all duration-300 border-muted/60 hover:border-primary/20 bg-card/50 backdrop-blur-sm">
-                            <CardHeader className="pb-3">
+                        <Card key={entry.id} className="group hover:shadow-xl transition-all duration-300 border-muted/60 hover:border-primary/20 bg-card/50 backdrop-blur-sm overflow-hidden">
+                            <div className="absolute top-0 left-0 w-1 h-full bg-primary/0 group-hover:bg-primary/50 transition-all duration-300" />
+                            <CardHeader className="pb-3 relative">
                                 <div className="flex justify-between items-start">
-                                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-lg select-none">
+                                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center text-primary font-bold text-xl select-none shadow-sm group-hover:scale-105 transition-transform duration-300">
                                         {entry.service.charAt(0).toUpperCase()}
                                     </div>
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    <div className="flex gap-1">
                                         {entry.url && (
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.open(entry.url, '_blank')} title="Open URL">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={() => window.open(entry.url, '_blank')} title="Open URL">
                                                 <ExternalLink className="h-4 w-4" />
                                             </Button>
                                         )}
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleDelete(entry.id)} title="Delete">
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted">
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => setEditingPassword(entry)}>
+                                                    <Pencil className="mr-2 h-4 w-4" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={() => handleDeleteClick(entry.id)} className="text-destructive focus:text-destructive">
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    Delete
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                 </div>
-                                <div className="mt-2">
-                                    <CardTitle className="text-lg font-bold truncate">{entry.service}</CardTitle>
-                                    <CardDescription className="truncate font-mono text-xs mt-1">{entry.username}</CardDescription>
+                                <div className="mt-3">
+                                    <CardTitle className="text-lg font-bold truncate tracking-tight">{entry.service}</CardTitle>
+                                    <CardDescription className="truncate font-mono text-xs mt-1 opacity-80">{entry.username}</CardDescription>
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div className="flex items-center gap-2 bg-muted/30 p-2 rounded-md border border-border/50 group-hover:border-primary/10 transition-colors">
+                                <div className="flex items-center gap-2 bg-muted/40 p-2.5 rounded-lg border border-border/50 group-hover:border-primary/10 transition-colors">
                                     <div className="flex-1 font-mono text-sm truncate tracking-wider">
                                         {visiblePasswords.has(entry.id) ? entry.password : "••••••••••••"}
                                     </div>
                                     <div className="flex gap-1">
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-background" onClick={() => toggleVisibility(entry.id)}>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-background hover:text-primary" onClick={() => toggleVisibility(entry.id)}>
                                             {visiblePasswords.has(entry.id) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                                         </Button>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-background" onClick={() => copyToClipboard(entry.password)}>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-background hover:text-primary" onClick={() => copyToClipboard(entry.password)}>
                                             <Copy className="h-3.5 w-3.5" />
                                         </Button>
                                     </div>
                                 </div>
                                 {entry.notes && (
-                                    <div className="mt-3 text-xs text-muted-foreground line-clamp-2 bg-muted/20 p-2 rounded border border-border/30">
+                                    <div className="mt-3 text-xs text-muted-foreground line-clamp-2 bg-muted/20 p-2.5 rounded-lg border border-border/30 italic">
                                         {entry.notes}
                                     </div>
                                 )}
@@ -161,22 +192,32 @@ export function PasswordList() {
                     ))}
                 </div>
             ) : (
-                <div className="space-y-2">
-                    {filteredPasswords.map((entry) => (
-                        <Card key={entry.id} className="group hover:shadow-md transition-all duration-200 border-muted/60">
-                            <CardContent className="p-3">
-                                <div className="flex items-center gap-4">
-                                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0 select-none">
-                                        {entry.service.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                                        <div>
-                                            <h3 className="font-semibold truncate">{entry.service}</h3>
-                                            <p className="text-xs text-muted-foreground truncate font-mono">{entry.username}</p>
+                <div className="rounded-md border bg-card/50 backdrop-blur-sm overflow-hidden">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="hover:bg-transparent">
+                                <TableHead className="w-[250px]">Service</TableHead>
+                                <TableHead className="w-[200px]">Username</TableHead>
+                                <TableHead className="w-[250px]">Password</TableHead>
+                                <TableHead>URL</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredPasswords.map((entry) => (
+                                <TableRow key={entry.id} className="group hover:bg-muted/30 transition-colors">
+                                    <TableCell className="font-medium">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-sm select-none">
+                                                {entry.service.charAt(0).toUpperCase()}
+                                            </div>
+                                            <span className="truncate">{entry.service}</span>
                                         </div>
-
-                                        <div className="flex items-center gap-2 bg-muted/30 px-3 py-1.5 rounded-md border border-border/50 max-w-[200px]">
-                                            <div className="font-mono text-sm truncate flex-1">
+                                    </TableCell>
+                                    <TableCell className="font-mono text-xs text-muted-foreground">{entry.username}</TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2 max-w-[200px]">
+                                            <div className="font-mono text-sm truncate flex-1 bg-muted/30 px-2 py-1 rounded border border-border/50">
                                                 {visiblePasswords.has(entry.id) ? entry.password : "••••••••••••"}
                                             </div>
                                             <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-background shrink-0" onClick={() => toggleVisibility(entry.id)}>
@@ -186,23 +227,66 @@ export function PasswordList() {
                                                 <Copy className="h-3 w-3" />
                                             </Button>
                                         </div>
-
-                                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            {entry.url && (
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.open(entry.url, '_blank')}>
-                                                    <ExternalLink className="h-4 w-4" />
+                                    </TableCell>
+                                    <TableCell>
+                                        {entry.url ? (
+                                            <a href={entry.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline truncate max-w-[150px] block">
+                                                {entry.url.replace(/^https?:\/\//, '')}
+                                            </a>
+                                        ) : (
+                                            <span className="text-xs text-muted-foreground">-</span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted">
+                                                    <MoreVertical className="h-4 w-4" />
                                                 </Button>
-                                            )}
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleDelete(entry.id)}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => setEditingPassword(entry)}>
+                                                    <Pencil className="mr-2 h-4 w-4" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={() => handleDeleteClick(entry.id)} className="text-destructive focus:text-destructive">
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    Delete
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 </div>
+            )}
+
+            <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Password</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete this password? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {editingPassword && (
+                <EditPasswordDialog
+                    entry={editingPassword}
+                    open={!!editingPassword}
+                    onOpenChange={(open) => !open && setEditingPassword(null)}
+                />
             )}
         </div>
     )
