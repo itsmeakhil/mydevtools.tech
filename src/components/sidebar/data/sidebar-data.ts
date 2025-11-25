@@ -93,6 +93,7 @@ export const sidebarData: SidebarData = {
     {
       title: 'Generators',
       collapsible: true,
+      icon: IconTool,
       items: [
         {
           title: 'UUID / ULID',
@@ -153,12 +154,19 @@ export const sidebarData: SidebarData = {
     {
       title: 'Converters',
       collapsible: true,
+      icon: IconArrowsExchange,
       items: [
         {
           title: 'JSON Converter',
           url: '/app/converters',
           description: 'Convert between JSON, XML, YAML, TOML, and CSV.',
           icon: IconJson
+        },
+        {
+          title: 'JSON to Types',
+          url: '/app/json-to-types',
+          description: 'Generate types from JSON.',
+          icon: IconCode
         },
 
         {
@@ -208,6 +216,7 @@ export const sidebarData: SidebarData = {
     {
       title: 'Developer',
       collapsible: true,
+      icon: IconCode,
       items: [
         {
           title: 'Git Commands',
@@ -250,6 +259,7 @@ export const sidebarData: SidebarData = {
     {
       title: 'Security',
       collapsible: true,
+      icon: IconShieldCode,
       items: [
         {
           title: 'Encryption',
@@ -280,6 +290,7 @@ export const sidebarData: SidebarData = {
     {
       title: 'Text & Diff',
       collapsible: true,
+      icon: IconFileDescription,
       items: [
         {
           title: 'Text Stats',
@@ -310,6 +321,7 @@ export const sidebarData: SidebarData = {
     {
       title: 'Network',
       collapsible: true,
+      icon: IconNetwork,
       items: [
         {
           title: 'Subnet Calc',

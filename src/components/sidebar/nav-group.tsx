@@ -9,6 +9,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../ui/collapsible";
+import { Tooltip, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -39,10 +40,11 @@ interface NavGroupProps {
   title: string;
   items: (NavLink | NavCollapsible)[];
   collapsible?: boolean;
+  icon?: React.ElementType;
 }
 
 // Main NavGroup Component
-export function NavGroup({ title, items, collapsible }: NavGroupProps) {
+export function NavGroup({ title, items, collapsible, icon: Icon }: NavGroupProps) {
   const { state } = useSidebar();
   const pathname = usePathname();
   const { user, loading } = useAuth(false); // Check auth state with loading
@@ -103,10 +105,18 @@ export function NavGroup({ title, items, collapsible }: NavGroupProps) {
     return (
       <Collapsible asChild defaultOpen={false} className="group/collapsible">
         <SidebarGroup>
-          <SidebarGroupLabel asChild>
+          <SidebarGroupLabel asChild className="group-data-[collapsible=icon]:!mt-0 group-data-[collapsible=icon]:!opacity-100">
             <CollapsibleTrigger suppressHydrationWarning>
-              {title}
-              <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+              {Icon && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Icon className="mr-2 group-data-[collapsible=icon]:mr-0 group-data-[collapsible=icon]:size-4" size={16} />
+                  </TooltipTrigger>
+                  <TooltipContent side="right" align="center" className="capitalize">{title}</TooltipContent>
+                </Tooltip>
+              )}
+              <span className="group-data-[collapsible=icon]:hidden">{title}</span>
+              <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
           <CollapsibleContent suppressHydrationWarning>
@@ -121,7 +131,17 @@ export function NavGroup({ title, items, collapsible }: NavGroupProps) {
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>{title}</SidebarGroupLabel>
+      <SidebarGroupLabel>
+        {Icon && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Icon className="mr-2" size={16} />
+            </TooltipTrigger>
+            <TooltipContent side="right" align="center" className="capitalize">{title}</TooltipContent>
+          </Tooltip>
+        )}
+        {title}
+      </SidebarGroupLabel>
       {content}
     </SidebarGroup>
   );

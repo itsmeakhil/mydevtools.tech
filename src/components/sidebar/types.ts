@@ -30,6 +30,7 @@ interface NavGroup {
   title: string
   items: NavItem[]
   collapsible?: boolean // ✅ Added collapsible property
+  icon?: React.ElementType // ✅ Added icon property for group labels
 }
 
 interface SidebarData {
