@@ -1,13 +1,16 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Wand2, RefreshCw, Check, Copy } from "lucide-react"
+import { Plus, Wand2, RefreshCw, Check, Copy, ChevronDown, ChevronUp } from "lucide-react"
 import { usePasswordStore, PasswordEntry } from "@/store/password-store"
+import { AdvancedGenerator } from "./advanced-generator"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Badge } from "@/components/ui/badge"
 import { encryptData } from "@/lib/encryption"
 import { auth, db } from "@/database/firebase"
 import { collection, addDoc } from "firebase/firestore"
@@ -23,8 +26,11 @@ export function AddPasswordDialog() {
         username: "",
         password: "",
         url: "",
-        notes: ""
+        notes: "",
+        tags: [] as string[]
     })
+    const [tagInput, setTagInput] = useState("")
+    const [showGenerator, setShowGenerator] = useState(false)
     const [strength, setStrength] = useState(0)
 
     useEffect(() => {
@@ -45,13 +51,19 @@ export function AddPasswordDialog() {
         setStrength(score)
     }
 
-    const generatePassword = () => {
-        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+"
-        let pass = ""
-        for (let i = 0; i < 16; i++) {
-            pass += chars.charAt(Math.floor(Math.random() * chars.length))
+    const handleAddTag = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault()
+            const tag = tagInput.trim()
+            if (tag && !formData.tags.includes(tag)) {
+                setFormData(prev => ({ ...prev, tags: [...prev.tags, tag] }))
+            }
+            setTagInput("")
         }
-        setFormData(prev => ({ ...prev, password: pass }))
+    }
+
+    const removeTag = (tagToRemove: string) => {
+        setFormData(prev => ({ ...prev, tags: prev.tags.filter(tag => tag !== tagToRemove) }))
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -81,7 +93,9 @@ export function AddPasswordDialog() {
 
             addPassword(newEntry)
             setOpen(false)
-            setFormData({ service: "", username: "", password: "", url: "", notes: "" })
+            setFormData({ service: "", username: "", password: "", url: "", notes: "", tags: [] })
+            setTagInput("")
+            setShowGenerator(false)
             toast.success("Password saved successfully")
         } catch (error) {
             console.error("Failed to add password:", error)
@@ -104,6 +118,10 @@ export function AddPasswordDialog() {
         if (score <= 3) return "Medium"
         return "Strong"
     }
+
+    const handlePasswordChange = useCallback((pass: string) => {
+        setFormData(prev => ({ ...prev, password: pass }))
+    }, [])
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -150,19 +168,9 @@ export function AddPasswordDialog() {
                                 value={formData.password}
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                 required
-                                className="pr-10 font-mono"
+                                className="font-mono"
                                 placeholder="Enter or generate password"
                             />
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                                onClick={generatePassword}
-                                title="Generate Strong Password"
-                            >
-                                <RefreshCw className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
-                            </Button>
                         </div>
 
                         {formData.password && (
@@ -184,6 +192,22 @@ export function AddPasswordDialog() {
                                 </div>
                             </div>
                         )}
+
+                        <Collapsible open={showGenerator} onOpenChange={setShowGenerator} className="border rounded-lg p-2 bg-muted/30">
+                            <CollapsibleTrigger asChild>
+                                <Button variant="ghost" size="sm" className="w-full flex justify-between items-center text-xs text-muted-foreground hover:text-primary">
+                                    <span className="flex items-center gap-2"><Wand2 className="h-3 w-3" /> Advanced Generator</span>
+                                    {showGenerator ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                                </Button>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="pt-2">
+                                <AdvancedGenerator
+                                    showInput={false}
+                                    onPasswordChange={handlePasswordChange}
+                                    className="p-2 bg-background rounded-md border shadow-sm"
+                                />
+                            </CollapsibleContent>
+                        </Collapsible>
                     </div>
 
                     <div className="space-y-2">
@@ -205,6 +229,25 @@ export function AddPasswordDialog() {
                             value={formData.notes}
                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                             className="min-h-[80px]"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="tags">Tags</Label>
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                            {formData.tags.map(tag => (
+                                <Badge key={tag} variant="secondary" className="gap-1 pr-1">
+                                    {tag}
+                                    <span className="cursor-pointer hover:text-destructive" onClick={() => removeTag(tag)}>×</span>
+                                </Badge>
+                            ))}
+                        </div>
+                        <Input
+                            id="tags"
+                            placeholder="Add tags (press Enter or comma)"
+                            value={tagInput}
+                            onChange={(e) => setTagInput(e.target.value)}
+                            onKeyDown={handleAddTag}
                         />
                     </div>
 

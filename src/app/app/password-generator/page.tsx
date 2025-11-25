@@ -1,17 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Copy, RefreshCw, Check, Lock } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-
-// Note: Metadata must be exported from a Server Component parent
-// This is handled by creating a separate layout.tsx or moving metadata to parent
+import { Lock } from 'lucide-react';
+import { AdvancedGenerator } from '@/components/password-manager/advanced-generator';
 
 export default function PasswordGeneratorPage() {
   return (
@@ -24,93 +15,6 @@ export default function PasswordGeneratorPage() {
 }
 
 function PasswordGenerator() {
-  const [length, setLength] = useState(16);
-  const [password, setPassword] = useState('');
-  const [copied, setCopied] = useState(false);
-
-  const [options, setOptions] = useState({
-    uppercase: true,
-    lowercase: true,
-    numbers: true,
-    symbols: true,
-    excludeSimilar: false,
-    excludeAmbiguous: false,
-  });
-
-  const generatePassword = useCallback(() => {
-    const chars = {
-      lowercase: 'abcdefghijklmnopqrstuvwxyz',
-      uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-      numbers: '0123456789',
-      symbols: '!@#$%^&*()_+-=[]{}|;:,.<>?',
-      similar: 'il1Lo0O',
-      ambiguous: '{}[]()/\\\'\"~,;.<>',
-    };
-
-    let availableChars = '';
-
-    if (options.lowercase) availableChars += chars.lowercase;
-    if (options.uppercase) availableChars += chars.uppercase;
-    if (options.numbers) availableChars += chars.numbers;
-    if (options.symbols) availableChars += chars.symbols;
-
-    if (options.excludeSimilar) {
-      availableChars = availableChars.split('').filter(c => !chars.similar.includes(c)).join('');
-    }
-    if (options.excludeAmbiguous) {
-      availableChars = availableChars.split('').filter(c => !chars.ambiguous.includes(c)).join('');
-    }
-
-    if (!availableChars) {
-      setPassword('');
-      return;
-    }
-
-    let newPassword = '';
-    const array = new Uint8Array(length);
-    crypto.getRandomValues(array);
-
-    for (let i = 0; i < length; i++) {
-      newPassword += availableChars[array[i] % availableChars.length];
-    }
-
-    setPassword(newPassword);
-  }, [length, options]);
-
-  useEffect(() => {
-    generatePassword();
-  }, [generatePassword]);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(password);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Silent fail
-    }
-  };
-
-  const calculateStrength = (pwd: string) => {
-    if (!pwd) return { strength: 0, label: 'Empty', color: 'bg-gray-500' };
-
-    let score = 0;
-    if (pwd.length >= 8) score++;
-    if (pwd.length >= 12) score++;
-    if (pwd.length >= 16) score++;
-    if (/[a-z]/.test(pwd)) score++;
-    if (/[A-Z]/.test(pwd)) score++;
-    if (/[0-9]/.test(pwd)) score++;
-    if (/[^a-zA-Z0-9]/.test(pwd)) score++;
-
-    if (score < 3) return { strength: score, label: 'Weak', color: 'bg-red-500' };
-    if (score < 5) return { strength: score, label: 'Medium', color: 'bg-yellow-500' };
-    if (score < 6) return { strength: score, label: 'Strong', color: 'bg-blue-500' };
-    return { strength: score, label: 'Very Strong', color: 'bg-green-500' };
-  };
-
-  const strength = calculateStrength(password);
-
   return (
     <Card className="border shadow-lg">
       <CardHeader className="pb-3">
@@ -127,176 +31,10 @@ function PasswordGenerator() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Generated Password */}
-        <div className="space-y-2">
-          <div className="flex gap-2">
-            <Input
-              value={password}
-              readOnly
-              className="text-center text-sm font-mono font-semibold h-9"
-              onClick={(e) => (e.target as HTMLInputElement).select()}
-            />
-            <Button size="icon" onClick={handleCopy} variant="outline" className="h-9 w-9">
-              {copied ? (
-                <Check className="h-4 w-4" />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-            </Button>
-            <Button size="icon" onClick={generatePassword} variant="outline" className="h-9 w-9">
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Strength Bar */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-medium">Strength</span>
-              <Badge variant={strength.strength < 3 ? 'destructive' : strength.strength < 5 ? 'secondary' : 'default'} className="text-xs h-5">
-                {strength.label}
-              </Badge>
-            </div>
-            <div className="w-full bg-muted rounded-full h-1.5">
-              <div
-                className={`h-1.5 rounded-full transition-all duration-300 ${strength.color}`}
-                style={{ width: `${(strength.strength / 7) * 100}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Length Slider */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="length" className="text-xs">Length: {length} characters</Label>
-            <Badge variant="secondary" className="text-xs h-5">{length} chars</Badge>
-          </div>
-          <Slider
-            id="length"
-            min={4}
-            max={512}
-            step={1}
-            value={[length]}
-            onValueChange={(value) => setLength(value[0])}
-          />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>4</span>
-            <span>512</span>
-          </div>
-        </div>
-
-        {/* Options */}
-        <div className="space-y-3">
-          <Label className="text-sm font-semibold">Character Sets</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-            <div className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-primary/10 rounded-md">
-                  <span className="text-sm font-bold">ABC</span>
-                </div>
-                <Label htmlFor="uppercase" className="cursor-pointer text-xs">
-                  Uppercase Letters
-                </Label>
-              </div>
-              <Switch
-                id="uppercase"
-                checked={options.uppercase}
-                onCheckedChange={(checked) =>
-                  setOptions({ ...options, uppercase: checked })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-primary/10 rounded-md">
-                  <span className="text-sm font-bold">abc</span>
-                </div>
-                <Label htmlFor="lowercase" className="cursor-pointer text-xs">
-                  Lowercase Letters
-                </Label>
-              </div>
-              <Switch
-                id="lowercase"
-                checked={options.lowercase}
-                onCheckedChange={(checked) =>
-                  setOptions({ ...options, lowercase: checked })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-primary/10 rounded-md">
-                  <span className="text-sm font-bold">123</span>
-                </div>
-                <Label htmlFor="numbers" className="cursor-pointer text-xs">
-                  Numbers
-                </Label>
-              </div>
-              <Switch
-                id="numbers"
-                checked={options.numbers}
-                onCheckedChange={(checked) =>
-                  setOptions({ ...options, numbers: checked })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-primary/10 rounded-md">
-                  <span className="text-sm font-bold">!@#</span>
-                </div>
-                <Label htmlFor="symbols" className="cursor-pointer text-xs">
-                  Symbols
-                </Label>
-              </div>
-              <Switch
-                id="symbols"
-                checked={options.symbols}
-                onCheckedChange={(checked) =>
-                  setOptions({ ...options, symbols: checked })
-                }
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Advanced Options */}
-        <div className="space-y-3">
-          <Label className="text-sm font-semibold">Advanced Options</Label>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border">
-              <Label htmlFor="exclude-similar" className="cursor-pointer text-xs">
-                Exclude Similar Characters (i, l, 1, L, o, 0, O)
-              </Label>
-              <Switch
-                id="exclude-similar"
-                checked={options.excludeSimilar}
-                onCheckedChange={(checked) =>
-                  setOptions({ ...options, excludeSimilar: checked })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border">
-              <Label htmlFor="exclude-ambiguous" className="cursor-pointer text-xs">
-                Exclude Ambiguous Characters
-              </Label>
-              <Switch
-                id="exclude-ambiguous"
-                checked={options.excludeAmbiguous}
-                onCheckedChange={(checked) =>
-                  setOptions({ ...options, excludeAmbiguous: checked })
-                }
-              />
-            </div>
-          </div>
-        </div>
+        <AdvancedGenerator initialLength={16} />
 
         {/* Info Section */}
-        <div className="bg-muted/50 rounded-lg p-3 border border-border">
+        <div className="bg-muted/50 rounded-lg p-3 border border-border mt-4">
           <h3 className="text-xs font-semibold mb-1.5">Security Tips</h3>
           <ul className="text-xs text-muted-foreground space-y-0.5">
             <li>• Use at least 12-16 characters for better security</li>
@@ -310,4 +48,3 @@ function PasswordGenerator() {
     </Card>
   );
 }
-

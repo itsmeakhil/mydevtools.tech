@@ -8,6 +8,7 @@ export interface PasswordEntry {
     password: string // Decrypted
     url?: string
     notes?: string
+    tags?: string[]
     createdAt: number
     updatedAt: number
 }
