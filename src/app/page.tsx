@@ -149,6 +149,18 @@ export default function Page() {
                 </Link>
               </Button>
             </div>
+
+            <div className="pt-8 md:pt-10 animate-in fade-in slide-in-from-bottom-12 duration-1000">
+              <a href="https://www.producthunt.com/products/mydevtools?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-mydevtools" target="_blank" className="inline-block hover:opacity-90 transition-opacity">
+                <img
+                  src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1041847&theme=light&t=1764002797983"
+                  alt="MyDevTools - Essential tools for developers | Product Hunt"
+                  style={{ width: '250px', height: '54px' }}
+                  width="250"
+                  height="54"
+                />
+              </a>
+            </div>
           </div>
         </div>
       </section>

@@ -33,6 +33,7 @@ import {
 import { cn } from "@/lib/utils";
 import { STATUS_CONFIG, PRIORITY_CONFIG } from "./config/constants";
 import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
+import { useProjectContext } from "@/app/app/to-do/context/ProjectContext";
 
 // Helper to safely parse and format dates
 const safeFormatDate = (dateString: string | undefined, formatStr: string): string => {
@@ -154,6 +155,8 @@ export default function TaskItem({
   const [isHovered, setIsHovered] = useState(false);
   const [justCompleted, setJustCompleted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const { projects } = useProjectContext();
+  const project = task.projectId ? projects.find(p => p.id === task.projectId) : null;
 
   const statusConfig = STATUS_CONFIG[task.status];
   const StatusIcon = statusConfig.icon;
@@ -312,6 +315,15 @@ export default function TaskItem({
                   >
                     {React.createElement(PRIORITY_CONFIG[task.priority].icon, { className: "h-3.5 w-3.5" })}
                     <span className="text-xs font-medium">{PRIORITY_CONFIG[task.priority].label}</span>
+                  </Badge>
+                )}
+                {project && (
+                  <Badge
+                    variant="outline"
+                    className="gap-1.5 px-2 py-0.5 border text-[10px] font-normal flex-shrink-0"
+                  >
+                    <div className={cn("w-1.5 h-1.5 rounded-full", project.color)} />
+                    {project.name}
                   </Badge>
                 )}
               </div>

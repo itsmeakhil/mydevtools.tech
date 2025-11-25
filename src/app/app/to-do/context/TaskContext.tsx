@@ -67,6 +67,8 @@ interface TaskContextType {
   totalTaskCount: number;
   filterStatus: "all" | "not-started" | "ongoing" | "completed";
   setFilterStatus: (status: "all" | "not-started" | "ongoing" | "completed") => void;
+  filterProject: string | "all";
+  setFilterProject: (projectId: string | "all") => void;
   allTaskStats: {
     total: number;
     completed: number;
@@ -76,7 +78,7 @@ interface TaskContextType {
   fetchNextPage: () => void;
   fetchPreviousPage: () => void;
   handlePageChange: (page: number) => void;
-  addTask: (text: string) => Promise<void>;
+  addTask: (text: string, projectId?: string) => Promise<void>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
   updateTaskStatus: (taskId: string, newStatus: "not-started" | "ongoing" | "completed") => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
@@ -101,6 +103,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const [totalPages, setTotalPages] = useState(0);
   const [totalTaskCount, setTotalTaskCount] = useState(0);
   const [filterStatus, setFilterStatus] = useState<"all" | "not-started" | "ongoing" | "completed">("all");
+  const [filterProject, setFilterProject] = useState<string | "all">("all");
   const [allTaskStats, setAllTaskStats] = useState({
     total: 0,
     completed: 0,
@@ -152,6 +155,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         timeLogged: data.timeLogged,
         isTimerRunning: data.isTimerRunning,
         timerStartedAt: data.timerStartedAt,
+        projectId: data.projectId,
       });
     });
     setTasks(tasksArray);
@@ -235,6 +239,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         constraints.push(where("status", "==", filterStatus));
       }
 
+      if (filterProject !== "all") {
+        constraints.push(where("projectId", "==", filterProject));
+      }
+
       if (baseQuery) {
         return query(
           collection(db, "tasks"),
@@ -251,7 +259,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         orderBy("createdAt", "desc")
       );
     },
-    [user?.uid, tasksPerPage, filterStatus]
+    [user?.uid, tasksPerPage, filterStatus, filterProject]
   );
 
   // Add this new function to refresh current page
@@ -266,6 +274,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
       if (filterStatus !== "all") {
         constraints.push(where("status", "==", filterStatus));
+      }
+
+      if (filterProject !== "all") {
+        constraints.push(where("projectId", "==", filterProject));
       }
 
       const q = query(
@@ -307,6 +319,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
           timeLogged: data.timeLogged,
           isTimerRunning: data.isTimerRunning,
           timerStartedAt: data.timerStartedAt,
+          projectId: data.projectId,
         };
       });
 
@@ -335,13 +348,13 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.uid, currentPage, tasksPerPage, filterStatus]);
+  }, [user?.uid, currentPage, tasksPerPage, filterStatus, filterProject]);
 
   // Reset to page 1 when filter changes
   useEffect(() => {
     setCurrentPage(1);
     setPageCache(new Map());
-  }, [filterStatus]);
+  }, [filterStatus, filterProject]);
 
   // Initial page load
   useEffect(() => {
@@ -368,7 +381,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cleanupListeners();
     };
-  }, [user, createTaskQuery, refreshCurrentPage, cleanupListeners, handleFirestoreError, updateTasksFromSnapshot, filterStatus]);
+  }, [user, createTaskQuery, refreshCurrentPage, cleanupListeners, handleFirestoreError, updateTasksFromSnapshot, filterStatus, filterProject]);
 
   const fetchNextPage = useCallback(() => {
     if (currentPage >= totalPages || !lastDoc || !user || !user.uid) return;
@@ -379,6 +392,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
     if (filterStatus !== "all") {
       constraints.push(where("status", "==", filterStatus));
+    }
+
+    if (filterProject !== "all") {
+      constraints.push(where("projectId", "==", filterProject));
     }
 
     const q = query(
@@ -407,7 +424,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     );
 
     unsubscribers.current.push(unsubscribe);
-  }, [currentPage, totalPages, lastDoc, user, handleFirestoreError, filterStatus, updateTasksFromSnapshot]);
+  }, [currentPage, totalPages, lastDoc, user, handleFirestoreError, filterStatus, filterProject, updateTasksFromSnapshot]);
 
   const fetchPreviousPage = useCallback(() => {
     if (currentPage <= 1 || !firstDoc || !user || !user.uid) return;
@@ -418,6 +435,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
     if (filterStatus !== "all") {
       constraints.push(where("status", "==", filterStatus));
+    }
+
+    if (filterProject !== "all") {
+      constraints.push(where("projectId", "==", filterProject));
     }
 
     const q = query(
@@ -446,7 +467,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     );
 
     unsubscribers.current.push(unsubscribe);
-  }, [currentPage, firstDoc, user, handleFirestoreError, filterStatus, updateTasksFromSnapshot]);
+  }, [currentPage, firstDoc, user, handleFirestoreError, filterStatus, filterProject, updateTasksFromSnapshot]);
 
   const handlePageChange = async (page: number) => {
     if (page === currentPage || page > totalPages || page < 1 || !user || !user.uid) return;
@@ -466,6 +487,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
     if (filterStatus !== "all") {
       constraints.push(where("status", "==", filterStatus));
+    }
+
+    if (filterProject !== "all") {
+      constraints.push(where("projectId", "==", filterProject));
     }
 
     const cachedDoc = pageCache.get(page);
@@ -517,10 +542,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         completedAt: formatFirestoreDate(data.completedAt),
         created_by: data.created_by,
         archived: data.archived,
-        timeEstimate: data.timeEstimate,
         timeLogged: data.timeLogged,
         isTimerRunning: data.isTimerRunning,
         timerStartedAt: data.timerStartedAt,
+        projectId: data.projectId,
       });
     });
 
@@ -537,7 +562,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     setCurrentPage(page);
   };
 
-  const addTask = async (newTaskText: string): Promise<void> => {
+  const addTask = async (newTaskText: string, projectId?: string): Promise<void> => {
     if (!user || !user.uid) return;
     const newTask: NewTask = {
       text: newTaskText,
@@ -545,6 +570,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       statusOrder: 2,
       createdAt: serverTimestamp(),
       created_by: user.uid,
+      projectId: projectId,
     };
     try {
       await addDoc(collection(db, "tasks"), newTask);
@@ -753,6 +779,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       constraints.push(where("status", "==", filterStatus));
     }
 
+    if (filterProject !== "all") {
+      constraints.push(where("projectId", "==", filterProject));
+    }
+
     const q = query(
       collection(db, "tasks"),
       ...constraints,
@@ -772,7 +802,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => unsubscribe();
-  }, [user?.uid, currentPage, handleFirestoreError, updateTasksFromSnapshot, filterStatus]);
+  }, [user?.uid, currentPage, handleFirestoreError, updateTasksFromSnapshot, filterStatus, filterProject]);
 
   useEffect(() => {
     return () => {
@@ -790,6 +820,8 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         totalTaskCount,
         filterStatus,
         setFilterStatus,
+        filterProject,
+        setFilterProject,
         allTaskStats,
         fetchNextPage,
         fetchPreviousPage,

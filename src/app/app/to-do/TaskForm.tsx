@@ -13,9 +13,20 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectSeparator,
+} from "@/components/ui/select";
+import { useProjectContext } from "@/app/app/to-do/context/ProjectContext";
+import { ProjectManagerDialog } from "./components/ProjectManagerDialog";
+import { Folder } from "lucide-react";
 
 interface TaskFormProps {
-  onAddTask: (task: string) => void;
+  onAddTask: (task: string, projectId?: string) => void;
   inputRef?: React.RefObject<HTMLInputElement | HTMLTextAreaElement | null>;
 }
 
@@ -25,6 +36,8 @@ export default function TaskForm({ onAddTask, inputRef }: TaskFormProps) {
   const [isMultiline, setIsMultiline] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const internalRef = inputRef || textareaRef;
+  const { projects } = useProjectContext();
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("none");
 
   // Auto-resize textarea
   useEffect(() => {
@@ -37,7 +50,7 @@ export default function TaskForm({ onAddTask, inputRef }: TaskFormProps) {
 
   const handleAddTask = () => {
     if (newTask.trim() === "") return;
-    onAddTask(newTask.trim());
+    onAddTask(newTask.trim(), selectedProjectId === "none" ? undefined : selectedProjectId);
     setNewTask("");
     setIsMultiline(false);
     // Reset textarea height
@@ -107,7 +120,7 @@ export default function TaskForm({ onAddTask, inputRef }: TaskFormProps) {
                 onBlur={() => setIsFocused(false)}
                 placeholder={isMultiline ? "Add task details... (Shift+Enter for new line)" : "What needs to be done? Press Enter to add"}
                 className={cn(
-                  "min-h-[40px] max-h-[120px] resize-none text-sm transition-all",
+                  "min-h-[40px] max-h-[120px] resize-none text-sm transition-all pr-[150px]",
                   isFocused
                     ? "border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
                     : "border-border hover:border-primary/50"
@@ -116,6 +129,34 @@ export default function TaskForm({ onAddTask, inputRef }: TaskFormProps) {
                 aria-label="Task input"
                 aria-describedby="task-hint"
               />
+
+              {/* Project Selection */}
+              <div className="absolute right-1 top-1 z-10">
+                <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                  <SelectTrigger className="w-[140px] h-[32px] border-dashed text-xs bg-background/50 hover:bg-background shadow-none">
+                    <div className="flex items-center gap-2 truncate">
+                      <Folder className="h-3.5 w-3.5 text-muted-foreground" />
+                      <SelectValue placeholder="Project" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent align="end">
+                    <SelectItem value="none" className="text-xs text-muted-foreground">No Project</SelectItem>
+                    {projects.length > 0 && <SelectSeparator />}
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id} className="text-xs">
+                        <div className="flex items-center gap-2">
+                          <div className={cn("w-2 h-2 rounded-full", project.color)} />
+                          {project.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                    <SelectSeparator />
+                    <div className="p-1">
+                      <ProjectManagerDialog />
+                    </div>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Helper text */}

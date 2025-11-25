@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { STATUS_CONFIG, PRIORITY_CONFIG } from "./config/constants";
+import { useProjectContext } from "@/app/app/to-do/context/ProjectContext";
 
 // Helper to safely parse and format dates
 const safeFormatDate = (dateString: string | undefined, formatStr: string): string => {
@@ -145,6 +146,8 @@ export default function KanbanCard({ task, onUpdateTask, onDeleteTask }: KanbanC
     transition,
     isDragging,
   } = useSortable({ id: task.id });
+  const { projects } = useProjectContext();
+  const project = task.projectId ? projects.find(p => p.id === task.projectId) : null;
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -236,6 +239,19 @@ export default function KanbanCard({ task, onUpdateTask, onDeleteTask }: KanbanC
                 </TooltipProvider>
               )}
             </div>
+
+            {/* Project Badge */}
+            {project && (
+              <div className="mb-1.5">
+                <Badge
+                  variant="outline"
+                  className="gap-1.5 px-2 py-0.5 border text-[10px] font-normal inline-flex"
+                >
+                  <div className={cn("w-1.5 h-1.5 rounded-full", project.color)} />
+                  {project.name}
+                </Badge>
+              </div>
+            )}
 
             {task.description && (
               <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">

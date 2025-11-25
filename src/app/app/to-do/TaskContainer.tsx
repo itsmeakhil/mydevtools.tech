@@ -8,7 +8,8 @@ import TaskList from "@/app/app/to-do/TaskList";
 import KanbanBoard from "@/app/app/to-do/KanbanBoard";
 import PaginationDemo from "@/app/app/to-do/PaginationS";
 import { useTaskContext } from "@/app/app/to-do/context/TaskContext";
-import { ListTodo, Circle, LayoutGrid, List, Search, X, Plus } from "lucide-react";
+import { useProjectContext } from "@/app/app/to-do/context/ProjectContext";
+import { ListTodo, Circle, LayoutGrid, List, Search, X, Plus, Folder } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { STATUS_CONFIG } from "./config/constants";
@@ -23,6 +24,14 @@ import {
   DrawerClose,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectSeparator,
+} from "@/components/ui/select";
 
 export const TaskContainer = () => {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
@@ -45,7 +54,10 @@ export const TaskContainer = () => {
     updateTask,
     updateTaskStatus,
     deleteTask,
+    filterProject,
+    setFilterProject,
   } = useTaskContext();
+  const { projects } = useProjectContext();
 
   // Filter tasks based on search query
   const searchFilteredTasks = useMemo(() => {
@@ -179,6 +191,28 @@ export const TaskContainer = () => {
                   </Button>
                 )}
               </div>
+
+              {/* Project Filter */}
+              <Select value={filterProject} onValueChange={setFilterProject}>
+                <SelectTrigger className="w-[140px] h-9 text-xs">
+                  <div className="flex items-center gap-2 truncate">
+                    <Folder className="h-3.5 w-3.5 text-muted-foreground" />
+                    <SelectValue placeholder="All Projects" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value="all" className="text-xs">All Projects</SelectItem>
+                  {projects.length > 0 && <SelectSeparator />}
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id} className="text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className={cn("w-2 h-2 rounded-full", project.color)} />
+                        {project.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               {/* Enhanced View Toggle - Always visible */}
               <ToggleGroup

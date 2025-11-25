@@ -93,6 +93,7 @@
     "oui-data": "^1.1.462",
     "qrcode": "^1.5.4",
     "qrcode.react": "^4.2.0",
+    "quicktype-core": "^23.2.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-firebase-hooks": "^5.1.1",

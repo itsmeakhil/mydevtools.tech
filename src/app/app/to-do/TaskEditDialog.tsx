@@ -16,6 +16,8 @@ import { Calendar as CalendarIcon, Plus, X, Tag, CheckCircle2, Circle, Clock, Tr
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useProjectContext } from "@/app/app/to-do/context/ProjectContext";
+import { Folder } from "lucide-react";
 
 interface TaskEditDialogProps {
   task: Task;
@@ -49,6 +51,7 @@ export default function TaskEditDialog({ task, open, onOpenChange, onSave }: Tas
   const [isSaving, setIsSaving] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const { projects } = useProjectContext();
 
   useEffect(() => {
     if (open && task) {
@@ -61,6 +64,7 @@ export default function TaskEditDialog({ task, open, onOpenChange, onSave }: Tas
         tags: task.tags || [],
         subTasks: task.subTasks || [],
         timeEstimate: task.timeEstimate,
+        projectId: task.projectId,
       });
       if (task.dueDate) {
         setSelectedDate(new Date(task.dueDate));
@@ -257,6 +261,35 @@ export default function TaskEditDialog({ task, open, onOpenChange, onSave }: Tas
             </PopoverContent>
           </Popover>
         </div>
+      </div>
+
+      {/* Project Selection */}
+      <div className="space-y-2">
+        <Label>Project</Label>
+        <Select
+          value={editedTask.projectId || "none"}
+          onValueChange={(value) => setEditedTask({ ...editedTask, projectId: value === "none" ? undefined : value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select a project" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">
+              <div className="flex items-center gap-2">
+                <Folder className="h-4 w-4 text-muted-foreground" />
+                No Project
+              </div>
+            </SelectItem>
+            {projects.map((project) => (
+              <SelectItem key={project.id} value={project.id}>
+                <div className="flex items-center gap-2">
+                  <div className={cn("w-3 h-3 rounded-full", project.color)} />
+                  {project.name}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Time Estimate */}

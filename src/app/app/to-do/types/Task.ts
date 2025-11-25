@@ -33,6 +33,7 @@ export interface Task {
   timeLogged?: number; // in minutes
   isTimerRunning?: boolean;
   timerStartedAt?: string;
+  projectId?: string;
 }
 
 export interface NewTask {
@@ -52,4 +53,5 @@ export interface NewTask {
   timeLogged?: number;
   isTimerRunning?: boolean;
   timerStartedAt?: FieldValue | Timestamp | string;
+  projectId?: string;
 }

@@ -104,12 +104,12 @@ export function NavGroup({ title, items, collapsible }: NavGroupProps) {
       <Collapsible asChild defaultOpen={false} className="group/collapsible">
         <SidebarGroup>
           <SidebarGroupLabel asChild>
-            <CollapsibleTrigger>
+            <CollapsibleTrigger suppressHydrationWarning>
               {title}
               <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
-          <CollapsibleContent>
+          <CollapsibleContent suppressHydrationWarning>
             <SidebarGroupContent>
               {content}
             </SidebarGroupContent>

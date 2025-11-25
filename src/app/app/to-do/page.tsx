@@ -2,6 +2,7 @@
 import useAuth from "@/utils/useAuth";
 import { TaskProvider } from "@/app/app/to-do/context/TaskContext";
 import { TaskContainer } from "@/app/app/to-do/TaskContainer";
+import { ProjectProvider } from "@/app/app/to-do/context/ProjectContext";
 
 export default function ToDoPage() {
   const { user, loading } = useAuth(true); // Enforce authentication
@@ -15,8 +16,10 @@ export default function ToDoPage() {
   }
 
   return (
-    <TaskProvider>
-      <TaskContainer />
-    </TaskProvider>
+    <ProjectProvider>
+      <TaskProvider>
+        <TaskContainer />
+      </TaskProvider>
+    </ProjectProvider>
   );
 }
