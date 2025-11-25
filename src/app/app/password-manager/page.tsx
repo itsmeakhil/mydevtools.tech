@@ -4,9 +4,19 @@ import { AddPasswordDialog } from "@/components/password-manager/add-password-di
 import { PasswordList } from "@/components/password-manager/password-list"
 import { VaultLockScreen } from "@/components/password-manager/master-password-modal"
 import { usePasswordStore } from "@/store/password-store"
+import useAuth from "@/utils/useAuth"
 
 export default function PasswordManagerPage() {
+    const { user, loading } = useAuth(true);
     const { isUnlocked } = usePasswordStore()
+
+    if (loading) {
+        return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    }
+
+    if (!user) {
+        return null;
+    }
 
     if (!isUnlocked) {
         return <VaultLockScreen />
