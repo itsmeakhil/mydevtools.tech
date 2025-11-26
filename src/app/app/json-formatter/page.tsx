@@ -5,6 +5,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tab';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   Code,
   TreePine,
   Table2,
@@ -158,7 +164,6 @@ export default function JsonEditorPage() {
         >
           {/* Left Panel */}
           <EditorPanel
-            label="Left Panel"
             state={leftPanel}
             onModeChange={(mode) => handleModeChange('left', mode)}
             onContentChange={(content) => handleContentChange('left', content)}
@@ -213,7 +218,6 @@ export default function JsonEditorPage() {
 
           {/* Right Panel */}
           <EditorPanel
-            label="Right Panel"
             state={rightPanel}
             onModeChange={(mode) => handleModeChange('right', mode)}
             onContentChange={(content) => handleContentChange('right', content)}
@@ -252,7 +256,6 @@ export default function JsonEditorPage() {
 }
 
 interface EditorPanelProps {
-  label: string;
   state: EditorState;
   onModeChange: (mode: EditorMode) => void;
   onContentChange: (content: string) => void;
@@ -263,7 +266,6 @@ interface EditorPanelProps {
 }
 
 function EditorPanel({
-  label,
   state,
   onModeChange,
   onContentChange,
@@ -309,62 +311,76 @@ function EditorPanel({
           </Tabs>
 
           {/* Actions */}
-          <div className="flex items-center gap-1">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onFormat}
-              className="h-7 px-2 text-xs gap-1"
-              disabled={!state.isValid}
-            >
-              <Sparkles className="h-3 w-3" />
-              <span className="hidden sm:inline">Format</span>
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onMinify}
-              className="h-7 px-2 text-xs gap-1"
-              disabled={!state.isValid}
-            >
-              <Minimize2 className="h-3 w-3" />
-              <span className="hidden sm:inline">Minify</span>
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={handleCopy}
-              className="h-7 px-2 text-xs gap-1"
-            >
-              {copied ? (
-                <>
-                  <CheckCircle2 className="h-3 w-3" />
-                  <span className="hidden sm:inline">Copied</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3 w-3" />
-                  <span className="hidden sm:inline">Copy</span>
-                </>
-              )}
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setRepairDialogOpen(true)}
-              className="h-7 px-2 text-xs gap-1"
-              disabled={!state.error}
-              title="Auto-repair JSON errors"
-            >
-              <Wrench className="h-3 w-3" />
-              <span className="hidden sm:inline">Repair</span>
-            </Button>
-          </div>
+          <TooltipProvider delayDuration={200}>
+            <div className="flex items-center gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={onFormat}
+                    className="h-7 w-8 p-0"
+                    disabled={!state.isValid}
+                    aria-label="Format JSON"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Format</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={onMinify}
+                    className="h-7 w-8 p-0"
+                    disabled={!state.isValid}
+                    aria-label="Minify JSON"
+                  >
+                    <Minimize2 className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Minify</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleCopy}
+                    className="h-7 w-8 p-0"
+                    aria-label="Copy JSON"
+                  >
+                    {copied ? <CheckCircle2 className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{copied ? 'Copied' : 'Copy'}</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setRepairDialogOpen(true)}
+                    className="h-7 w-8 p-0"
+                    disabled={!state.error}
+                    aria-label="Repair JSON"
+                  >
+                    <Wrench className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Repair</TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
         </div>
 
         {/* Status Bar */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-          <span>{label}</span>
+        <div className="flex items-center justify-end text-xs text-muted-foreground px-1 gap-2">
           {state.isValid && (
             <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
               <CheckCircle2 className="h-3 w-3" />
