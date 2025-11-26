@@ -158,7 +158,7 @@ export default function TaskItem({
   const { projects } = useProjectContext();
   const project = task.projectId ? projects.find(p => p.id === task.projectId) : null;
 
-  const statusConfig = STATUS_CONFIG[task.status];
+  const statusConfig = STATUS_CONFIG[task.status] || STATUS_CONFIG["not-started"];
   const StatusIcon = statusConfig.icon;
 
   // Check if task is overdue

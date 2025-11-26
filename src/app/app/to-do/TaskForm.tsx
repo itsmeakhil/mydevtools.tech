@@ -24,6 +24,7 @@ import {
 import { useProjectContext } from "@/app/app/to-do/context/ProjectContext";
 import { ProjectManagerDialog } from "./components/ProjectManagerDialog";
 import { Folder } from "lucide-react";
+import { toast } from "sonner";
 
 interface TaskFormProps {
   onAddTask: (task: string, projectId?: string) => void;
@@ -39,6 +40,22 @@ export default function TaskForm({ onAddTask, inputRef }: TaskFormProps) {
   const { projects } = useProjectContext();
   const [selectedProjectId, setSelectedProjectId] = useState<string>("none");
 
+  // Load last selected project from localStorage
+  useEffect(() => {
+    const lastProjectId = localStorage.getItem("lastSelectedProjectId");
+    if (lastProjectId && projects.some(p => p.id === lastProjectId)) {
+      setSelectedProjectId(lastProjectId);
+    }
+  }, [projects]);
+
+  // Save selected project to localStorage
+  const handleProjectChange = (projectId: string) => {
+    setSelectedProjectId(projectId);
+    if (projectId !== "none") {
+      localStorage.setItem("lastSelectedProjectId", projectId);
+    }
+  };
+
   // Auto-resize textarea
   useEffect(() => {
     if (internalRef.current && 'scrollHeight' in internalRef.current) {
@@ -50,7 +67,13 @@ export default function TaskForm({ onAddTask, inputRef }: TaskFormProps) {
 
   const handleAddTask = () => {
     if (newTask.trim() === "") return;
-    onAddTask(newTask.trim(), selectedProjectId === "none" ? undefined : selectedProjectId);
+
+    if (selectedProjectId === "none") {
+      toast.error("Please select a project or create a new one to add a task.");
+      return;
+    }
+
+    onAddTask(newTask.trim(), selectedProjectId);
     setNewTask("");
     setIsMultiline(false);
     // Reset textarea height
@@ -132,7 +155,7 @@ export default function TaskForm({ onAddTask, inputRef }: TaskFormProps) {
 
               {/* Project Selection */}
               <div className="absolute right-1 top-1 z-10">
-                <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                <Select value={selectedProjectId} onValueChange={handleProjectChange}>
                   <SelectTrigger className="w-[140px] h-[32px] border-dashed text-xs bg-background/50 hover:bg-background shadow-none">
                     <div className="flex items-center gap-2 truncate">
                       <Folder className="h-3.5 w-3.5 text-muted-foreground" />
@@ -140,7 +163,7 @@ export default function TaskForm({ onAddTask, inputRef }: TaskFormProps) {
                     </div>
                   </SelectTrigger>
                   <SelectContent align="end">
-                    <SelectItem value="none" className="text-xs text-muted-foreground">No Project</SelectItem>
+                    <SelectItem value="none" className="text-xs text-muted-foreground">Select Project</SelectItem>
                     {projects.length > 0 && <SelectSeparator />}
                     {projects.map((project) => (
                       <SelectItem key={project.id} value={project.id} className="text-xs">
