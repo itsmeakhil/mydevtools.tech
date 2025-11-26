@@ -18,7 +18,13 @@ import {
     Download,
     ArrowUpDown,
     AlertCircle,
+    Maximize2,
 } from 'lucide-react';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
 import { JSONValue } from './types';
 
 interface TableViewProps {
@@ -170,7 +176,10 @@ export default function TableView({ value, onChange, error }: TableViewProps) {
     const formatCellValue = (val: JSONValue): string => {
         if (val === null) return 'null';
         if (typeof val === 'boolean') return val ? 'true' : 'false';
-        if (typeof val === 'object') return JSON.stringify(val);
+        if (typeof val === 'object') {
+            if (Array.isArray(val)) return `Array[${val.length}]`;
+            return `Object{${Object.keys(val).length}}`;
+        }
         return String(val);
     };
 
@@ -286,14 +295,17 @@ export default function TableView({ value, onChange, error }: TableViewProps) {
                                 {columns.map(column => {
                                     const isEditing = editingCell?.row === rowIndex && editingCell?.col === column;
                                     const cellValue = row[column];
+                                    const isComplex = typeof cellValue === 'object' && cellValue !== null;
 
                                     return (
                                         <TableCell
                                             key={column}
                                             className="p-1"
                                             onDoubleClick={() => {
-                                                setEditingCell({ row: rowIndex, col: column });
-                                                setEditValue(formatCellValue(cellValue));
+                                                if (!isComplex) {
+                                                    setEditingCell({ row: rowIndex, col: column });
+                                                    setEditValue(formatCellValue(cellValue));
+                                                }
                                             }}
                                         >
                                             {isEditing ? (
@@ -313,8 +325,26 @@ export default function TableView({ value, onChange, error }: TableViewProps) {
                                                     autoFocus
                                                 />
                                             ) : (
-                                                <div className={`px-2 py-1 text-xs font-mono ${getCellColor(cellValue)} cursor-pointer hover:bg-muted/50 rounded`}>
-                                                    {formatCellValue(cellValue)}
+                                                <div className="relative group/cell">
+                                                    <div className={`px-2 py-1 text-xs font-mono ${getCellColor(cellValue)} cursor-pointer hover:bg-muted/50 rounded truncate max-w-[200px]`}>
+                                                        {formatCellValue(cellValue)}
+                                                    </div>
+                                                    {isComplex && (
+                                                        <div className="absolute top-0 right-0 hidden group-hover/cell:block z-10">
+                                                            <Popover>
+                                                                <PopoverTrigger asChild>
+                                                                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                                                                        <Maximize2 className="h-3 w-3" />
+                                                                    </Button>
+                                                                </PopoverTrigger>
+                                                                <PopoverContent className="w-80 p-2">
+                                                                    <div className="max-h-[300px] overflow-auto text-xs font-mono whitespace-pre-wrap">
+                                                                        {JSON.stringify(cellValue, null, 2)}
+                                                                    </div>
+                                                                </PopoverContent>
+                                                            </Popover>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </TableCell>

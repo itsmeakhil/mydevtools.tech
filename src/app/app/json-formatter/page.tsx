@@ -153,13 +153,13 @@ export default function JsonEditorPage() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-background via-background to-muted/20 p-3 md:p-4 lg:p-6 flex flex-col overflow-hidden">
+    <div className="h-[100dvh] bg-gradient-to-br from-background via-background to-muted/20 p-3 md:p-4 lg:p-6 flex flex-col overflow-hidden">
       <div className="max-w-[1800px] mx-auto w-full flex flex-col gap-3 flex-1 overflow-hidden">
         {/* Main Editor Area */}
         <div
-          className={`editor-container ${isDesktop ? 'grid' : 'flex flex-col'} gap-3 flex-1 overflow-hidden relative min-h-0`}
+          className={`editor-container ${isDesktop ? 'grid' : 'flex flex-col gap-3'} flex-1 overflow-hidden relative min-h-0`}
           style={isDesktop ? {
-            gridTemplateColumns: `${leftWidth}% 8px ${100 - leftWidth}%`,
+            gridTemplateColumns: `calc(${leftWidth}% - 4px) 8px calc(${100 - leftWidth}% - 4px)`,
           } : undefined}
         >
           {/* Left Panel */}

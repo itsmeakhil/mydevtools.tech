@@ -139,7 +139,7 @@ export default function TreeNode({
                         autoFocus
                     />
                 ) : (
-                    <span className={`font-mono ${getTypeColor(valueType)}`}>
+                    <span className={`font-mono ${getTypeColor(valueType)} truncate max-w-[300px] inline-block align-bottom`}>
                         {getDisplayValue(value)}
                     </span>
                 )}
