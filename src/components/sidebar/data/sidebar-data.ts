@@ -77,16 +77,16 @@ export const sidebarData: SidebarData = {
           description: 'Securely store and manage your passwords.'
         },
         {
-          title: 'URL Shortener',
-          url: '/app/url-shortener',
-          icon: IconUnlink,
-          description: 'Shorten long URLs for easy sharing.'
-        },
-        {
           title: 'JSON Editor',
           url: '/app/json-formatter',
           description: 'Advanced JSON editor and formatter.',
           icon: IconJson
+        },
+        {
+          title: 'URL Shortener',
+          url: '/app/url-shortener',
+          icon: IconUnlink,
+          description: 'Shorten long URLs for easy sharing.'
         },
       ],
     },
