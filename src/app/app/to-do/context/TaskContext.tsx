@@ -83,6 +83,7 @@ interface TaskContextType {
   updateTaskStatus: (taskId: string, newStatus: "not-started" | "ongoing" | "completed") => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
   importTasks: (tasks: Task[]) => Promise<void>;
+  getFilteredTasksForExport: () => Promise<Task[]>;
 }
 
 interface StatusOrderMap {
@@ -810,6 +811,54 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     };
   }, [cleanupListeners]);
 
+  const getFilteredTasksForExport = async (): Promise<Task[]> => {
+    if (!user?.uid) return [];
+
+    const constraints = [
+      where("created_by", "==", user.uid),
+    ];
+
+    if (filterStatus !== "all") {
+      constraints.push(where("status", "==", filterStatus));
+    }
+
+    if (filterProject !== "all") {
+      constraints.push(where("projectId", "==", filterProject));
+    }
+
+    const q = query(
+      collection(db, "tasks"),
+      ...constraints,
+      orderBy("statusOrder"),
+      orderBy("createdAt", "desc")
+    );
+
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        text: data.text,
+        description: data.description,
+        status: data.status,
+        statusOrder: data.statusOrder,
+        priority: data.priority,
+        dueDate: data.dueDate,
+        tags: data.tags,
+        subTasks: data.subTasks,
+        createdAt: formatFirestoreDate(data.createdAt) || "Unknown",
+        completedAt: formatFirestoreDate(data.completedAt),
+        created_by: data.created_by,
+        archived: data.archived,
+        timeEstimate: data.timeEstimate,
+        timeLogged: data.timeLogged,
+        isTimerRunning: data.isTimerRunning,
+        timerStartedAt: data.timerStartedAt,
+        projectId: data.projectId,
+      };
+    });
+  };
+
   return (
     <TaskContext.Provider
       value={{
@@ -831,6 +880,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         updateTaskStatus,
         deleteTask,
         importTasks,
+        getFilteredTasksForExport,
       }}
     >
       {children}

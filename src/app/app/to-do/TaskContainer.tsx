@@ -7,6 +7,7 @@ import TaskForm from "@/app/app/to-do/TaskForm";
 import TaskList from "@/app/app/to-do/TaskList";
 import KanbanBoard from "@/app/app/to-do/KanbanBoard";
 import PaginationDemo from "@/app/app/to-do/PaginationS";
+import ExportImportDialog from "@/app/app/to-do/ExportImportDialog";
 import { useTaskContext } from "@/app/app/to-do/context/TaskContext";
 import { useProjectContext } from "@/app/app/to-do/context/ProjectContext";
 import { ListTodo, Circle, LayoutGrid, List, Search, X, Plus, Folder } from "lucide-react";
@@ -106,6 +107,8 @@ export const TaskContainer = () => {
     addTask(taskText);
     setIsDrawerOpen(false);
   };
+
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   return (
     <div className="h-screen bg-gradient-to-br from-background via-background to-muted/20 ml-0 mr-0 px-0 w-full flex flex-col overflow-hidden relative">
@@ -213,6 +216,17 @@ export const TaskContainer = () => {
                   ))}
                 </SelectContent>
               </Select>
+
+              {/* Export Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsExportDialogOpen(true)}
+                className="h-9 px-3 gap-2"
+              >
+                <Folder className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline text-xs font-medium">Export</span>
+              </Button>
 
               {/* Enhanced View Toggle - Always visible */}
               <ToggleGroup
@@ -390,6 +404,13 @@ export const TaskContainer = () => {
           </DrawerContent>
         </Drawer>
       </div>
+
+      <ExportImportDialog
+        open={isExportDialogOpen}
+        onOpenChange={setIsExportDialogOpen}
+        tasks={tasks}
+        projects={projects}
+      />
     </div>
   );
 };

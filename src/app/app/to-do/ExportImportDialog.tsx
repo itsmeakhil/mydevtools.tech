@@ -10,29 +10,57 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Upload, FileJson, FileSpreadsheet, AlertCircle } from "lucide-react";
+import { Download, FileJson, FileSpreadsheet } from "lucide-react";
 import { Task } from "@/app/app/to-do/types/Task";
+import { Project } from "@/app/app/to-do/types/Project";
 import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tab";
 
 interface ExportImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   tasks: Task[];
-  onImport: (tasks: Task[]) => Promise<void>;
+  projects: Project[];
 }
 
 export default function ExportImportDialog({
   open,
   onOpenChange,
   tasks,
-  onImport,
+  projects,
 }: ExportImportDialogProps) {
-  const [isImporting, setIsImporting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Filter states
+  const [selectedProject, setSelectedProject] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [selectedTag, setSelectedTag] = useState<string>("all");
+
+  // Derive unique values for filters
+  const uniqueTags = Array.from(
+    new Set(tasks.flatMap((t) => t.tags?.map((tag) => tag.name) || []))
+  );
+
+  // Helper to get project name
+  const getProjectName = (projectId?: string) => {
+    if (!projectId) return "";
+    return projects.find((p) => p.id === projectId)?.name || "Unknown Project";
+  };
+
+  // Filter tasks
+  const getFilteredTasks = () => {
+    return tasks.filter((task) => {
+      const matchesProject =
+        selectedProject === "all" || task.projectId === selectedProject;
+      const matchesStatus =
+        selectedStatus === "all" || task.status === selectedStatus;
+      const matchesTag =
+        selectedTag === "all" ||
+        task.tags?.some((t) => t.name === selectedTag);
+      return matchesProject && matchesStatus && matchesTag;
+    });
+  };
 
   const exportToJSON = () => {
-    const dataStr = JSON.stringify(tasks, null, 2);
+    const filteredTasks = getFilteredTasks();
+    const dataStr = JSON.stringify(filteredTasks, null, 2);
     const dataBlob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement("a");
@@ -40,12 +68,13 @@ export default function ExportImportDialog({
     link.download = `tasks-export-${new Date().toISOString().split("T")[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
-    toast.success("Tasks exported successfully!");
+    toast.success(`Exported ${filteredTasks.length} tasks to JSON!`);
   };
 
   const exportToCSV = () => {
-    if (tasks.length === 0) {
-      toast.error("No tasks to export");
+    const filteredTasks = getFilteredTasks();
+    if (filteredTasks.length === 0) {
+      toast.error("No tasks to export with current filters");
       return;
     }
 
@@ -61,20 +90,22 @@ export default function ExportImportDialog({
       "Tags",
       "Time Estimate (min)",
       "Time Logged (min)",
+      "Project Name",
     ];
 
-    const rows = tasks.map((task) => [
+    const rows = filteredTasks.map((task) => [
       task.id,
       `"${task.text.replace(/"/g, '""')}"`,
       `"${(task.description || "").replace(/"/g, '""')}"`,
       task.status,
-      task.priority || "",
-      task.dueDate || "",
-      task.createdAt,
-      task.completedAt || "",
-      task.tags?.map((t) => t.name).join(";") || "",
+      `"${(task.priority || "").replace(/"/g, '""')}"`,
+      `"${(task.dueDate || "").replace(/"/g, '""')}"`,
+      `"${(task.createdAt || "").replace(/"/g, '""')}"`,
+      `"${(task.completedAt || "").replace(/"/g, '""')}"`,
+      `"${(task.tags?.map((t) => t.name).join(";") || "").replace(/"/g, '""')}"`,
       task.timeEstimate || "",
       task.timeLogged || "",
+      `"${getProjectName(task.projectId).replace(/"/g, '""')}"`,
     ]);
 
     const csvContent = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
@@ -86,41 +117,43 @@ export default function ExportImportDialog({
     link.download = `tasks-export-${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
-    toast.success("Tasks exported to CSV successfully!");
+    toast.success(`Exported ${filteredTasks.length} tasks to CSV!`);
   };
 
-  const handleImportJSON = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsImporting(true);
+  const exportToExcel = async () => {
     try {
-      const text = await file.text();
-      const importedTasks = JSON.parse(text) as Task[];
+      const XLSX = await import("xlsx");
+      const filteredTasks = getFilteredTasks();
 
-      // Validate the imported data
-      if (!Array.isArray(importedTasks)) {
-        throw new Error("Invalid file format: expected an array of tasks");
+      if (filteredTasks.length === 0) {
+        toast.error("No tasks to export with current filters");
+        return;
       }
 
-      // Basic validation of task structure
-      for (const task of importedTasks) {
-        if (!task.text || !task.status) {
-          throw new Error("Invalid task structure: missing required fields");
-        }
-      }
+      const rows = filteredTasks.map((task) => ({
+        ID: task.id,
+        Title: task.text,
+        Description: task.description || "",
+        Status: task.status,
+        Priority: task.priority || "",
+        "Due Date": task.dueDate || "",
+        "Created At": task.createdAt,
+        "Completed At": task.completedAt || "",
+        Tags: task.tags?.map((t) => t.name).join("; ") || "",
+        "Time Estimate (min)": task.timeEstimate || "",
+        "Time Logged (min)": task.timeLogged || "",
+        "Project Name": getProjectName(task.projectId),
+      }));
 
-      await onImport(importedTasks);
-      toast.success(`Successfully imported ${importedTasks.length} tasks!`);
-      onOpenChange(false);
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Tasks");
+
+      XLSX.writeFile(workbook, `tasks-export-${new Date().toISOString().split("T")[0]}.xlsx`);
+      toast.success(`Exported ${filteredTasks.length} tasks to Excel!`);
     } catch (error) {
-      console.error("Import error:", error);
-      toast.error("Failed to import tasks. Please check the file format.");
-    } finally {
-      setIsImporting(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      console.error("Excel export error:", error);
+      toast.error("Failed to export to Excel");
     }
   };
 
@@ -128,106 +161,101 @@ export default function ExportImportDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Export / Import Tasks</DialogTitle>
+          <DialogTitle>Export Tasks</DialogTitle>
           <DialogDescription>
-            Backup your tasks or import from a previous export
+            Export your tasks to JSON, CSV, or Excel formats.
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="export" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="export">Export</TabsTrigger>
-            <TabsTrigger value="import">Import</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="export" className="space-y-4">
-            <div className="space-y-3">
-              <div className="p-4 rounded-lg border bg-muted/50">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-md bg-primary/10">
-                    <FileJson className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold mb-1">Export as JSON</h3>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Export all task data including subtasks, tags, and metadata. Best for
-                      backing up and restoring your tasks.
-                    </p>
-                    <Button onClick={exportToJSON} className="gap-2">
-                      <Download className="h-4 w-4" />
-                      Export JSON ({tasks.length} tasks)
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-lg border bg-muted/50">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-md bg-green-500/10">
-                    <FileSpreadsheet className="h-5 w-5 text-green-500" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold mb-1">Export as CSV</h3>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Export tasks in CSV format for use in spreadsheet applications. Some data
-                      may be simplified.
-                    </p>
-                    <Button onClick={exportToCSV} variant="outline" className="gap-2">
-                      <Download className="h-4 w-4" />
-                      Export CSV ({tasks.length} tasks)
-                    </Button>
-                  </div>
-                </div>
-              </div>
+        <div className="space-y-4 py-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Project</label>
+              <select
+                className="w-full p-2 rounded-md border bg-background"
+                value={selectedProject}
+                onChange={(e) => setSelectedProject(e.target.value)}
+              >
+                <option value="all">All Projects</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
             </div>
-          </TabsContent>
-
-          <TabsContent value="import" className="space-y-4">
-            <div className="p-4 rounded-lg border border-orange-500/20 bg-orange-500/10">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-orange-500 mt-0.5" />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-orange-700 dark:text-orange-400 mb-1">
-                    Import Warning
-                  </h4>
-                  <p className="text-sm text-orange-600 dark:text-orange-300">
-                    Importing tasks will add them to your existing tasks. This action cannot be
-                    undone. Make sure to export your current tasks first as a backup.
-                  </p>
-                </div>
-              </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status</label>
+              <select
+                className="w-full p-2 rounded-md border bg-background"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+              >
+                <option value="all">All Statuses</option>
+                <option value="not-started">Not Started</option>
+                <option value="ongoing">Ongoing</option>
+                <option value="completed">Completed</option>
+              </select>
             </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Tag</label>
+              <select
+                className="w-full p-2 rounded-md border bg-background"
+                value={selectedTag}
+                onChange={(e) => setSelectedTag(e.target.value)}
+              >
+                <option value="all">All Tags</option>
+                {uniqueTags.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-            <div className="p-6 rounded-lg border-2 border-dashed text-center space-y-4">
-              <div className="flex justify-center">
-                <div className="p-4 rounded-full bg-primary/10">
-                  <Upload className="h-8 w-8 text-primary" />
-                </div>
+          <div className="p-4 rounded-lg border bg-muted/50">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-md bg-primary/10">
+                <FileJson className="h-5 w-5 text-primary" />
               </div>
-              <div>
-                <h3 className="font-semibold mb-2">Import from JSON</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Select a JSON file exported from this app
+              <div className="flex-1">
+                <h3 className="font-semibold mb-1">Export as JSON</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Export task data including subtasks, tags, and metadata.
                 </p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".json"
-                  onChange={handleImportJSON}
-                  className="hidden"
-                />
-                <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isImporting}
-                  className="gap-2"
-                >
-                  <Upload className="h-4 w-4" />
-                  {isImporting ? "Importing..." : "Select JSON File"}
+                <Button onClick={exportToJSON} className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Export JSON
                 </Button>
               </div>
             </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+
+          <div className="p-4 rounded-lg border bg-muted/50">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-md bg-green-500/10">
+                <FileSpreadsheet className="h-5 w-5 text-green-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold mb-1">Export as CSV / Excel</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Export tasks for spreadsheet applications.
+                </p>
+                <div className="flex gap-2">
+                  <Button onClick={exportToCSV} variant="outline" className="gap-2">
+                    <Download className="h-4 w-4" />
+                    Export CSV
+                  </Button>
+                  <Button onClick={exportToExcel} variant="outline" className="gap-2">
+                    <Download className="h-4 w-4" />
+                    Export Excel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
