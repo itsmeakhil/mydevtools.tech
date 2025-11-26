@@ -19,7 +19,9 @@ import {
   CheckCircle2,
   Copy,
   ArrowLeftRight,
-  Wrench
+  Wrench,
+  Trash2,
+  Maximize2
 } from 'lucide-react';
 import { EditorMode, EditorState } from '@/components/json-editor/types';
 import TextEditor from '@/components/json-editor/TextEditor';
@@ -152,28 +154,58 @@ export default function JsonEditorPage() {
     handleContentChange('right', leftPanel.content);
   };
 
+  const [maximizedPanel, setMaximizedPanel] = useState<'left' | 'right' | null>(null);
+
+  const handleClear = (panel: 'left' | 'right') => {
+    handleContentChange(panel, '');
+  };
+
+  const handleLoadSample = (panel: 'left' | 'right') => {
+    const sample = {
+      "string": "Hello World",
+      "number": 123,
+      "boolean": true,
+      "null": null,
+      "array": [1, 2, 3],
+      "object": {
+        "key": "value"
+      }
+    };
+    handleContentChange(panel, JSON.stringify(sample, null, 2));
+  };
+
+  const toggleMaximize = (panel: 'left' | 'right') => {
+    setMaximizedPanel(maximizedPanel === panel ? null : panel);
+  };
+
   return (
     <div className="h-[100dvh] bg-gradient-to-br from-background via-background to-muted/20 p-3 md:p-4 lg:p-6 flex flex-col overflow-hidden">
       <div className="max-w-[1800px] mx-auto w-full flex flex-col gap-3 flex-1 overflow-hidden">
         {/* Main Editor Area */}
         <div
-          className={`editor-container ${isDesktop ? 'grid' : 'flex flex-col gap-3'} flex-1 overflow-hidden relative min-h-0`}
-          style={isDesktop ? {
+          className={`editor-container ${isDesktop && !maximizedPanel ? 'grid' : 'flex flex-col gap-3'} flex-1 overflow-hidden relative min-h-0`}
+          style={isDesktop && !maximizedPanel ? {
             gridTemplateColumns: `calc(${leftWidth}% - 4px) 8px calc(${100 - leftWidth}% - 4px)`,
           } : undefined}
         >
           {/* Left Panel */}
-          <EditorPanel
-            state={leftPanel}
-            onModeChange={(mode) => handleModeChange('left', mode)}
-            onContentChange={(content) => handleContentChange('left', content)}
-            onFormat={() => formatJSON('left')}
-            onMinify={() => minifyJSON('left')}
-            onRepair={(content) => handleContentChange('left', content)}
-            fullHeight={isDesktop}
-          />
+          <div className={`${maximizedPanel === 'right' ? 'hidden' : 'flex'} flex-col h-full overflow-hidden`}>
+            <EditorPanel
+              state={leftPanel}
+              onModeChange={(mode) => handleModeChange('left', mode)}
+              onContentChange={(content) => handleContentChange('left', content)}
+              onFormat={() => formatJSON('left')}
+              onMinify={() => minifyJSON('left')}
+              onRepair={(content) => handleContentChange('left', content)}
+              onClear={() => handleClear('left')}
+              onLoadSample={() => handleLoadSample('left')}
+              onMaximize={() => toggleMaximize('left')}
+              isMaximized={maximizedPanel === 'left'}
+              fullHeight={isDesktop}
+            />
+          </div>
 
-          {isDesktop && (
+          {isDesktop && !maximizedPanel && (
             <>
               {/* Draggable Divider */}
               <div
@@ -217,15 +249,21 @@ export default function JsonEditorPage() {
           )}
 
           {/* Right Panel */}
-          <EditorPanel
-            state={rightPanel}
-            onModeChange={(mode) => handleModeChange('right', mode)}
-            onContentChange={(content) => handleContentChange('right', content)}
-            onFormat={() => formatJSON('right')}
-            onMinify={() => minifyJSON('right')}
-            onRepair={(content) => handleContentChange('right', content)}
-            fullHeight={isDesktop}
-          />
+          <div className={`${maximizedPanel === 'left' ? 'hidden' : 'flex'} flex-col h-full overflow-hidden`}>
+            <EditorPanel
+              state={rightPanel}
+              onModeChange={(mode) => handleModeChange('right', mode)}
+              onContentChange={(content) => handleContentChange('right', content)}
+              onFormat={() => formatJSON('right')}
+              onMinify={() => minifyJSON('right')}
+              onRepair={(content) => handleContentChange('right', content)}
+              onClear={() => handleClear('right')}
+              onLoadSample={() => handleLoadSample('right')}
+              onMaximize={() => toggleMaximize('right')}
+              isMaximized={maximizedPanel === 'right'}
+              fullHeight={isDesktop}
+            />
+          </div>
         </div>
       </div>
 
@@ -262,6 +300,10 @@ interface EditorPanelProps {
   onFormat: () => void;
   onMinify: () => void;
   onRepair: (repairedContent: string) => void;
+  onClear: () => void;
+  onLoadSample: () => void;
+  onMaximize: () => void;
+  isMaximized: boolean;
   fullHeight?: boolean;
 }
 
@@ -272,6 +314,10 @@ function EditorPanel({
   onFormat,
   onMinify,
   onRepair,
+  onClear,
+  onLoadSample,
+  onMaximize,
+  isMaximized,
   fullHeight = false,
 }: EditorPanelProps) {
   const [copied, setCopied] = useState(false);
@@ -291,7 +337,7 @@ function EditorPanel({
     <Card className={`border shadow-lg flex flex-col ${fullHeight ? 'h-full' : ''} overflow-hidden`}>
       <CardContent className="p-3 flex flex-col flex-1 overflow-hidden">
         {/* Toolbar */}
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2 mb-2">
           {/* Mode Tabs */}
           <Tabs value={state.mode} onValueChange={(v) => onModeChange(v as EditorMode)}>
             <TabsList className="h-8 p-0.5">
@@ -313,6 +359,23 @@ function EditorPanel({
           {/* Actions */}
           <TooltipProvider delayDuration={200}>
             <div className="flex items-center gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={onLoadSample}
+                    className="h-7 px-2 text-xs"
+                    aria-label="Load Sample"
+                  >
+                    Sample
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Load Sample JSON</TooltipContent>
+              </Tooltip>
+
+              <div className="w-px h-4 bg-border mx-1" />
+
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -375,12 +438,44 @@ function EditorPanel({
                 </TooltipTrigger>
                 <TooltipContent>Repair</TooltipContent>
               </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={onClear}
+                    className="h-7 w-8 p-0 text-destructive hover:text-destructive"
+                    aria-label="Clear"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Clear</TooltipContent>
+              </Tooltip>
+
+              <div className="w-px h-4 bg-border mx-1" />
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={onMaximize}
+                    className="h-7 w-8 p-0"
+                    aria-label={isMaximized ? "Restore" : "Maximize"}
+                  >
+                    {isMaximized ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{isMaximized ? "Restore" : "Maximize"}</TooltipContent>
+              </Tooltip>
             </div>
           </TooltipProvider>
         </div>
 
         {/* Status Bar */}
-        <div className="flex items-center justify-end text-xs text-muted-foreground px-1 gap-2">
+        <div className="flex items-center justify-end text-xs text-muted-foreground px-1 gap-2 mb-1">
           {state.isValid && (
             <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
               <CheckCircle2 className="h-3 w-3" />

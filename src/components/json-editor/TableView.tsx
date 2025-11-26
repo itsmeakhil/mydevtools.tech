@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,13 +17,19 @@ import {
     ArrowUpDown,
     AlertCircle,
     Maximize2,
+    Pencil,
+    Check,
+    X
 } from 'lucide-react';
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from '@/components/ui/popover';
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/components/ui/dialog';
 import { JSONValue } from './types';
+import TextEditor from './TextEditor';
 
 interface TableViewProps {
     value: string;
@@ -40,6 +44,10 @@ export default function TableView({ value, onChange, error }: TableViewProps) {
     const [editValue, setEditValue] = useState('');
     const [sortColumn, setSortColumn] = useState<string | null>(null);
     const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+
+    // Complex cell editing state
+    const [complexEditorOpen, setComplexEditorOpen] = useState(false);
+    const [complexEditData, setComplexEditData] = useState<{ row: number; col: string; value: string; error: string | null } | null>(null);
 
     let parsed: JSONValue = null;
     let parseError: string | null = null;
@@ -126,6 +134,31 @@ export default function TableView({ value, onChange, error }: TableViewProps) {
         }
     };
 
+    const handleComplexEditSave = () => {
+        if (!complexEditData || complexEditData.error) return;
+
+        try {
+            const parsedValue = JSON.parse(complexEditData.value);
+            const data = [...sortedData];
+            data[complexEditData.row][complexEditData.col] = parsedValue;
+            onChange(JSON.stringify(data, null, 2));
+            setComplexEditorOpen(false);
+            setComplexEditData(null);
+        } catch (err) {
+            console.error('Failed to save complex edit:', err);
+        }
+    };
+
+    const openComplexEditor = (rowIndex: number, column: string, value: JSONValue) => {
+        setComplexEditData({
+            row: rowIndex,
+            col: column,
+            value: JSON.stringify(value, null, 2),
+            error: null
+        });
+        setComplexEditorOpen(true);
+    };
+
     const handleAddRow = () => {
         try {
             const data = [...sortedData];
@@ -178,7 +211,12 @@ export default function TableView({ value, onChange, error }: TableViewProps) {
         if (typeof val === 'boolean') return val ? 'true' : 'false';
         if (typeof val === 'object') {
             if (Array.isArray(val)) return `Array[${val.length}]`;
-            return `Object{${Object.keys(val).length}}`;
+            // Show preview of object content if small
+            const keys = Object.keys(val);
+            if (keys.length <= 2) {
+                return `{ ${keys.map(k => `${k}:...`).join(', ')} }`;
+            }
+            return `Object{${keys.length}}`;
         }
         return String(val);
     };
@@ -302,7 +340,9 @@ export default function TableView({ value, onChange, error }: TableViewProps) {
                                             key={column}
                                             className="p-1"
                                             onDoubleClick={() => {
-                                                if (!isComplex) {
+                                                if (isComplex) {
+                                                    openComplexEditor(rowIndex, column, cellValue);
+                                                } else {
                                                     setEditingCell({ row: rowIndex, col: column });
                                                     setEditValue(formatCellValue(cellValue));
                                                 }
@@ -331,18 +371,14 @@ export default function TableView({ value, onChange, error }: TableViewProps) {
                                                     </div>
                                                     {isComplex && (
                                                         <div className="absolute top-0 right-0 hidden group-hover/cell:block z-10">
-                                                            <Popover>
-                                                                <PopoverTrigger asChild>
-                                                                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                                                                        <Maximize2 className="h-3 w-3" />
-                                                                    </Button>
-                                                                </PopoverTrigger>
-                                                                <PopoverContent className="w-80 p-2">
-                                                                    <div className="max-h-[300px] overflow-auto text-xs font-mono whitespace-pre-wrap">
-                                                                        {JSON.stringify(cellValue, null, 2)}
-                                                                    </div>
-                                                                </PopoverContent>
-                                                            </Popover>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-6 w-6 bg-background/80 backdrop-blur-sm shadow-sm"
+                                                                onClick={() => openComplexEditor(rowIndex, column, cellValue)}
+                                                            >
+                                                                <Pencil className="h-3 w-3" />
+                                                            </Button>
                                                         </div>
                                                     )}
                                                 </div>
@@ -370,6 +406,43 @@ export default function TableView({ value, onChange, error }: TableViewProps) {
             <div className="p-2 border-t bg-muted/30 text-xs text-muted-foreground">
                 Double-click any cell to edit. Click column headers to sort.
             </div>
+
+            {/* Complex Editor Dialog */}
+            <Dialog open={complexEditorOpen} onOpenChange={setComplexEditorOpen}>
+                <DialogContent className="max-w-2xl h-[80vh] flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle>Edit Cell Content</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 min-h-0 border rounded-md overflow-hidden relative">
+                        {complexEditData && (
+                            <TextEditor
+                                value={complexEditData.value}
+                                onChange={(val) => {
+                                    let error = null;
+                                    try {
+                                        JSON.parse(val);
+                                    } catch (e) {
+                                        error = (e as Error).message;
+                                    }
+                                    setComplexEditData({ ...complexEditData, value: val, error });
+                                }}
+                                error={complexEditData.error}
+                            />
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setComplexEditorOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleComplexEditSave}
+                            disabled={!!complexEditData?.error}
+                        >
+                            Save Changes
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

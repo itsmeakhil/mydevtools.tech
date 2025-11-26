@@ -9,12 +9,12 @@ import { JSONValue } from './types';
 interface TreeNodeProps {
     label: string;
     value: JSONValue;
-    path: string;
+    path: (string | number)[];
     isExpanded: boolean;
     onToggle: () => void;
-    onEdit: (path: string, newValue: JSONValue) => void;
-    onDelete: (path: string) => void;
-    onAdd: (path: string) => void;
+    onEdit: (path: (string | number)[], newValue: JSONValue) => void;
+    onDelete: (path: (string | number)[]) => void;
+    onAdd: (path: (string | number)[]) => void;
     level: number;
 }
 
@@ -200,10 +200,10 @@ export default function TreeNode({
                     {Array.isArray(value) ? (
                         value.map((item, index) => (
                             <TreeNodeContainer
-                                key={`${path}[${index}]`}
+                                key={`${path.join('.')}[${index}]`}
                                 label={`[${index}]`}
                                 value={item}
-                                path={`${path}[${index}]`}
+                                path={[...path, index]}
                                 onEdit={onEdit}
                                 onDelete={onDelete}
                                 onAdd={onAdd}
@@ -213,10 +213,10 @@ export default function TreeNode({
                     ) : (
                         Object.entries(value as object).map(([key, val]) => (
                             <TreeNodeContainer
-                                key={`${path}.${key}`}
+                                key={`${path.join('.')}.${key}`}
                                 label={key}
                                 value={val}
-                                path={path ? `${path}.${key}` : key}
+                                path={[...path, key]}
                                 onEdit={onEdit}
                                 onDelete={onDelete}
                                 onAdd={onAdd}
@@ -233,10 +233,10 @@ export default function TreeNode({
 interface TreeNodeContainerProps {
     label: string;
     value: JSONValue;
-    path: string;
-    onEdit: (path: string, newValue: JSONValue) => void;
-    onDelete: (path: string) => void;
-    onAdd: (path: string) => void;
+    path: (string | number)[];
+    onEdit: (path: (string | number)[], newValue: JSONValue) => void;
+    onDelete: (path: (string | number)[]) => void;
+    onAdd: (path: (string | number)[]) => void;
     level: number;
 }
 

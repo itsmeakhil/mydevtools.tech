@@ -35,7 +35,7 @@ export default function TreeView({ value, onChange, error }: TreeViewProps) {
         parseError = err instanceof Error ? err.message : 'Invalid JSON';
     }
 
-    const handleEdit = (path: string, newValue: JSONValue) => {
+    const handleEdit = (path: (string | number)[], newValue: JSONValue) => {
         try {
             const current = JSON.parse(value);
             setValueByPath(current, path, newValue);
@@ -45,7 +45,7 @@ export default function TreeView({ value, onChange, error }: TreeViewProps) {
         }
     };
 
-    const handleDelete = (path: string) => {
+    const handleDelete = (path: (string | number)[]) => {
         try {
             const current = JSON.parse(value);
             deleteByPath(current, path);
@@ -55,7 +55,7 @@ export default function TreeView({ value, onChange, error }: TreeViewProps) {
         }
     };
 
-    const handleAdd = (path: string) => {
+    const handleAdd = (path: (string | number)[]) => {
         try {
             const current = JSON.parse(value);
             const parent = getValueByPath(current, path);
@@ -80,17 +80,16 @@ export default function TreeView({ value, onChange, error }: TreeViewProps) {
 
     const expandAll = () => {
         const paths = new Set<string>();
-        const collectPaths = (obj: JSONValue, currentPath: string = '') => {
+        const collectPaths = (obj: JSONValue, currentPath: (string | number)[] = []) => {
             if (obj !== null && typeof obj === 'object') {
-                paths.add(currentPath);
+                paths.add(JSON.stringify(currentPath));
                 if (Array.isArray(obj)) {
                     obj.forEach((item, index) => {
-                        collectPaths(item, `${currentPath}[${index}]`);
+                        collectPaths(item, [...currentPath, index]);
                     });
                 } else {
                     Object.entries(obj).forEach(([key, val]) => {
-                        const newPath = currentPath ? `${currentPath}.${key}` : key;
-                        collectPaths(val, newPath);
+                        collectPaths(val, [...currentPath, key]);
                     });
                 }
             }
@@ -163,7 +162,7 @@ export default function TreeView({ value, onChange, error }: TreeViewProps) {
                 <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleAdd('')}
+                    onClick={() => handleAdd([])}
                     className="h-7 px-2 text-xs gap-1"
                 >
                     <Plus className="h-3 w-3" />
@@ -176,53 +175,61 @@ export default function TreeView({ value, onChange, error }: TreeViewProps) {
                 {typeof parsed === 'object' && parsed !== null ? (
                     Array.isArray(parsed) ? (
                         <div className="space-y-0.5">
-                            {parsed.map((item, index) => (
-                                <TreeNode
-                                    key={`[${index}]`}
-                                    label={`[${index}]`}
-                                    value={item}
-                                    path={`[${index}]`}
-                                    isExpanded={expandedPaths.has(`[${index}]`)}
-                                    onToggle={() => {
-                                        const newPaths = new Set(expandedPaths);
-                                        if (newPaths.has(`[${index}]`)) {
-                                            newPaths.delete(`[${index}]`);
-                                        } else {
-                                            newPaths.add(`[${index}]`);
-                                        }
-                                        setExpandedPaths(newPaths);
-                                    }}
-                                    onEdit={handleEdit}
-                                    onDelete={handleDelete}
-                                    onAdd={handleAdd}
-                                    level={0}
-                                />
-                            ))}
+                            {parsed.map((item, index) => {
+                                const path = [index];
+                                const pathKey = JSON.stringify(path);
+                                return (
+                                    <TreeNode
+                                        key={pathKey}
+                                        label={`[${index}]`}
+                                        value={item}
+                                        path={path}
+                                        isExpanded={expandedPaths.has(pathKey)}
+                                        onToggle={() => {
+                                            const newPaths = new Set(expandedPaths);
+                                            if (newPaths.has(pathKey)) {
+                                                newPaths.delete(pathKey);
+                                            } else {
+                                                newPaths.add(pathKey);
+                                            }
+                                            setExpandedPaths(newPaths);
+                                        }}
+                                        onEdit={handleEdit}
+                                        onDelete={handleDelete}
+                                        onAdd={handleAdd}
+                                        level={0}
+                                    />
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="space-y-0.5">
-                            {Object.entries(parsed).map(([key, val]) => (
-                                <TreeNode
-                                    key={key}
-                                    label={key}
-                                    value={val}
-                                    path={key}
-                                    isExpanded={expandedPaths.has(key)}
-                                    onToggle={() => {
-                                        const newPaths = new Set(expandedPaths);
-                                        if (newPaths.has(key)) {
-                                            newPaths.delete(key);
-                                        } else {
-                                            newPaths.add(key);
-                                        }
-                                        setExpandedPaths(newPaths);
-                                    }}
-                                    onEdit={handleEdit}
-                                    onDelete={handleDelete}
-                                    onAdd={handleAdd}
-                                    level={0}
-                                />
-                            ))}
+                            {Object.entries(parsed).map(([key, val]) => {
+                                const path = [key];
+                                const pathKey = JSON.stringify(path);
+                                return (
+                                    <TreeNode
+                                        key={pathKey}
+                                        label={key}
+                                        value={val}
+                                        path={path}
+                                        isExpanded={expandedPaths.has(pathKey)}
+                                        onToggle={() => {
+                                            const newPaths = new Set(expandedPaths);
+                                            if (newPaths.has(pathKey)) {
+                                                newPaths.delete(pathKey);
+                                            } else {
+                                                newPaths.add(pathKey);
+                                            }
+                                            setExpandedPaths(newPaths);
+                                        }}
+                                        onEdit={handleEdit}
+                                        onDelete={handleDelete}
+                                        onAdd={handleAdd}
+                                        level={0}
+                                    />
+                                );
+                            })}
                         </div>
                     )
                 ) : (
@@ -236,26 +243,24 @@ export default function TreeView({ value, onChange, error }: TreeViewProps) {
 }
 
 // Helper functions
-function setValueByPath(obj: any, path: string, value: JSONValue) {
-    const parts = parsePath(path);
+function setValueByPath(obj: any, path: (string | number)[], value: JSONValue) {
     let current = obj;
 
-    for (let i = 0; i < parts.length - 1; i++) {
-        current = current[parts[i]];
+    for (let i = 0; i < path.length - 1; i++) {
+        current = current[path[i]];
     }
 
-    current[parts[parts.length - 1]] = value;
+    current[path[path.length - 1]] = value;
 }
 
-function deleteByPath(obj: any, path: string) {
-    const parts = parsePath(path);
+function deleteByPath(obj: any, path: (string | number)[]) {
     let current = obj;
 
-    for (let i = 0; i < parts.length - 1; i++) {
-        current = current[parts[i]];
+    for (let i = 0; i < path.length - 1; i++) {
+        current = current[path[i]];
     }
 
-    const lastKey = parts[parts.length - 1];
+    const lastKey = path[path.length - 1];
     if (Array.isArray(current)) {
         current.splice(Number(lastKey), 1);
     } else {
@@ -263,30 +268,13 @@ function deleteByPath(obj: any, path: string) {
     }
 }
 
-function getValueByPath(obj: any, path: string): JSONValue {
-    if (!path) return obj;
-    const parts = parsePath(path);
+function getValueByPath(obj: any, path: (string | number)[]): JSONValue {
+    if (path.length === 0) return obj;
     let current = obj;
 
-    for (const part of parts) {
+    for (const part of path) {
         current = current[part];
     }
 
     return current;
-}
-
-function parsePath(path: string): (string | number)[] {
-    const parts: (string | number)[] = [];
-    const regex = /\[(\d+)\]|\.?([^.\[]+)/g;
-    let match;
-
-    while ((match = regex.exec(path)) !== null) {
-        if (match[1] !== undefined) {
-            parts.push(Number(match[1]));
-        } else if (match[2] !== undefined) {
-            parts.push(match[2]);
-        }
-    }
-
-    return parts;
 }
