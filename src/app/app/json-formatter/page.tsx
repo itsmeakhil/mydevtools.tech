@@ -12,11 +12,7 @@ import {
   Minimize2,
   CheckCircle2,
   Copy,
-  Download,
-  Upload,
   ArrowLeftRight,
-  Search,
-  Shield,
   Wrench
 } from 'lucide-react';
 import { EditorMode, EditorState } from '@/components/json-editor/types';
@@ -27,13 +23,10 @@ import TableView from '@/components/json-editor/TableView';
 import CompareDialog from '@/components/json-editor/CompareDialog';
 import TransformDialog from '@/components/json-editor/TransformDialog';
 import SchemaValidator from '@/components/json-editor/SchemaValidator';
-import {
-  importJSONFromFile,
-  exportJSONToFile,
-  exportJSONAsCSV
-} from '@/lib/json-utils/import-export';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 export default function JsonEditorPage() {
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
   const [leftPanel, setLeftPanel] = useState<EditorState>({
     content: '',
     mode: 'text',
@@ -61,6 +54,7 @@ export default function JsonEditorPage() {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (!isDesktop) return;
     e.preventDefault();
     setIsDragging(true);
   };
@@ -86,7 +80,7 @@ export default function JsonEditorPage() {
 
   // Add mouse event listeners
   useEffect(() => {
-    if (isDragging) {
+    if (isDragging && isDesktop) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       document.body.style.cursor = 'col-resize';
@@ -99,7 +93,7 @@ export default function JsonEditorPage() {
         document.body.style.userSelect = '';
       };
     }
-  }, [isDragging]);
+  }, [isDragging, isDesktop]);
 
   const handleModeChange = (panel: 'left' | 'right', mode: EditorMode) => {
     if (panel === 'left') {
@@ -152,105 +146,16 @@ export default function JsonEditorPage() {
     handleContentChange('right', leftPanel.content);
   };
 
-  const handleImport = async () => {
-    try {
-      const content = await importJSONFromFile();
-      handleContentChange('left', content);
-    } catch (err) {
-      console.error('Import failed:', err);
-    }
-  };
-
-  const handleExport = () => {
-    const content = leftPanel.content || rightPanel.content;
-    if (!content) return;
-    exportJSONToFile(content, 'data.json');
-  };
-
-  const handleExportCSV = () => {
-    const content = leftPanel.content || rightPanel.content;
-    if (!content) return;
-    const result = exportJSONAsCSV(content, 'data.csv');
-    if (!result.success) {
-      alert(result.error);
-    }
-  };
-
   return (
     <div className="h-screen bg-gradient-to-br from-background via-background to-muted/20 p-3 md:p-4 lg:p-6 flex flex-col overflow-hidden">
       <div className="max-w-[1800px] mx-auto w-full flex flex-col gap-3 flex-1 overflow-hidden">
-        {/* Header */}
-        <Card className="border shadow-lg">
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-primary/10 rounded-lg">
-                  <Code className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <h1 className="text-lg font-bold">JSON Editor</h1>
-                  <p className="text-xs text-muted-foreground">
-                    Edit, format, validate, and compare JSON with multiple view modes
-                  </p>
-                </div>
-              </div>
-
-              {/* Global Actions */}
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 gap-1.5 text-xs"
-                  onClick={handleImport}
-                >
-                  <Upload className="h-3 w-3" />
-                  Import
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 gap-1.5 text-xs"
-                  onClick={handleExport}
-                  disabled={!leftPanel.content && !rightPanel.content}
-                >
-                  <Download className="h-3 w-3" />
-                  Export JSON
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 gap-1.5 text-xs"
-                  onClick={() => {
-                    setQueryPanel('left');
-                    setTransformDialogOpen(true);
-                  }}
-                  disabled={!leftPanel.content && !rightPanel.content}
-                >
-                  <Search className="h-3 w-3" />
-                  Query
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 gap-1.5 text-xs"
-                  onClick={() => {
-                    setValidatePanel('left');
-                    setSchemaValidatorOpen(true);
-                  }}
-                  disabled={!leftPanel.content && !rightPanel.content}
-                >
-                  <Shield className="h-3 w-3" />
-                  Validate
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Main Editor Area */}
-        <div className="editor-container grid gap-3 flex-1 overflow-hidden relative" style={{
-          gridTemplateColumns: `${leftWidth}% 8px ${100 - leftWidth}%`,
-        }}>
+        <div
+          className={`editor-container ${isDesktop ? 'grid' : 'flex flex-col'} gap-3 flex-1 overflow-hidden relative min-h-0`}
+          style={isDesktop ? {
+            gridTemplateColumns: `${leftWidth}% 8px ${100 - leftWidth}%`,
+          } : undefined}
+        >
           {/* Left Panel */}
           <EditorPanel
             label="Left Panel"
@@ -260,46 +165,51 @@ export default function JsonEditorPage() {
             onFormat={() => formatJSON('left')}
             onMinify={() => minifyJSON('left')}
             onRepair={(content) => handleContentChange('left', content)}
+            fullHeight={isDesktop}
           />
 
-          {/* Draggable Divider */}
-          <div
-            className={`relative flex items-center justify-center group cursor-col-resize ${isDragging ? 'bg-primary/20' : 'hover:bg-primary/10'
-              } transition-colors`}
-            onMouseDown={handleMouseDown}
-          >
-            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-1 bg-border group-hover:bg-primary/30 transition-colors" />
-            <div className="absolute top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="w-1 h-1 rounded-full bg-primary/40" />
-              <div className="w-1 h-1 rounded-full bg-primary/40" />
-              <div className="w-1 h-1 rounded-full bg-primary/40" />
-            </div>
-          </div>
+          {isDesktop && (
+            <>
+              {/* Draggable Divider */}
+              <div
+                className={`relative flex items-center justify-center group cursor-col-resize ${isDragging ? 'bg-primary/20' : 'hover:bg-primary/10'
+                  } transition-colors`}
+                onMouseDown={handleMouseDown}
+              >
+                <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-1 bg-border group-hover:bg-primary/30 transition-colors" />
+                <div className="absolute top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="w-1 h-1 rounded-full bg-primary/40" />
+                  <div className="w-1 h-1 rounded-full bg-primary/40" />
+                  <div className="w-1 h-1 rounded-full bg-primary/40" />
+                </div>
+              </div>
 
-          {/* Center Actions - Positioned Absolutely */}
-          <div className="hidden lg:flex flex-col items-center justify-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
-            <div className="flex flex-col gap-2 pointer-events-auto">
-              <Button
-                size="icon"
-                variant="outline"
-                className="h-10 w-10 rounded-full bg-background shadow-lg"
-                title="Copy left to right"
-                onClick={copyToOtherPanel}
-              >
-                <ArrowLeftRight className="h-4 w-4" />
-              </Button>
-              <Button
-                size="icon"
-                variant="outline"
-                className="h-10 w-10 rounded-full bg-background shadow-lg"
-                title="Compare JSON"
-                onClick={() => setCompareDialogOpen(true)}
-                disabled={!leftPanel.content && !rightPanel.content}
-              >
-                <Code className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+              {/* Center Actions - Positioned Absolutely */}
+              <div className="hidden lg:flex flex-col items-center justify-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
+                <div className="flex flex-col gap-2 pointer-events-auto">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-10 w-10 rounded-full bg-background shadow-lg"
+                    title="Copy left to right"
+                    onClick={copyToOtherPanel}
+                  >
+                    <ArrowLeftRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-10 w-10 rounded-full bg-background shadow-lg"
+                    title="Compare JSON"
+                    onClick={() => setCompareDialogOpen(true)}
+                    disabled={!leftPanel.content && !rightPanel.content}
+                  >
+                    <Code className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Right Panel */}
           <EditorPanel
@@ -310,6 +220,7 @@ export default function JsonEditorPage() {
             onFormat={() => formatJSON('right')}
             onMinify={() => minifyJSON('right')}
             onRepair={(content) => handleContentChange('right', content)}
+            fullHeight={isDesktop}
           />
         </div>
       </div>
@@ -348,6 +259,7 @@ interface EditorPanelProps {
   onFormat: () => void;
   onMinify: () => void;
   onRepair: (repairedContent: string) => void;
+  fullHeight?: boolean;
 }
 
 function EditorPanel({
@@ -358,6 +270,7 @@ function EditorPanel({
   onFormat,
   onMinify,
   onRepair,
+  fullHeight = false,
 }: EditorPanelProps) {
   const [copied, setCopied] = useState(false);
   const [repairDialogOpen, setRepairDialogOpen] = useState(false);
@@ -373,7 +286,7 @@ function EditorPanel({
   };
 
   return (
-    <Card className="border shadow-lg flex flex-col h-full overflow-hidden">
+    <Card className={`border shadow-lg flex flex-col ${fullHeight ? 'h-full' : ''} overflow-hidden`}>
       <CardContent className="p-3 flex flex-col flex-1 overflow-hidden">
         {/* Toolbar */}
         <div className="flex items-center justify-between gap-2">
