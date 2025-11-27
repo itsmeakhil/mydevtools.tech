@@ -2,6 +2,7 @@
 
 import { AddPasswordDialog } from "@/components/password-manager/add-password-dialog"
 import { PasswordList } from "@/components/password-manager/password-list"
+import { SecurityDashboard } from "@/components/password-manager/security-dashboard"
 import { VaultLockScreen } from "@/components/password-manager/master-password-modal"
 import { usePasswordStore } from "@/store/password-store"
 import useAuth from "@/utils/useAuth"
@@ -29,6 +30,7 @@ export default function PasswordManagerPage() {
                 <AddPasswordDialog />
             </div>
 
+            <SecurityDashboard />
             <PasswordList />
         </div>
     )
