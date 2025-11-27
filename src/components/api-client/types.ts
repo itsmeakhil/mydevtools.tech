@@ -41,3 +41,22 @@ export interface ApiRequestState {
     response: ApiResponse | null
     isLoading: boolean
 }
+
+export interface CollectionRequest extends Omit<ApiRequestState, "response" | "isLoading"> {
+    id: string
+    name: string
+}
+
+export interface CollectionFolder {
+    id: string
+    name: string
+    type: "folder"
+    items: (CollectionFolder | CollectionRequest)[]
+    isOpen?: boolean
+}
+
+export interface Collection {
+    id: string
+    name: string
+    items: (CollectionFolder | CollectionRequest)[]
+}
