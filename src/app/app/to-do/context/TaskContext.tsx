@@ -20,6 +20,7 @@ import {
   serverTimestamp,
   QuerySnapshot,
   where,
+  getCountFromServer,
 } from "firebase/firestore";
 import { db } from "../../../../database/firebase";
 import { Task, NewTask } from "@/app/app/to-do/types/Task";
@@ -166,65 +167,56 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Modified total pages calculation
+  // Fetch stats efficiently using count()
+  const fetchStats = useCallback(async () => {
+    if (!user || !user.uid) return;
+
+    try {
+      const baseQuery = query(collection(db, "tasks"), where("created_by", "==", user.uid));
+
+      const [totalSnap, completedSnap, ongoingSnap, notStartedSnap] = await Promise.all([
+        getCountFromServer(baseQuery),
+        getCountFromServer(query(baseQuery, where("status", "==", "completed"))),
+        getCountFromServer(query(baseQuery, where("status", "==", "ongoing"))),
+        getCountFromServer(query(baseQuery, where("status", "==", "not-started")))
+      ]);
+
+      setAllTaskStats({
+        total: totalSnap.data().count,
+        completed: completedSnap.data().count,
+        ongoing: ongoingSnap.data().count,
+        notStarted: notStartedSnap.data().count,
+      });
+
+      // Update total pages based on total count
+      const calculatedPages = Math.max(1, Math.ceil(totalSnap.data().count / tasksPerPage));
+      setTotalPages(calculatedPages);
+      setTotalTaskCount(totalSnap.data().count);
+
+    } catch (error) {
+      console.error("Error fetching task stats:", error);
+    }
+  }, [user]);
+
+  // Initial stats load
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  // Listen for page changes to update list
   useEffect(() => {
     if (!user || !user.uid) {
       cleanupListeners();
       return;
     }
 
-    const unsubscribe = onSnapshot(
-      query(
-        collection(db, "tasks"),
-        where("created_by", "==", user.uid)
-      ),
-      async (snapshot) => {
-        const actualCount = snapshot.size;
-        const calculatedPages = Math.max(1, Math.ceil(actualCount / tasksPerPage));
+    // We still need to fetch the current page of tasks
+    // This logic was partly in the previous useEffect, now we ensure it runs when page/filter changes
+    // The actual task fetching is handled by the other useEffect (lines 361+ in original file)
+    // but we need to make sure totalPages is correct.
+    // fetchStats handles totalPages now.
 
-        setTotalTaskCount(actualCount);
-
-        // Calculate stats from all tasks
-        const stats = {
-          total: actualCount,
-          completed: 0,
-          ongoing: 0,
-          notStarted: 0,
-        };
-
-        snapshot.forEach((doc) => {
-          const status = doc.data().status;
-          if (status === "completed") stats.completed++;
-          else if (status === "ongoing") stats.ongoing++;
-          else if (status === "not-started") stats.notStarted++;
-        });
-
-        setAllTaskStats(stats);
-
-        if (calculatedPages !== totalPages) {
-          setTotalPages(calculatedPages);
-          if (currentPage > calculatedPages) {
-            setCurrentPage(calculatedPages);
-            const lastPageQuery = query(
-              collection(db, "tasks"),
-              where("created_by", "==", user.uid),
-              orderBy("statusOrder"),
-              orderBy("createdAt", "desc"),
-              limit(tasksPerPage)
-            );
-            const querySnapshot = await getDocs(lastPageQuery);
-            updateTasksFromSnapshot(querySnapshot);
-          }
-        }
-      },
-      handleFirestoreError
-    );
-
-    unsubscribers.current.push(unsubscribe);
-    return () => {
-      cleanupListeners();
-    };
-  }, [currentPage, totalPages, user, cleanupListeners, handleFirestoreError, updateTasksFromSnapshot]);
+  }, [user, cleanupListeners]);
 
   // Modified query creation helper function with proper typing
   const createTaskQuery = useCallback(
@@ -575,6 +567,15 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     };
     try {
       await addDoc(collection(db, "tasks"), newTask);
+
+      // Optimistically update stats
+      setAllTaskStats(prev => ({
+        ...prev,
+        total: prev.total + 1,
+        notStarted: prev.notStarted + 1
+      }));
+      setTotalTaskCount(prev => prev + 1);
+
       toast.success("Task added successfully", {
         description: newTaskText.length > 50 ? `${newTaskText.substring(0, 50)}...` : newTaskText,
       });
@@ -663,6 +664,26 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
       try {
         await updateTask(taskId, updates);
+
+        // Optimistically update stats if status changed
+        if (task && task.status !== newStatus) {
+          setAllTaskStats(prev => {
+            const newStats = { ...prev };
+
+            // Decrement old status count
+            if (task.status === "completed") newStats.completed--;
+            else if (task.status === "ongoing") newStats.ongoing--;
+            else if (task.status === "not-started") newStats.notStarted--;
+
+            // Increment new status count
+            if (newStatus === "completed") newStats.completed++;
+            else if (newStatus === "ongoing") newStats.ongoing++;
+            else if (newStatus === "not-started") newStats.notStarted++;
+
+            return newStats;
+          });
+        }
+
         if (task) {
           toast.success(`Task moved to ${statusLabels[newStatus]}`, {
             description: task.text.length > 50 ? `${task.text.substring(0, 50)}...` : task.text,
@@ -731,6 +752,20 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       try {
         await deleteDoc(doc(db, "tasks", taskId));
         deleteExecuted = true;
+
+        // Update stats after successful deletion
+        setAllTaskStats(prev => {
+          const newStats = { ...prev };
+          newStats.total = Math.max(0, newStats.total - 1);
+
+          if (taskToDelete.status === "completed") newStats.completed = Math.max(0, newStats.completed - 1);
+          else if (taskToDelete.status === "ongoing") newStats.ongoing = Math.max(0, newStats.ongoing - 1);
+          else if (taskToDelete.status === "not-started") newStats.notStarted = Math.max(0, newStats.notStarted - 1);
+
+          return newStats;
+        });
+        setTotalTaskCount(prev => Math.max(0, prev - 1));
+
         if (tasks.length === 1 && currentPage > 1) {
           await refreshCurrentPage();
         }

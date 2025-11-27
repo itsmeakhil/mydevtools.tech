@@ -192,7 +192,7 @@ export function NavBar() {
       <header className="sticky top-0 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-20">
         <div className="flex h-14 items-center pr-4 pl-4">
           <div className="flex items-center gap-2 md:gap-4">
-            <SidebarTrigger className="h-8 w-8 md:h-9 md:w-9" />
+            <SidebarTrigger className="hidden md:flex h-8 w-8 md:h-9 md:w-9" />
             <Button
               variant="ghost"
               size="icon"

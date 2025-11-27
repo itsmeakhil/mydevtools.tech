@@ -91,7 +91,7 @@ export function JsonToCsv() {
                     </div>
                     <div className="relative">
                         <textarea
-                            className={`w-full font-mono text-xs p-3 bg-muted/30 rounded-lg resize-none focus:outline-none border transition-colors min-h-[250px] ${error ? 'border-destructive' : 'border-border focus:border-primary/50'
+                            className={`w-full font-mono text-base sm:text-xs p-3 bg-muted/30 rounded-lg resize-none focus:outline-none border transition-colors min-h-[150px] sm:min-h-[250px] ${error ? 'border-destructive' : 'border-border focus:border-primary/50'
                                 }`}
                             value={jsonInput}
                             onChange={(e) => {

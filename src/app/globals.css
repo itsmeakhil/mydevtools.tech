@@ -43,6 +43,12 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
     --sidebar-width: 247px;
     --main-content-width: calc(100% - var(--sidebar-width));
+
+    /* Mobile Safe Areas */
+    --safe-area-top: env(safe-area-inset-top);
+    --safe-area-bottom: env(safe-area-inset-bottom);
+    --safe-area-left: env(safe-area-inset-left);
+    --safe-area-right: env(safe-area-inset-right);
   }
 
   .dark {

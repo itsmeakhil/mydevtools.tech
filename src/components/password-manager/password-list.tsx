@@ -21,6 +21,8 @@ import { calculatePasswordStrength, getStrengthColor, getFaviconUrl } from "@/li
 import { Badge } from "@/components/ui/badge"
 import { formatDistanceToNow } from "date-fns"
 import { ImportExportDialog } from "./import-export-dialog"
+import { useIsMobile } from "@/components/hooks/use-mobile"
+import { PasswordItemSwipeable } from "./password-item-swipeable"
 
 export function PasswordList() {
     const { passwords, deletePassword, lockVault, isLoading } = usePasswordStore()
@@ -30,6 +32,12 @@ export function PasswordList() {
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
     const [passwordToDelete, setPasswordToDelete] = useState<string | null>(null)
     const [editingPassword, setEditingPassword] = useState<PasswordEntry | null>(null)
+    const isMobile = useIsMobile()
+
+    // Force grid view on mobile
+    if (isMobile && viewMode !== "grid") {
+        setViewMode("grid")
+    }
 
     const filteredPasswords = passwords.filter(p =>
         p.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -104,7 +112,10 @@ export function PasswordList() {
 
     return (
         <div className="space-y-6">
-            <div className="flex gap-2 items-center">
+            <div className={cn(
+                "flex gap-2 items-center z-40 transition-all duration-200",
+                isMobile ? "sticky top-0 bg-background/80 backdrop-blur-md py-2 -mx-4 px-4 border-b" : ""
+            )}>
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -114,16 +125,18 @@ export function PasswordList() {
                         className="pl-9 h-10 bg-background/50 backdrop-blur-sm"
                     />
                 </div>
-                <div className="flex items-center gap-2 border rounded-lg p-1 bg-muted/20">
-                    <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")}>
-                        <ToggleGroupItem value="grid" size="sm" aria-label="Grid view">
-                            <LayoutGrid className="h-4 w-4" />
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="list" size="sm" aria-label="List view">
-                            <List className="h-4 w-4" />
-                        </ToggleGroupItem>
-                    </ToggleGroup>
-                </div>
+                {!isMobile && (
+                    <div className="flex items-center gap-2 border rounded-lg p-1 bg-muted/20">
+                        <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")}>
+                            <ToggleGroupItem value="grid" size="sm" aria-label="Grid view">
+                                <LayoutGrid className="h-4 w-4" />
+                            </ToggleGroupItem>
+                            <ToggleGroupItem value="list" size="sm" aria-label="List view">
+                                <List className="h-4 w-4" />
+                            </ToggleGroupItem>
+                        </ToggleGroup>
+                    </div>
+                )}
                 <ImportExportDialog />
                 <Button variant="outline" size="icon" onClick={handleLock} title="Lock Vault" className="h-10 w-10">
                     <Lock className="h-4 w-4" />
@@ -137,105 +150,117 @@ export function PasswordList() {
             ) : viewMode === "grid" ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {filteredPasswords.map((entry) => (
-                        <Card key={entry.id} className="group hover:shadow-xl transition-all duration-300 border-muted/60 hover:border-primary/20 bg-card/50 backdrop-blur-sm overflow-hidden">
-                            <div className="absolute top-0 left-0 w-1 h-full bg-primary/0 group-hover:bg-primary/50 transition-all duration-300" />
-                            <CardHeader className="pb-3 relative">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center text-primary font-bold text-xl select-none shadow-sm group-hover:scale-105 transition-transform duration-300 overflow-hidden">
-                                            {entry.url && getFaviconUrl(entry.url) ? (
-                                                <img
-                                                    src={getFaviconUrl(entry.url)!}
-                                                    alt={entry.service}
-                                                    className="h-8 w-8 object-contain"
-                                                    onError={(e) => {
-                                                        (e.target as HTMLImageElement).style.display = 'none';
-                                                        (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                                                    }}
-                                                />
-                                            ) : null}
-                                            <span className={cn(entry.url && getFaviconUrl(entry.url) ? "hidden" : "")}>
-                                                {entry.service.charAt(0).toUpperCase()}
-                                            </span>
-                                        </div>
-                                        <div>
-                                            <CardTitle className="text-lg font-bold truncate tracking-tight">{entry.service}</CardTitle>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <CardDescription className="truncate font-mono text-xs opacity-80 max-w-[150px]" title={entry.username}>
-                                                    {entry.username}
-                                                </CardDescription>
-                                                <Button variant="ghost" size="icon" className="h-5 w-5 -ml-1 hover:bg-transparent hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => copyToClipboard(entry.username, "Username")} title="Copy Username">
-                                                    <Copy className="h-3 w-3" />
-                                                </Button>
+                        isMobile ? (
+                            <PasswordItemSwipeable
+                                key={entry.id}
+                                entry={entry}
+                                onCopy={(text) => copyToClipboard(text)}
+                                onDelete={(id) => handleDeleteClick(id)}
+                                onEdit={(entry) => setEditingPassword(entry)}
+                                onToggleVisibility={(id) => toggleVisibility(id)}
+                                isVisible={visiblePasswords.has(entry.id)}
+                            />
+                        ) : (
+                            <Card key={entry.id} className="group hover:shadow-xl transition-all duration-300 border-muted/60 hover:border-primary/20 bg-card/50 backdrop-blur-sm overflow-hidden">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-primary/0 group-hover:bg-primary/50 transition-all duration-300" />
+                                <CardHeader className="pb-3 relative">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center text-primary font-bold text-xl select-none shadow-sm group-hover:scale-105 transition-transform duration-300 overflow-hidden">
+                                                {entry.url && getFaviconUrl(entry.url) ? (
+                                                    <img
+                                                        src={getFaviconUrl(entry.url)!}
+                                                        alt={entry.service}
+                                                        className="h-8 w-8 object-contain"
+                                                        onError={(e) => {
+                                                            (e.target as HTMLImageElement).style.display = 'none';
+                                                            (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                                                        }}
+                                                    />
+                                                ) : null}
+                                                <span className={cn(entry.url && getFaviconUrl(entry.url) ? "hidden" : "")}>
+                                                    {entry.service.charAt(0).toUpperCase()}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-lg font-bold truncate tracking-tight">{entry.service}</CardTitle>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <CardDescription className="truncate font-mono text-xs opacity-80 max-w-[150px]" title={entry.username}>
+                                                        {entry.username}
+                                                    </CardDescription>
+                                                    <Button variant="ghost" size="icon" className="h-5 w-5 -ml-1 hover:bg-transparent hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => copyToClipboard(entry.username, "Username")} title="Copy Username">
+                                                        <Copy className="h-3 w-3" />
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="flex gap-1">
-                                        {entry.url && (
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={() => window.open(entry.url, '_blank')} title="Open URL">
-                                                <ExternalLink className="h-4 w-4" />
-                                            </Button>
-                                        )}
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted">
-                                                    <MoreVertical className="h-4 w-4" />
+                                        <div className="flex gap-1">
+                                            {entry.url && (
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={() => window.open(entry.url, '_blank')} title="Open URL">
+                                                    <ExternalLink className="h-4 w-4" />
                                                 </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => setEditingPassword(entry)}>
-                                                    <Pencil className="mr-2 h-4 w-4" />
-                                                    Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem onClick={() => handleDeleteClick(entry.id)} className="text-destructive focus:text-destructive">
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    Delete
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                            )}
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted">
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => setEditingPassword(entry)}>
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuItem onClick={() => handleDeleteClick(entry.id)} className="text-destructive focus:text-destructive">
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="mt-3 flex flex-wrap gap-1">
-                                    {entry.tags?.map(tag => (
-                                        <Badge key={tag} variant="secondary" className="text-[10px] h-5 px-1.5 bg-muted/50 text-muted-foreground">
-                                            {tag}
-                                        </Badge>
-                                    ))}
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="flex items-center gap-2 bg-muted/40 p-2.5 rounded-lg border border-border/50 group-hover:border-primary/10 transition-colors">
-                                    <div className="flex-1 font-mono text-sm truncate tracking-wider">
-                                        {visiblePasswords.has(entry.id) ? entry.password : "••••••••••••"}
+                                    <div className="mt-3 flex flex-wrap gap-1">
+                                        {entry.tags?.map(tag => (
+                                            <Badge key={tag} variant="secondary" className="text-[10px] h-5 px-1.5 bg-muted/50 text-muted-foreground">
+                                                {tag}
+                                            </Badge>
+                                        ))}
                                     </div>
-                                    <div className="flex gap-1">
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-background hover:text-primary" onClick={() => toggleVisibility(entry.id)}>
-                                            {visiblePasswords.has(entry.id) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                                        </Button>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-background hover:text-primary" onClick={() => copyToClipboard(entry.password)}>
-                                            <Copy className="h-3.5 w-3.5" />
-                                        </Button>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="flex items-center gap-2 bg-muted/40 p-2.5 rounded-lg border border-border/50 group-hover:border-primary/10 transition-colors">
+                                        <div className="flex-1 font-mono text-sm truncate tracking-wider">
+                                            {visiblePasswords.has(entry.id) ? entry.password : "••••••••••••"}
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-background hover:text-primary" onClick={() => toggleVisibility(entry.id)}>
+                                                {visiblePasswords.has(entry.id) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-background hover:text-primary" onClick={() => copyToClipboard(entry.password)}>
+                                                <Copy className="h-3.5 w-3.5" />
+                                            </Button>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="mt-2 flex items-center gap-2">
-                                    <div className="h-1 flex-1 bg-muted rounded-full overflow-hidden">
-                                        <div
-                                            className={cn("h-full transition-all duration-300", getStrengthColor(calculatePasswordStrength(entry.password)))}
-                                            style={{ width: `${(calculatePasswordStrength(entry.password) / 5) * 100}%` }}
-                                        />
+                                    <div className="mt-2 flex items-center gap-2">
+                                        <div className="h-1 flex-1 bg-muted rounded-full overflow-hidden">
+                                            <div
+                                                className={cn("h-full transition-all duration-300", getStrengthColor(calculatePasswordStrength(entry.password)))}
+                                                style={{ width: `${(calculatePasswordStrength(entry.password) / 5) * 100}%` }}
+                                            />
+                                        </div>
+                                        <span className="text-[10px] text-muted-foreground">
+                                            {formatDistanceToNow(entry.updatedAt, { addSuffix: true })}
+                                        </span>
                                     </div>
-                                    <span className="text-[10px] text-muted-foreground">
-                                        {formatDistanceToNow(entry.updatedAt, { addSuffix: true })}
-                                    </span>
-                                </div>
-                                {entry.notes && (
-                                    <div className="mt-3 text-xs text-muted-foreground line-clamp-2 bg-muted/20 p-2.5 rounded-lg border border-border/30 italic">
-                                        {entry.notes}
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
+                                    {entry.notes && (
+                                        <div className="mt-3 text-xs text-muted-foreground line-clamp-2 bg-muted/20 p-2.5 rounded-lg border border-border/30 italic">
+                                            {entry.notes}
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )
                     ))}
                 </div>
             ) : (
