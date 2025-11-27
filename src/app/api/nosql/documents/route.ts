@@ -24,7 +24,7 @@ export async function GET(request: Request) {
         const db = client.db(dbName);
         const collection = db.collection(collectionName);
 
-        let query = {};
+        let query: any = {};
         try {
             query = JSON.parse(queryStr);
             // Convert _id strings to ObjectId if present in query
