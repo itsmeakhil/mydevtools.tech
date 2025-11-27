@@ -21,6 +21,7 @@ import { calculatePasswordStrength, getStrengthColor, getFaviconUrl } from "@/li
 import { Badge } from "@/components/ui/badge"
 import { formatDistanceToNow } from "date-fns"
 import { ImportExportDialog } from "./import-export-dialog"
+import { useIsMobile } from "@/components/hooks/use-mobile"
 
 export function PasswordList() {
     const { passwords, deletePassword, lockVault, isLoading } = usePasswordStore()
@@ -30,6 +31,12 @@ export function PasswordList() {
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
     const [passwordToDelete, setPasswordToDelete] = useState<string | null>(null)
     const [editingPassword, setEditingPassword] = useState<PasswordEntry | null>(null)
+    const isMobile = useIsMobile()
+
+    // Force grid view on mobile
+    if (isMobile && viewMode !== "grid") {
+        setViewMode("grid")
+    }
 
     const filteredPasswords = passwords.filter(p =>
         p.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -114,16 +121,18 @@ export function PasswordList() {
                         className="pl-9 h-10 bg-background/50 backdrop-blur-sm"
                     />
                 </div>
-                <div className="flex items-center gap-2 border rounded-lg p-1 bg-muted/20">
-                    <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")}>
-                        <ToggleGroupItem value="grid" size="sm" aria-label="Grid view">
-                            <LayoutGrid className="h-4 w-4" />
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="list" size="sm" aria-label="List view">
-                            <List className="h-4 w-4" />
-                        </ToggleGroupItem>
-                    </ToggleGroup>
-                </div>
+                {!isMobile && (
+                    <div className="flex items-center gap-2 border rounded-lg p-1 bg-muted/20">
+                        <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")}>
+                            <ToggleGroupItem value="grid" size="sm" aria-label="Grid view">
+                                <LayoutGrid className="h-4 w-4" />
+                            </ToggleGroupItem>
+                            <ToggleGroupItem value="list" size="sm" aria-label="List view">
+                                <List className="h-4 w-4" />
+                            </ToggleGroupItem>
+                        </ToggleGroup>
+                    </div>
+                )}
                 <ImportExportDialog />
                 <Button variant="outline" size="icon" onClick={handleLock} title="Lock Vault" className="h-10 w-10">
                     <Lock className="h-4 w-4" />

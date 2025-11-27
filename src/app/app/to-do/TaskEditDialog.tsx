@@ -15,7 +15,7 @@ import { Task, TaskPriority, TaskStatus, SubTask, TaskTag } from "@/app/app/to-d
 import { Calendar as CalendarIcon, Plus, X, Tag, CheckCircle2, Circle, Clock, TrendingUp, Flame, AlertCircle, Zap } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { useIsMobile } from "@/components/hooks/use-mobile";
 import { useProjectContext } from "@/app/app/to-do/context/ProjectContext";
 import { Folder } from "lucide-react";
 
@@ -50,7 +50,7 @@ export default function TaskEditDialog({ task, open, onOpenChange, onSave }: Tas
   const [customTagColor, setCustomTagColor] = useState("#3b82f6");
   const [isSaving, setIsSaving] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const isMobile = useIsMobile();
   const { projects } = useProjectContext();
 
   useEffect(() => {
@@ -406,7 +406,7 @@ export default function TaskEditDialog({ task, open, onOpenChange, onSave }: Tas
     </div>
   );
 
-  if (isDesktop) {
+  if (!isMobile) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">

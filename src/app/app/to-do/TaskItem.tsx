@@ -174,10 +174,10 @@ export default function TaskItem({
   const bgLeft = useTransform(x, [0, -100], ["rgba(239, 68, 68, 0)", "rgba(239, 68, 68, 0.2)"]); // Red
 
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    if (info.offset.x > 100) {
+    if (info.offset.x > 80) {
       // Swipe Right -> Complete
       handleQuickComplete();
-    } else if (info.offset.x < -100) {
+    } else if (info.offset.x < -80) {
       // Swipe Left -> Delete
       if (window.confirm("Are you sure you want to delete this task?")) {
         onDeleteTask(task.id);
@@ -236,7 +236,9 @@ export default function TaskItem({
             style={{ opacity: opacityRight, backgroundColor: bgRight }}
             className="flex-1 flex items-center justify-start pl-6"
           >
-            <CheckCircle2 className="h-6 w-6 text-green-600" />
+            <motion.div style={{ scale: opacityRight }}>
+              <CheckCircle2 className="h-6 w-6 text-green-600" />
+            </motion.div>
           </motion.div>
 
           {/* Right Background (Delete) */}
@@ -244,7 +246,9 @@ export default function TaskItem({
             style={{ opacity: opacityLeft, backgroundColor: bgLeft }}
             className="flex-1 flex items-center justify-end pr-6"
           >
-            <Trash2 className="h-6 w-6 text-red-600" />
+            <motion.div style={{ scale: opacityLeft }}>
+              <Trash2 className="h-6 w-6 text-red-600" />
+            </motion.div>
           </motion.div>
         </div>
 

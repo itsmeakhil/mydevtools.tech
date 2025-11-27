@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
 import { Button } from "@/components/ui/button"
+import { useIsMobile } from "@/components/hooks/use-mobile"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -135,138 +137,163 @@ export function EditPasswordDialog({ entry, open, onOpenChange }: EditPasswordDi
         setFormData(prev => ({ ...prev, password: pass }))
     }, [])
 
+    const isMobile = useIsMobile()
+
+    const FormContent = (
+        <form onSubmit={handleSubmit} className="space-y-5 mt-2">
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="edit-service">Service Name</Label>
+                    <Input
+                        id="edit-service"
+                        placeholder="e.g. Netflix"
+                        value={formData.service}
+                        onChange={(e) => setFormData({ ...formData, service: e.target.value })}
+                        required
+                        autoFocus={!isMobile}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="edit-username">Username / Email</Label>
+                    <Input
+                        id="edit-username"
+                        placeholder="user@example.com"
+                        value={formData.username}
+                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                        required
+                    />
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="edit-password">Password</Label>
+                <div className="relative">
+                    <Input
+                        id="edit-password"
+                        type="text"
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        required
+                        className="font-mono"
+                        placeholder="Enter or generate password"
+                    />
+                </div>
+
+                {formData.password && (
+                    <div className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Strength</span>
+                            <span className={cn("font-medium",
+                                strength <= 2 ? "text-red-500" :
+                                    strength <= 3 ? "text-yellow-500" : "text-green-500"
+                            )}>
+                                {getStrengthLabel(strength)}
+                            </span>
+                        </div>
+                        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                            <div
+                                className={cn("h-full transition-all duration-300", getStrengthColor(strength))}
+                                style={{ width: `${(strength / 5) * 100}%` }}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                <Collapsible open={showGenerator} onOpenChange={setShowGenerator} className="border rounded-lg p-2 bg-muted/30">
+                    <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="w-full flex justify-between items-center text-xs text-muted-foreground hover:text-primary">
+                            <span className="flex items-center gap-2"><Wand2 className="h-3 w-3" /> Advanced Generator</span>
+                            {showGenerator ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                        </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-2">
+                        <AdvancedGenerator
+                            showInput={false}
+                            onPasswordChange={handlePasswordChange}
+                            className="p-2 bg-background rounded-md border shadow-sm"
+                        />
+                    </CollapsibleContent>
+                </Collapsible>
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="edit-url">Website URL (Optional)</Label>
+                <Input
+                    id="edit-url"
+                    type="url"
+                    placeholder="https://..."
+                    value={formData.url}
+                    onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                />
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="edit-notes">Notes (Optional)</Label>
+                <Textarea
+                    id="edit-notes"
+                    placeholder="Additional details..."
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    className="min-h-[80px]"
+                />
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="edit-tags">Tags</Label>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                    {formData.tags.map(tag => (
+                        <Badge key={tag} variant="secondary" className="gap-1 pr-1">
+                            {tag}
+                            <span className="cursor-pointer hover:text-destructive" onClick={() => removeTag(tag)}>×</span>
+                        </Badge>
+                    ))}
+                </div>
+                <Input
+                    id="edit-tags"
+                    placeholder="Add tags (press Enter or comma)"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleAddTag}
+                />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+                {!isMobile && (
+                    <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        Cancel
+                    </Button>
+                )}
+                <Button type="submit" disabled={loading} className={cn(isMobile && "w-full")}>
+                    {loading ? "Updating..." : "Update Password"}
+                </Button>
+            </div>
+        </form>
+    )
+
+    if (isMobile) {
+        return (
+            <Drawer open={open} onOpenChange={onOpenChange}>
+                <DrawerContent>
+                    <div className="mx-auto w-full max-w-sm max-h-[90vh] overflow-y-auto">
+                        <DrawerHeader>
+                            <DrawerTitle>Edit Password</DrawerTitle>
+                        </DrawerHeader>
+                        <div className="px-4 pb-4">
+                            {FormContent}
+                        </div>
+                    </div>
+                </DrawerContent>
+            </Drawer>
+        )
+    }
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle className="text-xl">Edit Password</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-5 mt-2">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="edit-service">Service Name</Label>
-                            <Input
-                                id="edit-service"
-                                placeholder="e.g. Netflix"
-                                value={formData.service}
-                                onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-                                required
-                                autoFocus
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="edit-username">Username / Email</Label>
-                            <Input
-                                id="edit-username"
-                                placeholder="user@example.com"
-                                value={formData.username}
-                                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="edit-password">Password</Label>
-                        <div className="relative">
-                            <Input
-                                id="edit-password"
-                                type="text"
-                                value={formData.password}
-                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                required
-                                className="font-mono"
-                                placeholder="Enter or generate password"
-                            />
-                        </div>
-
-                        {formData.password && (
-                            <div className="space-y-1">
-                                <div className="flex justify-between text-xs">
-                                    <span className="text-muted-foreground">Strength</span>
-                                    <span className={cn("font-medium",
-                                        strength <= 2 ? "text-red-500" :
-                                            strength <= 3 ? "text-yellow-500" : "text-green-500"
-                                    )}>
-                                        {getStrengthLabel(strength)}
-                                    </span>
-                                </div>
-                                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                                    <div
-                                        className={cn("h-full transition-all duration-300", getStrengthColor(strength))}
-                                        style={{ width: `${(strength / 5) * 100}%` }}
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        <Collapsible open={showGenerator} onOpenChange={setShowGenerator} className="border rounded-lg p-2 bg-muted/30">
-                            <CollapsibleTrigger asChild>
-                                <Button variant="ghost" size="sm" className="w-full flex justify-between items-center text-xs text-muted-foreground hover:text-primary">
-                                    <span className="flex items-center gap-2"><Wand2 className="h-3 w-3" /> Advanced Generator</span>
-                                    {showGenerator ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                                </Button>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="pt-2">
-                                <AdvancedGenerator
-                                    showInput={false}
-                                    onPasswordChange={handlePasswordChange}
-                                    className="p-2 bg-background rounded-md border shadow-sm"
-                                />
-                            </CollapsibleContent>
-                        </Collapsible>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="edit-url">Website URL (Optional)</Label>
-                        <Input
-                            id="edit-url"
-                            type="url"
-                            placeholder="https://..."
-                            value={formData.url}
-                            onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="edit-notes">Notes (Optional)</Label>
-                        <Textarea
-                            id="edit-notes"
-                            placeholder="Additional details..."
-                            value={formData.notes}
-                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                            className="min-h-[80px]"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="edit-tags">Tags</Label>
-                        <div className="flex flex-wrap gap-1.5 mb-2">
-                            {formData.tags.map(tag => (
-                                <Badge key={tag} variant="secondary" className="gap-1 pr-1">
-                                    {tag}
-                                    <span className="cursor-pointer hover:text-destructive" onClick={() => removeTag(tag)}>×</span>
-                                </Badge>
-                            ))}
-                        </div>
-                        <Input
-                            id="edit-tags"
-                            placeholder="Add tags (press Enter or comma)"
-                            value={tagInput}
-                            onChange={(e) => setTagInput(e.target.value)}
-                            onKeyDown={handleAddTag}
-                        />
-                    </div>
-
-                    <DialogFooter className="pt-2">
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" disabled={loading}>
-                            {loading ? "Updating..." : "Update Password"}
-                        </Button>
-                    </DialogFooter>
-                </form>
+                {FormContent}
             </DialogContent>
         </Dialog >
     )

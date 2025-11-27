@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { STATUS_CONFIG } from "./config/constants";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/components/hooks/use-mobile";
 import {
   Drawer,
   DrawerContent,
@@ -35,7 +36,16 @@ import {
 } from "@/components/ui/select";
 
 export const TaskContainer = () => {
+  const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
+
+  // Force list view on mobile when it mounts or changes
+  useEffect(() => {
+    if (isMobile) {
+      setViewMode("list");
+    }
+  }, [isMobile]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -125,14 +135,14 @@ export const TaskContainer = () => {
                   <h1 className="text-lg md:text-xl font-bold tracking-tight text-foreground">
                     My Tasks
                   </h1>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
                     {allTaskStats.total} total • {completionRate}% complete
                   </p>
                 </div>
               </div>
 
               {/* Enhanced Stats with Progress Bars - Hidden on mobile to save space */}
-              <div className="hidden md:flex items-center gap-2">
+              <div className="hidden lg:flex items-center gap-2">
                 <div className="flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-lg bg-muted/50 border">
                   <div className="flex items-center gap-1 text-xs font-medium">
                     <Circle className="h-3.5 w-3.5 text-muted-foreground" />
@@ -228,34 +238,36 @@ export const TaskContainer = () => {
                 <span className="hidden sm:inline text-xs font-medium">Export</span>
               </Button>
 
-              {/* Enhanced View Toggle - Always visible */}
-              <ToggleGroup
-                type="single"
-                value={viewMode}
-                onValueChange={(value) => {
-                  if (value) setViewMode(value as "list" | "kanban");
-                }}
-                className="border rounded-lg bg-muted/30 p-0.5 self-end sm:self-auto"
-              >
-                <ToggleGroupItem
-                  value="kanban"
-                  aria-label="Kanban view"
-                  size="sm"
-                  className="h-8 px-3 data-[state=on]:bg-background data-[state=on]:shadow-sm transition-all"
+              {/* Enhanced View Toggle - Hidden on mobile since we force list view */}
+              <div className="hidden md:block">
+                <ToggleGroup
+                  type="single"
+                  value={viewMode}
+                  onValueChange={(value) => {
+                    if (value) setViewMode(value as "list" | "kanban");
+                  }}
+                  className="border rounded-lg bg-muted/30 p-0.5 self-end sm:self-auto"
                 >
-                  <LayoutGrid className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline ml-1.5 text-xs font-medium">Kanban</span>
-                </ToggleGroupItem>
-                <ToggleGroupItem
-                  value="list"
-                  aria-label="List view"
-                  size="sm"
-                  className="h-8 px-3 data-[state=on]:bg-background data-[state=on]:shadow-sm transition-all"
-                >
-                  <List className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline ml-1.5 text-xs font-medium">List</span>
-                </ToggleGroupItem>
-              </ToggleGroup>
+                  <ToggleGroupItem
+                    value="kanban"
+                    aria-label="Kanban view"
+                    size="sm"
+                    className="h-8 px-3 data-[state=on]:bg-background data-[state=on]:shadow-sm transition-all"
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline ml-1.5 text-xs font-medium">Kanban</span>
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value="list"
+                    aria-label="List view"
+                    size="sm"
+                    className="h-8 px-3 data-[state=on]:bg-background data-[state=on]:shadow-sm transition-all"
+                  >
+                    <List className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline ml-1.5 text-xs font-medium">List</span>
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
             </div>
 
             {/* Mobile Filter - Enhanced scrollable container */}

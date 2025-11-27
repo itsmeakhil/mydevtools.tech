@@ -74,7 +74,7 @@ export function SecurityDashboard() {
     }
 
     return (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-6">
             <Card className="col-span-full lg:col-span-1 bg-card/50 backdrop-blur-sm border-muted/60">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">Vault Health</CardTitle>

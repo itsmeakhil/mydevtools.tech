@@ -47,24 +47,28 @@ export function VaultLockScreen() {
         try {
             setPasswordsLoading(true)
             const querySnapshot = await getDocs(collection(db, "user_passwords", uid, "entries"))
-            const loadedPasswords: PasswordEntry[] = []
 
-            for (const doc of querySnapshot.docs) {
+
+            const decryptionPromises = querySnapshot.docs.map(async (doc) => {
                 const data = doc.data()
                 try {
                     const decryptedData = await decryptData(key, data.encryptedData, data.iv)
                     const parsedData = JSON.parse(decryptedData)
 
-                    loadedPasswords.push({
+                    return {
                         id: doc.id,
                         ...parsedData,
                         createdAt: data.createdAt,
                         updatedAt: data.updatedAt
-                    })
+                    } as PasswordEntry
                 } catch (e) {
                     console.error(`Failed to decrypt password ${doc.id}:`, e)
+                    return null
                 }
-            }
+            })
+
+            const results = await Promise.all(decryptionPromises)
+            const loadedPasswords = results.filter((p): p is PasswordEntry => p !== null)
 
             setPasswords(loadedPasswords)
         } catch (error) {
