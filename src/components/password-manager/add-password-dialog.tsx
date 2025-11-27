@@ -262,8 +262,12 @@ export function AddPasswordDialog() {
         return (
             <Drawer open={open} onOpenChange={setOpen}>
                 <DrawerTrigger asChild>
-                    <Button className="shadow-lg hover:shadow-xl transition-all">
-                        <Plus className="mr-2 h-4 w-4" /> Add Password
+                    <Button
+                        className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-xl z-50 p-0"
+                        size="icon"
+                    >
+                        <Plus className="h-6 w-6" />
+                        <span className="sr-only">Add Password</span>
                     </Button>
                 </DrawerTrigger>
                 <DrawerContent>
