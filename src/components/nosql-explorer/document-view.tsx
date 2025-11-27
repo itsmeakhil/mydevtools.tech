@@ -46,6 +46,13 @@ export function DocumentView({
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isInsertDialogOpen, setIsInsertDialogOpen] = useState(false);
     const [editorContent, setEditorContent] = useState("");
+    const [viewValue, setViewValue] = useState<string>("");
+    const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+
+    const handleViewValue = (value: any) => {
+        setViewValue(JSON.stringify(value, null, 2));
+        setIsViewDialogOpen(true);
+    };
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -127,6 +134,43 @@ export function DocumentView({
                         <IconRefresh className="h-4 w-4 mr-2" />
                         Refresh
                     </Button>
+                    <div className="flex items-center gap-2 border-l pl-2">
+                        <select
+                            className="h-8 bg-transparent border rounded px-2 text-xs"
+                            value={limit}
+                            onChange={(e) => onLimitChange(Number(e.target.value))}
+                            title="Items per page"
+                        >
+                            {[50, 100, 200, 500, 1000, 2000].map((val) => (
+                                <option key={val} value={val}>
+                                    {val}
+                                </option>
+                            ))}
+                        </select>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {page} / {Math.ceil(total / limit) || 1}
+                        </span>
+                        <div className="flex items-center border rounded-md overflow-hidden">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-none"
+                                onClick={() => onPageChange(page - 1)}
+                                disabled={page <= 1}
+                            >
+                                &lt;
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-none"
+                                onClick={() => onPageChange(page + 1)}
+                                disabled={page >= Math.ceil(total / limit)}
+                            >
+                                &gt;
+                            </Button>
+                        </div>
+                    </div>
                     <Button size="sm" onClick={openInsertDialog}>
                         <IconPlus className="h-4 w-4 mr-2" />
                         Insert Document
@@ -164,7 +208,7 @@ export function DocumentView({
                         </div>
                     </ScrollArea>
                 ) : (
-                    <ScrollArea className="h-full">
+                    <ScrollArea className="h-full" horizontal>
                         <div className="w-full">
                             <table className="w-full text-sm text-left relative">
                                 <thead className="text-xs text-muted-foreground uppercase bg-muted/50 sticky top-0 z-10">
@@ -195,11 +239,12 @@ export function DocumentView({
                                                         {doc[key] === undefined ? (
                                                             ""
                                                         ) : typeof doc[key] === 'object' && doc[key] !== null ? (
-                                                            Array.isArray(doc[key]) ? (
-                                                                <span className="text-blue-500">Array({doc[key].length})</span>
-                                                            ) : (
-                                                                <span className="text-yellow-500">{'{...}'}</span>
-                                                            )
+                                                            <button
+                                                                onClick={() => handleViewValue(doc[key])}
+                                                                className="text-blue-500 hover:underline focus:outline-none"
+                                                            >
+                                                                {Array.isArray(doc[key]) ? `Array(${doc[key].length})` : '{...}'}
+                                                            </button>
                                                         ) : (
                                                             String(doc[key])
                                                         )}
@@ -222,51 +267,6 @@ export function DocumentView({
                         </div>
                     </ScrollArea>
                 )}
-            </div>
-
-            <div className="p-2 border-t flex items-center justify-between text-xs text-muted-foreground">
-                <div className="flex items-center gap-2">
-                    <span>Items per page:</span>
-                    <select
-                        className="bg-transparent border rounded p-1"
-                        value={limit}
-                        onChange={(e) => onLimitChange(Number(e.target.value))}
-                    >
-                        {[50, 100, 200, 500, 1000, 2000].map((val) => (
-                            <option key={val} value={val}>
-                                {val}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div className="flex items-center gap-2">
-                    <span>
-                        Page {page} of {Math.ceil(total / limit) || 1}
-                    </span>
-                    <div className="flex items-center border rounded overflow-hidden">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-8 rounded-none px-0"
-                            onClick={() => onPageChange(page - 1)}
-                            disabled={page <= 1}
-                        >
-                            &lt;
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-8 rounded-none px-0"
-                            onClick={() => onPageChange(page + 1)}
-                            disabled={page >= Math.ceil(total / limit)}
-                        >
-                            &gt;
-                        </Button>
-                    </div>
-                </div>
-                <div>
-                    Showing {documents.length} of {total} documents
-                </div>
             </div>
 
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -315,6 +315,33 @@ export function DocumentView({
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsInsertDialogOpen(false)}>Cancel</Button>
                         <Button onClick={handleInsert}>Insert</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+                <DialogContent className="max-w-3xl h-[80vh] flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle>View Value</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 border rounded-md overflow-hidden">
+                        <Editor
+                            height="100%"
+                            defaultLanguage="json"
+                            value={viewValue}
+                            theme="vs-dark"
+                            options={{
+                                minimap: { enabled: false },
+                                fontSize: 14,
+                                readOnly: true,
+                                folding: true,
+                                formatOnPaste: true,
+                                formatOnType: true,
+                            }}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={() => setIsViewDialogOpen(false)}>Close</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

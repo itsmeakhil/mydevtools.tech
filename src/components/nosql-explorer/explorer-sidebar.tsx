@@ -47,9 +47,9 @@ export function ExplorerSidebar({
         db.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const filteredCollections = collections.filter((col) =>
-        col.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredCollections = collections
+        .filter((col) => col.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        .sort((a, b) => a.name.localeCompare(b.name));
 
     return (
         <div className="w-64 border-r bg-muted/10 flex flex-col h-full">

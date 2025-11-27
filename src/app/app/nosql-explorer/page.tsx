@@ -261,7 +261,7 @@ export default function NoSQLExplorerPage() {
     }
 
     return (
-        <div className="flex h-full overflow-hidden">
+        <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
             <ExplorerSidebar
                 databases={state.databases}
                 selectedDb={state.selectedDb}
