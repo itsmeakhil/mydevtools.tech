@@ -45,6 +45,7 @@ import {
   IconPalette,
   IconLock,
   IconNotes,
+  IconDatabase,
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
@@ -93,6 +94,12 @@ export const sidebarData: SidebarData = {
           url: '/app/api-client',
           icon: IconNetwork,
           description: 'Test and debug HTTP requests.'
+        },
+        {
+          title: 'NoSQL Explorer',
+          url: '/app/nosql-explorer',
+          icon: IconDatabase,
+          description: 'Explore MongoDB databases.'
         },
       ],
     },
