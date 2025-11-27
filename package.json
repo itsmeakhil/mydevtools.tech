@@ -86,6 +86,7 @@
     "lowlight": "^3.3.0",
     "lucide-react": "^0.552.0",
     "monaco-editor": "^0.55.1",
+    "mongodb": "^7.0.0",
     "motion": "^12.23.24",
     "netmask": "^2.0.2",
     "next": "16.0.1",
