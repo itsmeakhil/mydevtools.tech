@@ -169,6 +169,7 @@ export function DocumentView({
                             <table className="w-full text-sm text-left relative">
                                 <thead className="text-xs text-muted-foreground uppercase bg-muted/50 sticky top-0 z-10">
                                     <tr>
+                                        <th className="px-4 py-3 w-[50px] whitespace-nowrap font-medium text-center">#</th>
                                         {Array.from(new Set(documents.flatMap(Object.keys)))
                                             .filter(key => key !== "_id")
                                             .reduce((acc, key) => [...acc, key], ["_id"])
@@ -181,8 +182,11 @@ export function DocumentView({
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {documents.map((doc) => (
+                                    {documents.map((doc, index) => (
                                         <tr key={doc._id} className="border-b hover:bg-muted/50 group">
+                                            <td className="px-4 py-3 font-mono text-xs text-center text-muted-foreground">
+                                                {index + 1 + (page - 1) * limit}
+                                            </td>
                                             {Array.from(new Set(documents.flatMap(Object.keys)))
                                                 .filter(key => key !== "_id")
                                                 .reduce((acc, key) => [...acc, key], ["_id"])
