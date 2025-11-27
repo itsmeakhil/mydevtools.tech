@@ -88,6 +88,12 @@ export const sidebarData: SidebarData = {
           icon: IconUnlink,
           description: 'Shorten long URLs for easy sharing.'
         },
+        {
+          title: 'API Client',
+          url: '/app/api-client',
+          icon: IconNetwork,
+          description: 'Test and debug HTTP requests.'
+        },
       ],
     },
     {
