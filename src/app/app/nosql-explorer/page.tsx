@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { ConnectionForm } from "@/components/nosql-explorer/connection-form";
 import { ExplorerSidebar } from "@/components/nosql-explorer/explorer-sidebar";
 import { DocumentView } from "@/components/nosql-explorer/document-view";
-import { ConnectionState } from "@/components/nosql-explorer/types";
+import { ConnectionState, ExplorerTab } from "@/components/nosql-explorer/types";
+import { TabBar } from "@/components/nosql-explorer/tab-bar";
 import { toast } from "sonner";
 import useAuth from "@/utils/useAuth";
 import { getConnections } from "@/components/nosql-explorer/connection-service";
@@ -24,8 +25,8 @@ export default function NoSQLExplorerPage() {
         error: null,
     });
 
-    const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(50);
+    const [tabs, setTabs] = useState<ExplorerTab[]>([]);
+    const [activeTabId, setActiveTabId] = useState<string | null>(null);
 
     // Auto-connect logic
     useEffect(() => {
@@ -73,7 +74,7 @@ export default function NoSQLExplorerPage() {
         } catch (error: any) {
             setState((prev) => ({ ...prev, loading: false, error: error.message }));
             toast.error(error.message);
-            throw error; // Re-throw to let caller know it failed
+            throw error;
         }
     };
 
@@ -89,7 +90,8 @@ export default function NoSQLExplorerPage() {
             loading: false,
             error: null,
         });
-        setPage(1);
+        setTabs([]);
+        setActiveTabId(null);
     };
 
     const handleSelectDb = async (dbName: string) => {
@@ -109,7 +111,6 @@ export default function NoSQLExplorerPage() {
                 collections: data.collections,
                 loading: false,
                 selectedCollection: null,
-                documents: [],
             }));
         } catch (error: any) {
             setState((prev) => ({ ...prev, loading: false }));
@@ -118,92 +119,133 @@ export default function NoSQLExplorerPage() {
     };
 
     const handleSelectCollection = async (collectionName: string) => {
-        setState((prev) => ({ ...prev, selectedCollection: collectionName, loading: true }));
-        setPage(1); // Reset page on new collection
-        await fetchDocuments(state.selectedDb!, collectionName, 1, limit);
+        if (!state.selectedDb) return;
+
+        const tabId = `${state.selectedDb}-${collectionName}`;
+        const existingTab = tabs.find((t) => t.id === tabId);
+
+        if (existingTab) {
+            setActiveTabId(tabId);
+            return;
+        }
+
+        const newTab: ExplorerTab = {
+            id: tabId,
+            dbName: state.selectedDb,
+            collectionName,
+            documents: [],
+            total: 0,
+            page: 1,
+            limit: 50,
+            query: "{}",
+            loading: true,
+            error: null,
+        };
+
+        setTabs((prev) => [...prev, newTab]);
+        setActiveTabId(tabId);
+
+        await fetchDocumentsForTab(newTab);
     };
 
-    const fetchDocuments = async (dbName: string, collectionName: string, pageNum: number, limitNum: number, query = "{}") => {
+    const fetchDocumentsForTab = async (tab: ExplorerTab) => {
+        updateTab(tab.id, { loading: true, error: null });
         try {
-            const skip = (pageNum - 1) * limitNum;
+            const skip = (tab.page - 1) * tab.limit;
             const res = await fetch(
                 `/api/nosql/documents?connectionString=${encodeURIComponent(
                     state.connectionString
-                )}&dbName=${dbName}&collectionName=${collectionName}&query=${encodeURIComponent(query)}&limit=${limitNum}&skip=${skip}`
+                )}&dbName=${tab.dbName}&collectionName=${tab.collectionName}&query=${encodeURIComponent(tab.query)}&limit=${tab.limit}&skip=${skip}`
             );
             const data = await res.json();
 
             if (!res.ok) throw new Error(data.error);
 
-            setState((prev) => ({
-                ...prev,
+            updateTab(tab.id, {
                 documents: data.documents,
                 total: data.total,
                 loading: false,
-            }));
-            // Ideally we should get total count from API too, but let's assume we have it or need to fetch it
-            // The API returns { documents, total }
-            // Let's update state to include total if we add it to types
-            // For now let's assume total is returned and we can store it in documents length or separate state
-            // Wait, state.documents is just array. We need total count for pagination.
-            // Let's check API response again. It returns { documents, total }.
-            // We need to add total to state or separate state.
-            // Let's add total to state.
+            });
         } catch (error: any) {
-            setState((prev) => ({ ...prev, loading: false }));
-            toast.error("Failed to fetch documents");
+            updateTab(tab.id, { loading: false, error: error.message });
+            toast.error(`Failed to fetch documents for ${tab.collectionName}`);
         }
     };
 
+    const updateTab = (tabId: string, updates: Partial<ExplorerTab>) => {
+        setTabs((prev) =>
+            prev.map((tab) => (tab.id === tabId ? { ...tab, ...updates } : tab))
+        );
+    };
+
+    const handleTabChange = (tabId: string) => {
+        setActiveTabId(tabId);
+    };
+
+    const handleTabClose = (tabId: string) => {
+        setTabs((prev) => prev.filter((t) => t.id !== tabId));
+        if (activeTabId === tabId) {
+            const index = tabs.findIndex((t) => t.id === tabId);
+            const newActiveTab = tabs[index - 1] || tabs[index + 1];
+            setActiveTabId(newActiveTab ? newActiveTab.id : null);
+        }
+    };
+
+    const activeTab = tabs.find((t) => t.id === activeTabId);
+
     const handleRefresh = () => {
-        if (state.selectedCollection && state.selectedDb) {
-            fetchDocuments(state.selectedDb, state.selectedCollection, page, limit);
+        if (activeTab) {
+            fetchDocumentsForTab(activeTab);
         } else if (state.isConnected) {
-            // Refresh databases
             handleConnect(state.connectionString);
         }
     };
 
     const handleInsert = async (doc: any) => {
+        if (!activeTab) return;
         try {
             const res = await fetch("/api/nosql/documents", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     connectionString: state.connectionString,
-                    dbName: state.selectedDb,
-                    collectionName: state.selectedCollection,
+                    dbName: activeTab.dbName,
+                    collectionName: activeTab.collectionName,
                     document: doc,
                 }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
+            handleRefresh();
         } catch (error: any) {
             throw new Error(error.message);
         }
     };
 
     const handleUpdate = async (id: string, update: any) => {
+        if (!activeTab) return;
         try {
             const res = await fetch("/api/nosql/documents", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     connectionString: state.connectionString,
-                    dbName: state.selectedDb,
-                    collectionName: state.selectedCollection,
+                    dbName: activeTab.dbName,
+                    collectionName: activeTab.collectionName,
                     documentId: id,
                     update,
                 }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
+            handleRefresh();
         } catch (error: any) {
             throw new Error(error.message);
         }
     };
 
     const handleDelete = async (id: string) => {
+        if (!activeTab) return;
         if (!confirm("Are you sure you want to delete this document?")) return;
         try {
             const res = await fetch("/api/nosql/documents", {
@@ -211,8 +253,8 @@ export default function NoSQLExplorerPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     connectionString: state.connectionString,
-                    dbName: state.selectedDb,
-                    collectionName: state.selectedCollection,
+                    dbName: activeTab.dbName,
+                    collectionName: activeTab.collectionName,
                     documentId: id,
                 }),
             });
@@ -226,27 +268,26 @@ export default function NoSQLExplorerPage() {
     };
 
     const handleSearch = (query: string) => {
-        if (state.selectedDb && state.selectedCollection) {
-            setState((prev) => ({ ...prev, loading: true }));
-            setPage(1);
-            fetchDocuments(state.selectedDb, state.selectedCollection, 1, limit, query);
+        if (activeTab) {
+            const updatedTab = { ...activeTab, query, page: 1 };
+            updateTab(activeTab.id, updatedTab);
+            fetchDocumentsForTab(updatedTab);
         }
     };
 
     const handlePageChange = (newPage: number) => {
-        setPage(newPage);
-        if (state.selectedDb && state.selectedCollection) {
-            setState((prev) => ({ ...prev, loading: true }));
-            fetchDocuments(state.selectedDb, state.selectedCollection, newPage, limit);
+        if (activeTab) {
+            const updatedTab = { ...activeTab, page: newPage };
+            updateTab(activeTab.id, updatedTab);
+            fetchDocumentsForTab(updatedTab);
         }
     };
 
     const handleLimitChange = (newLimit: number) => {
-        setLimit(newLimit);
-        setPage(1);
-        if (state.selectedDb && state.selectedCollection) {
-            setState((prev) => ({ ...prev, loading: true }));
-            fetchDocuments(state.selectedDb, state.selectedCollection, 1, newLimit);
+        if (activeTab) {
+            const updatedTab = { ...activeTab, limit: newLimit, page: 1 };
+            updateTab(activeTab.id, updatedTab);
+            fetchDocumentsForTab(updatedTab);
         }
     };
 
@@ -266,33 +307,42 @@ export default function NoSQLExplorerPage() {
                 databases={state.databases}
                 selectedDb={state.selectedDb}
                 collections={state.collections}
-                selectedCollection={state.selectedCollection}
+                selectedCollection={state.selectedDb === activeTab?.dbName ? activeTab?.collectionName : null}
                 onSelectDb={handleSelectDb}
                 onSelectCollection={handleSelectCollection}
                 onRefresh={handleRefresh}
                 onDisconnect={handleDisconnect}
             />
-            <div className="flex-1 overflow-hidden bg-background">
-                {state.selectedCollection ? (
-                    <DocumentView
-                        documents={state.documents}
-                        total={state.total || 0}
-                        page={page}
-                        limit={limit}
-                        loading={state.loading}
-                        onRefresh={handleRefresh}
-                        onInsert={handleInsert}
-                        onUpdate={handleUpdate}
-                        onDelete={handleDelete}
-                        onSearch={handleSearch}
-                        onPageChange={handlePageChange}
-                        onLimitChange={handleLimitChange}
-                    />
-                ) : (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                        Select a collection to view documents
-                    </div>
-                )}
+            <div className="flex-1 flex flex-col overflow-hidden bg-background min-w-0 w-full max-w-full">
+                <TabBar
+                    tabs={tabs}
+                    activeTabId={activeTabId}
+                    onTabChange={handleTabChange}
+                    onTabClose={handleTabClose}
+                />
+                <div className="flex-1 overflow-hidden relative">
+                    {activeTab ? (
+                        <DocumentView
+                            key={activeTab.id} // Force re-render on tab switch to reset internal state if needed
+                            documents={activeTab.documents}
+                            total={activeTab.total}
+                            page={activeTab.page}
+                            limit={activeTab.limit}
+                            loading={activeTab.loading}
+                            onRefresh={handleRefresh}
+                            onInsert={handleInsert}
+                            onUpdate={handleUpdate}
+                            onDelete={handleDelete}
+                            onSearch={handleSearch}
+                            onPageChange={handlePageChange}
+                            onLimitChange={handleLimitChange}
+                        />
+                    ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground">
+                            Select a collection to view documents
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

@@ -47,3 +47,16 @@ export interface ConnectionState {
     loading: boolean;
     error: string | null;
 }
+
+export interface ExplorerTab {
+    id: string;
+    dbName: string;
+    collectionName: string;
+    documents: Document[];
+    total: number;
+    page: number;
+    limit: number;
+    query: string;
+    loading: boolean;
+    error: string | null;
+}

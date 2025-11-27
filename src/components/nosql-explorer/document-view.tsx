@@ -208,8 +208,8 @@ export function DocumentView({
                         </div>
                     </ScrollArea>
                 ) : (
-                    <ScrollArea className="h-full" horizontal>
-                        <div className="w-full">
+                    <ScrollArea className="h-full w-full" horizontal>
+                        <div className="min-w-full inline-block align-middle">
                             <table className="w-full text-sm text-left relative">
                                 <thead className="text-xs text-muted-foreground uppercase bg-muted/50 sticky top-0 z-10">
                                     <tr>
