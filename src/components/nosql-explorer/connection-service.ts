@@ -77,3 +77,14 @@ export const updateConnectionName = async (userId: string, connectionId: string,
         throw error;
     }
 };
+export const updateConnectionDetails = async (userId: string, connectionId: string, updates: { name?: string, connectionString?: string }) => {
+    try {
+        await updateDoc(doc(db, COLLECTION_NAME, connectionId), {
+            ...updates,
+            lastUsedAt: serverTimestamp(),
+        });
+    } catch (error) {
+        console.error("Error updating connection details:", error);
+        throw error;
+    }
+};

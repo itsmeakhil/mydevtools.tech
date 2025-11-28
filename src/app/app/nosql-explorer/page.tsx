@@ -417,7 +417,7 @@ export default function NoSQLExplorerPage() {
             </div>
 
             <Dialog open={isConnectionDialogOpen} onOpenChange={setIsConnectionDialogOpen}>
-                <DialogContent>
+                <DialogContent className="max-w-5xl">
                     <DialogHeader>
                         <DialogTitle>Add Connection</DialogTitle>
                     </DialogHeader>
