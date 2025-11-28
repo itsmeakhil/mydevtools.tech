@@ -23,6 +23,7 @@ interface ExplorerSidebarProps {
     onSelectCollection: (connection: SavedConnection, dbName: string, collectionName: string) => void;
     onRefresh: () => void;
     onAddConnection: () => void;
+    width?: number;
 }
 
 interface ConnectionNode {
@@ -39,6 +40,7 @@ export function ExplorerSidebar({
     onSelectCollection,
     onRefresh,
     onAddConnection,
+    width = 256,
 }: ExplorerSidebarProps) {
     const { user } = useAuth();
     const [connections, setConnections] = useState<ConnectionNode[]>([]);
@@ -347,7 +349,10 @@ export function ExplorerSidebar({
     });
 
     return (
-        <div className="w-64 border-r bg-muted/10 flex flex-col h-full">
+        <div
+            className="border-r bg-muted/10 flex flex-col h-full flex-shrink-0 overflow-hidden"
+            style={{ width: `${width}px` }}
+        >
             <div className="p-4 border-b space-y-2">
                 <div className="flex items-center justify-between">
                     <span className="font-semibold text-sm">Explorer</span>

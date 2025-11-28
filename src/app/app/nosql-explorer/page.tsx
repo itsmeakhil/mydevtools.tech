@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import useAuth from "@/utils/useAuth";
 import { getConnections } from "@/components/nosql-explorer/connection-service";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 export default function NoSQLExplorerPage() {
     const { user } = useAuth();
@@ -318,12 +319,58 @@ export default function NoSQLExplorerPage() {
         }
     };
 
+    const [sidebarWidth, setSidebarWidth] = useState(256);
+    const [isResizing, setIsResizing] = useState(false);
+
+    useEffect(() => {
+        const savedWidth = localStorage.getItem("nosql_sidebar_width");
+        if (savedWidth) {
+            setSidebarWidth(parseInt(savedWidth, 10));
+        }
+    }, []);
+
+    useEffect(() => {
+        if (isResizing) {
+            const handleMouseMove = (e: MouseEvent) => {
+                const newWidth = Math.max(150, Math.min(600, e.clientX));
+                setSidebarWidth(newWidth);
+            };
+
+            const handleMouseUp = () => {
+                setIsResizing(false);
+                localStorage.setItem("nosql_sidebar_width", sidebarWidth.toString());
+            };
+
+            document.addEventListener("mousemove", handleMouseMove);
+            document.addEventListener("mouseup", handleMouseUp);
+            document.body.style.userSelect = "none";
+            document.body.style.cursor = "col-resize";
+
+            return () => {
+                document.removeEventListener("mousemove", handleMouseMove);
+                document.removeEventListener("mouseup", handleMouseUp);
+                document.body.style.userSelect = "";
+                document.body.style.cursor = "";
+                // Save on unmount if resizing
+                localStorage.setItem("nosql_sidebar_width", sidebarWidth.toString());
+            };
+        }
+    }, [isResizing, sidebarWidth]);
+
     return (
         <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
             <ExplorerSidebar
+                width={sidebarWidth}
                 onSelectCollection={handleSelectCollection}
                 onRefresh={() => { /* Sidebar handles its own refresh */ }}
                 onAddConnection={() => setIsConnectionDialogOpen(true)}
+            />
+            <div
+                className={cn(
+                    "w-2 hover:w-2 bg-border/50 hover:bg-primary/50 cursor-col-resize flex-shrink-0 transition-all z-50",
+                    isResizing && "bg-primary/50 w-2"
+                )}
+                onMouseDown={() => setIsResizing(true)}
             />
             <div className="flex-1 flex flex-col overflow-hidden bg-background min-w-0 w-full max-w-full">
                 <TabBar
