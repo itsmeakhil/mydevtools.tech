@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ConnectionForm } from "@/components/nosql-explorer/connection-form";
 import { ExplorerSidebar } from "@/components/nosql-explorer/explorer-sidebar";
 import { DocumentView } from "@/components/nosql-explorer/document-view";
@@ -322,6 +322,13 @@ export default function NoSQLExplorerPage() {
     const [sidebarWidth, setSidebarWidth] = useState(256);
     const [isResizing, setIsResizing] = useState(false);
 
+    const resizeStartRef = useRef<{ x: number, width: number } | null>(null);
+    const sidebarWidthRef = useRef(sidebarWidth);
+
+    useEffect(() => {
+        sidebarWidthRef.current = sidebarWidth;
+    }, [sidebarWidth]);
+
     useEffect(() => {
         const savedWidth = localStorage.getItem("nosql_sidebar_width");
         if (savedWidth) {
@@ -332,13 +339,16 @@ export default function NoSQLExplorerPage() {
     useEffect(() => {
         if (isResizing) {
             const handleMouseMove = (e: MouseEvent) => {
-                const newWidth = Math.max(150, Math.min(600, e.clientX));
+                if (!resizeStartRef.current) return;
+                const delta = e.clientX - resizeStartRef.current.x;
+                const newWidth = Math.max(150, Math.min(600, resizeStartRef.current.width + delta));
                 setSidebarWidth(newWidth);
             };
 
             const handleMouseUp = () => {
                 setIsResizing(false);
-                localStorage.setItem("nosql_sidebar_width", sidebarWidth.toString());
+                resizeStartRef.current = null;
+                localStorage.setItem("nosql_sidebar_width", sidebarWidthRef.current.toString());
             };
 
             document.addEventListener("mousemove", handleMouseMove);
@@ -351,11 +361,9 @@ export default function NoSQLExplorerPage() {
                 document.removeEventListener("mouseup", handleMouseUp);
                 document.body.style.userSelect = "";
                 document.body.style.cursor = "";
-                // Save on unmount if resizing
-                localStorage.setItem("nosql_sidebar_width", sidebarWidth.toString());
             };
         }
-    }, [isResizing, sidebarWidth]);
+    }, [isResizing]);
 
     return (
         <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
@@ -370,7 +378,10 @@ export default function NoSQLExplorerPage() {
                     "w-2 hover:w-2 bg-border/50 hover:bg-primary/50 cursor-col-resize flex-shrink-0 transition-all z-50",
                     isResizing && "bg-primary/50 w-2"
                 )}
-                onMouseDown={() => setIsResizing(true)}
+                onMouseDown={(e) => {
+                    setIsResizing(true);
+                    resizeStartRef.current = { x: e.clientX, width: sidebarWidth };
+                }}
             />
             <div className="flex-1 flex flex-col overflow-hidden bg-background min-w-0 w-full max-w-full">
                 <TabBar
