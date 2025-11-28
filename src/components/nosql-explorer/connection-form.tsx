@@ -47,18 +47,17 @@ export function ConnectionForm({ onConnect, loading, error }: ConnectionFormProp
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (connectionString) {
-            await onConnect(connectionString);
+            // Always try to save first if user is logged in
             if (user) {
                 try {
-                    // Save connection after successful connect (handled by parent usually, but we can do it here too or just let parent handle it)
-                    // Actually, parent handles connection logic. We should probably save it here if parent succeeds.
-                    // But onConnect is async. If it resolves, we assume success.
                     await saveConnection(user.uid, connectionString);
                     loadConnections();
                 } catch (e) {
                     console.error("Failed to save connection", e);
                 }
             }
+
+            await onConnect(connectionString);
         }
     };
 
