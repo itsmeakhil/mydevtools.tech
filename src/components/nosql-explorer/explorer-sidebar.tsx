@@ -62,15 +62,35 @@ export function ExplorerSidebar({
         setLoading(true);
         try {
             const saved = await getConnections(user.uid);
-            setConnections(saved.map(conn => ({
-                connection: conn,
-                isExpanded: false,
-                databases: [],
-                isLoading: false,
-                error: null,
-                expandedDbs: new Set(),
-                dbCollections: {}
-            })));
+
+            // Restore expanded state from localStorage
+            const expandedConnIds = JSON.parse(localStorage.getItem("nosql_expanded_connections") || "[]");
+            const expandedDbsMap = JSON.parse(localStorage.getItem("nosql_expanded_dbs") || "{}");
+
+            const newConnections = saved.map(conn => {
+                const isExpanded = expandedConnIds.includes(conn.id);
+                const expandedDbs = new Set<string>(expandedDbsMap[conn.id!] || []);
+
+                return {
+                    connection: conn,
+                    isExpanded,
+                    databases: [],
+                    isLoading: false,
+                    error: null,
+                    expandedDbs,
+                    dbCollections: {}
+                };
+            });
+
+            setConnections(newConnections);
+
+            // Trigger refresh for expanded connections to load databases
+            newConnections.forEach((node, index) => {
+                if (node.isExpanded) {
+                    refreshDatabases(index, node.connection);
+                }
+            });
+
         } catch (error) {
             toast.error("Failed to load connections");
         } finally {
@@ -82,25 +102,38 @@ export function ExplorerSidebar({
         if (editingConnectionId) return; // Prevent toggle while editing
 
         const node = connections[index];
-        if (node.isExpanded) {
-            // Collapse
-            setConnections(prev => prev.map((c, i) => i === index ? { ...c, isExpanded: false } : c));
-            return;
-        }
+        const newExpandedState = !node.isExpanded;
 
-        // Expand
-        setConnections(prev => prev.map((c, i) => i === index ? { ...c, isExpanded: true, isLoading: true, error: null } : c));
-        await refreshDatabases(index);
+        // Update state
+        setConnections(prev => prev.map((c, i) => i === index ? { ...c, isExpanded: newExpandedState, isLoading: newExpandedState, error: null } : c));
+
+        // Update localStorage
+        const expandedConnIds = JSON.parse(localStorage.getItem("nosql_expanded_connections") || "[]");
+        if (newExpandedState) {
+            if (node.connection.id && !expandedConnIds.includes(node.connection.id)) {
+                expandedConnIds.push(node.connection.id);
+            }
+        } else {
+            const idx = expandedConnIds.indexOf(node.connection.id);
+            if (idx !== -1) expandedConnIds.splice(idx, 1);
+        }
+        localStorage.setItem("nosql_expanded_connections", JSON.stringify(expandedConnIds));
+
+        if (newExpandedState) {
+            await refreshDatabases(index);
+        }
     };
 
-    const refreshDatabases = async (index: number) => {
-        const node = connections[index];
+    const refreshDatabases = async (index: number, connectionOverride?: SavedConnection) => {
+        const connection = connectionOverride || connections[index]?.connection;
+        if (!connection) return;
+
         setConnections(prev => prev.map((c, i) => i === index ? { ...c, isLoading: true, error: null } : c));
         try {
             const res = await fetch("/api/nosql/connect", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ connectionString: node.connection.connectionString }),
+                body: JSON.stringify({ connectionString: connection.connectionString }),
             });
             const data = await res.json();
 
@@ -117,30 +150,36 @@ export function ExplorerSidebar({
                 isLoading: false,
                 error: error.message
             } : c));
-            toast.error(`Failed to connect to ${node.connection.name}`);
+            toast.error(`Failed to connect to ${connection.name}`);
         }
     };
 
     const toggleDatabase = async (connIndex: number, dbName: string) => {
         const node = connections[connIndex];
         const isDbExpanded = node.expandedDbs.has(dbName);
+        const newExpanded = new Set(node.expandedDbs);
 
         if (isDbExpanded) {
-            // Collapse
-            const newExpanded = new Set(node.expandedDbs);
             newExpanded.delete(dbName);
-            setConnections(prev => prev.map((c, i) => i === connIndex ? { ...c, expandedDbs: newExpanded } : c));
-            return;
+        } else {
+            newExpanded.add(dbName);
         }
 
-        // Expand
-        const newExpanded = new Set(node.expandedDbs);
-        newExpanded.add(dbName);
+        // Update state
         setConnections(prev => prev.map((c, i) => i === connIndex ? { ...c, expandedDbs: newExpanded } : c));
 
-        // Fetch collections if not already fetched
-        if (!node.dbCollections[dbName]) {
-            await refreshCollections(connIndex, dbName);
+        // Update localStorage
+        if (node.connection.id) {
+            const expandedDbsMap = JSON.parse(localStorage.getItem("nosql_expanded_dbs") || "{}");
+            expandedDbsMap[node.connection.id] = Array.from(newExpanded);
+            localStorage.setItem("nosql_expanded_dbs", JSON.stringify(expandedDbsMap));
+        }
+
+        if (!isDbExpanded) {
+            // Fetch collections if not already fetched
+            if (!node.dbCollections[dbName]) {
+                await refreshCollections(connIndex, dbName);
+            }
         }
     };
 

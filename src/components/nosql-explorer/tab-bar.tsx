@@ -9,40 +9,30 @@ import { ExplorerTab } from "./types";
 interface TabBarProps {
     tabs: ExplorerTab[];
     activeTabId: string | null;
-    onTabChange: (id: string) => void;
-    onTabClose: (id: string) => void;
+    onTabChange: (tabId: string) => void;
+    onTabClose: (tabId: string) => void;
+    onCloseAll?: () => void;
 }
 
-export function TabBar({
-    tabs,
-    activeTabId,
-    onTabChange,
-    onTabClose,
-}: TabBarProps) {
-    if (tabs.length === 0) return null;
-
+export function TabBar({ tabs, activeTabId, onTabChange, onTabClose, onCloseAll }: TabBarProps) {
     return (
-        <div className="flex items-center border-b bg-muted/40 h-10">
-            <ScrollArea className="flex-1 min-w-0 whitespace-nowrap border-r h-full" horizontal>
-                <div className="flex h-full items-center w-max">
+        <div className="flex items-center border-b bg-muted/10">
+            <ScrollArea className="flex-1 w-full whitespace-nowrap">
+                <div className="flex items-center px-1">
                     {tabs.map((tab) => (
                         <div
                             key={tab.id}
                             className={cn(
-                                "group flex items-center gap-2 border-r px-4 h-full text-xs font-medium hover:bg-muted/60 cursor-pointer select-none min-w-[150px] max-w-[250px]",
-                                activeTabId === tab.id && "bg-background text-primary border-b-2 border-b-primary"
+                                "flex items-center gap-2 px-3 py-2 text-sm border-r cursor-pointer hover:bg-background/50 transition-colors min-w-[120px] max-w-[200px]",
+                                activeTabId === tab.id ? "bg-background font-medium border-b-2 border-b-primary" : "text-muted-foreground"
                             )}
                             onClick={() => onTabChange(tab.id)}
-                            title={`${tab.dbName} - ${tab.collectionName}`}
                         >
-                            <IconDatabase className="h-3 w-3 text-muted-foreground shrink-0" />
-                            <span className="truncate flex-1">
-                                {tab.dbName} - {tab.collectionName}
-                            </span>
+                            <span className="truncate flex-1">{tab.collectionName}</span>
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-4 w-4 opacity-0 group-hover:opacity-100 hover:bg-muted-foreground/20 rounded-full shrink-0"
+                                className="h-4 w-4 hover:bg-muted rounded-full"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onTabClose(tab.id);
@@ -53,7 +43,15 @@ export function TabBar({
                         </div>
                     ))}
                 </div>
+                <ScrollBar orientation="horizontal" />
             </ScrollArea>
+            {tabs.length > 0 && onCloseAll && (
+                <div className="border-l px-2">
+                    <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-destructive" onClick={onCloseAll}>
+                        Close All
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }
