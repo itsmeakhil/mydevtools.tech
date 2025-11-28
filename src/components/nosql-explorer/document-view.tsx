@@ -5,11 +5,14 @@ import { Document } from "./types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { IconPlus, IconRefresh, IconSearch, IconTrash, IconPencil, IconCode, IconTable } from "@tabler/icons-react";
+import { IconPlus, IconRefresh, IconSearch, IconTrash, IconPencil, IconCode, IconTable, IconCopy, IconAlignLeft, IconMinimize, IconJson, IconBinaryTree } from "@tabler/icons-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import Editor from "@monaco-editor/react";
+import CodeEditor from "@/components/ui/code-editor";
+import { JsonTree } from "./json-tree";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface DocumentViewProps {
     documents: Document[];
@@ -40,7 +43,7 @@ export function DocumentView({
     onPageChange,
     onLimitChange,
 }: DocumentViewProps) {
-    const [viewMode, setViewMode] = useState<"table" | "json">("json");
+    const [viewMode, setViewMode] = useState<"table" | "json" | "tree">("json");
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -48,6 +51,34 @@ export function DocumentView({
     const [editorContent, setEditorContent] = useState("");
     const [viewValue, setViewValue] = useState<string>("");
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+    const [jsonViewContent, setJsonViewContent] = useState("");
+
+    useEffect(() => {
+        setJsonViewContent(JSON.stringify(documents, null, 2));
+    }, [documents]);
+
+    const handlePrettify = () => {
+        try {
+            const parsed = JSON.parse(jsonViewContent);
+            setJsonViewContent(JSON.stringify(parsed, null, 2));
+        } catch (e) {
+            toast.error("Invalid JSON content");
+        }
+    };
+
+    const handleMinify = () => {
+        try {
+            const parsed = JSON.parse(jsonViewContent);
+            setJsonViewContent(JSON.stringify(parsed));
+        } catch (e) {
+            toast.error("Invalid JSON content");
+        }
+    };
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(jsonViewContent);
+        toast.success("Copied to clipboard");
+    };
 
     const handleViewValue = (value: any) => {
         setViewValue(JSON.stringify(value, null, 2));
@@ -113,22 +144,47 @@ export function DocumentView({
                 </form>
                 <div className="flex items-center gap-2">
                     <div className="flex items-center border rounded-md overflow-hidden">
-                        <Button
-                            variant={viewMode === "table" ? "secondary" : "ghost"}
-                            size="icon"
-                            className="h-8 w-8 rounded-none"
-                            onClick={() => setViewMode("table")}
-                        >
-                            <IconTable className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant={viewMode === "json" ? "secondary" : "ghost"}
-                            size="icon"
-                            className="h-8 w-8 rounded-none"
-                            onClick={() => setViewMode("json")}
-                        >
-                            <IconCode className="h-4 w-4" />
-                        </Button>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant={viewMode === "table" ? "secondary" : "ghost"}
+                                        size="icon"
+                                        className="h-8 w-8 rounded-none"
+                                        onClick={() => setViewMode("table")}
+                                    >
+                                        <IconTable className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Table View</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant={viewMode === "json" ? "secondary" : "ghost"}
+                                        size="icon"
+                                        className="h-8 w-8 rounded-none"
+                                        onClick={() => setViewMode("json")}
+                                    >
+                                        <IconJson className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>JSON View</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant={viewMode === "tree" ? "secondary" : "ghost"}
+                                        size="icon"
+                                        className="h-8 w-8 rounded-none"
+                                        onClick={() => setViewMode("tree")}
+                                    >
+                                        <IconBinaryTree className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Tree View</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
                     <Button variant="outline" size="sm" onClick={onRefresh} disabled={loading}>
                         <IconRefresh className="h-4 w-4 mr-2" />
@@ -188,21 +244,59 @@ export function DocumentView({
                         No documents found.
                     </div>
                 ) : viewMode === "json" ? (
+                    <div className="flex flex-col h-full">
+                        <div className="flex items-center justify-end gap-2 p-2 border-b bg-muted/10">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" onClick={handlePrettify}>
+                                            <IconAlignLeft className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Format JSON</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" onClick={handleMinify}>
+                                            <IconMinimize className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Compact JSON</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" onClick={handleCopy}>
+                                            <IconCopy className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Copy to Clipboard</TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                        <div className="flex-1 overflow-hidden">
+                            <CodeEditor
+                                value={jsonViewContent}
+                                language="json"
+                                readOnly={true}
+                                minimap={true}
+                                onChange={setJsonViewContent}
+                            />
+                        </div>
+                    </div>
+                ) : viewMode === "tree" ? (
                     <ScrollArea className="h-full p-4">
                         <div className="space-y-4">
-                            {documents.map((doc) => (
-                                <div key={doc._id} className="border rounded-lg p-4 bg-card relative group">
-                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(doc)}>
-                                            <IconPencil className="h-4 w-4" />
+                            {documents.map((doc, index) => (
+                                <div key={doc._id} className="border rounded-lg p-2 bg-card relative group">
+                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 z-10">
+                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEdit(doc)}>
+                                            <IconPencil className="h-3 w-3" />
                                         </Button>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(doc._id)}>
-                                            <IconTrash className="h-4 w-4" />
+                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => onDelete(doc._id)}>
+                                            <IconTrash className="h-3 w-3" />
                                         </Button>
                                     </div>
-                                    <pre className="text-xs font-mono overflow-auto max-h-[300px]">
-                                        {JSON.stringify(doc, null, 2)}
-                                    </pre>
+                                    <JsonTree data={doc} label={`Document ${index + 1 + (page - 1) * limit}`} defaultExpanded={false} />
                                 </div>
                             ))}
                         </div>
@@ -348,3 +442,4 @@ export function DocumentView({
         </div >
     );
 }
+

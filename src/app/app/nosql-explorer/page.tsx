@@ -30,6 +30,42 @@ export default function NoSQLExplorerPage() {
     const [tabs, setTabs] = useState<ExplorerTab[]>([]);
     const [activeTabId, setActiveTabId] = useState<string | null>(null);
     const [isConnectionDialogOpen, setIsConnectionDialogOpen] = useState(false);
+    const [isInitialized, setIsInitialized] = useState(false);
+
+    // Load tabs from localStorage on mount
+    useEffect(() => {
+        const savedTabs = localStorage.getItem("nosql_tabs");
+        const savedActiveTabId = localStorage.getItem("nosql_active_tab_id");
+
+        if (savedTabs) {
+            try {
+                setTabs(JSON.parse(savedTabs));
+            } catch (e) {
+                console.error("Failed to parse saved tabs", e);
+            }
+        }
+
+        if (savedActiveTabId) {
+            setActiveTabId(savedActiveTabId);
+        }
+        setIsInitialized(true);
+    }, []);
+
+    // Save tabs to localStorage whenever they change
+    useEffect(() => {
+        if (!isInitialized) return;
+        localStorage.setItem("nosql_tabs", JSON.stringify(tabs));
+    }, [tabs, isInitialized]);
+
+    // Save activeTabId to localStorage whenever it changes
+    useEffect(() => {
+        if (!isInitialized) return;
+        if (activeTabId) {
+            localStorage.setItem("nosql_active_tab_id", activeTabId);
+        } else {
+            localStorage.removeItem("nosql_active_tab_id");
+        }
+    }, [activeTabId, isInitialized]);
 
     // Auto-connect logic is now handled by the sidebar tree view mostly, 
     // but we might want to keep the "initial load" behavior if needed.
@@ -117,6 +153,14 @@ export default function NoSQLExplorerPage() {
             const index = tabs.findIndex((t) => t.id === tabId);
             const newActiveTab = tabs[index - 1] || tabs[index + 1];
             setActiveTabId(newActiveTab ? newActiveTab.id : null);
+        }
+    };
+
+    const handleCloseAllTabs = () => {
+        if (tabs.length === 0) return;
+        if (confirm("Are you sure you want to close all tabs?")) {
+            setTabs([]);
+            setActiveTabId(null);
         }
     };
 
@@ -287,6 +331,7 @@ export default function NoSQLExplorerPage() {
                     activeTabId={activeTabId}
                     onTabChange={handleTabChange}
                     onTabClose={handleTabClose}
+                    onCloseAll={handleCloseAllTabs}
                 />
                 <div className="flex-1 overflow-hidden relative">
                     {activeTab ? (
