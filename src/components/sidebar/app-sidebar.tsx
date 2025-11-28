@@ -83,7 +83,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <Logo size={32} showText={false} />
           </div>
           <div className="group-data-[state=collapsed]:hidden">
-            <h2 className="text-lg font-semibold tracking-tight text-primary/90 drop-shadow-sm">MyDevTools</h2>
+            <div className="relative h-6 w-28">
+              {/* Light Mode Text (Dark Color) */}
+              <img
+                src="/logo-text-light.png"
+                alt="MyDevTools"
+                className="dark:hidden object-contain h-full w-full"
+              />
+              {/* Dark Mode Text (Light Color) */}
+              <img
+                src="/logo-text-dark.png"
+                alt="MyDevTools"
+                className="hidden dark:block object-contain h-full w-full"
+              />
+            </div>
             <p className="text-xs text-muted-foreground/70 font-medium tracking-wide">Developer&apos;s Toolkit</p>
           </div>
         </div>
