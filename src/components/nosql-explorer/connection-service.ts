@@ -66,3 +66,14 @@ export const deleteConnection = async (userId: string, connectionId: string) => 
         throw error;
     }
 };
+
+export const updateConnectionName = async (userId: string, connectionId: string, newName: string) => {
+    try {
+        await updateDoc(doc(db, COLLECTION_NAME, connectionId), {
+            name: newName
+        });
+    } catch (error) {
+        console.error("Error updating connection name:", error);
+        throw error;
+    }
+};

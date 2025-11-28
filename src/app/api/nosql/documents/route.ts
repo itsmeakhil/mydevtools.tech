@@ -27,12 +27,27 @@ export async function GET(request: Request) {
         let query: any = {};
         try {
             query = JSON.parse(queryStr);
-            // Convert _id strings to ObjectId if present in query
-            if (query._id && typeof query._id === 'string') {
-                query._id = new ObjectId(query._id);
-            }
+
+            // Helper to recursively convert ObjectId strings
+            const convertObjectIds = (obj: any): any => {
+                if (Array.isArray(obj)) {
+                    return obj.map(convertObjectIds);
+                } else if (typeof obj === 'object' && obj !== null) {
+                    for (const key in obj) {
+                        if (key === '_id' && typeof obj[key] === 'string' && ObjectId.isValid(obj[key])) {
+                            obj[key] = new ObjectId(obj[key]);
+                        } else {
+                            obj[key] = convertObjectIds(obj[key]);
+                        }
+                    }
+                }
+                return obj;
+            };
+
+            query = convertObjectIds(query);
         } catch (e) {
             // Invalid JSON query, ignore or handle
+            console.error("Invalid JSON query", e);
         }
 
         const documents = await collection.find(query).skip(skip).limit(limit).toArray();

@@ -1,55 +1,311 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Database, Collection } from "./types";
-import { IconDatabase, IconFolder, IconChevronRight, IconChevronDown, IconRefresh, IconSearch, IconLogout } from "@tabler/icons-react";
+import { Database, Collection, SavedConnection } from "./types";
+import { IconDatabase, IconFolder, IconChevronRight, IconChevronDown, IconRefresh, IconSearch, IconPlus, IconServer, IconPencil, IconCheck, IconX, IconDotsVertical, IconTrash, IconEdit } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import useAuth from "@/utils/useAuth";
+import { getConnections, updateConnectionName } from "./connection-service";
+import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 interface ExplorerSidebarProps {
-    databases: Database[];
-    selectedDb: string | null;
-    collections: Collection[];
-    selectedCollection: string | null;
-    onSelectDb: (dbName: string) => void;
-    onSelectCollection: (collectionName: string) => void;
+    onSelectCollection: (connection: SavedConnection, dbName: string, collectionName: string) => void;
     onRefresh: () => void;
-    onDisconnect: () => void;
+    onAddConnection: () => void;
+}
+
+interface ConnectionNode {
+    connection: SavedConnection;
+    isExpanded: boolean;
+    databases: Database[];
+    isLoading: boolean;
+    error: string | null;
+    expandedDbs: Set<string>; // Set of expanded db names
+    dbCollections: Record<string, Collection[]>; // Map of dbName -> collections
 }
 
 export function ExplorerSidebar({
-    databases,
-    selectedDb,
-    collections,
-    selectedCollection,
-    onSelectDb,
     onSelectCollection,
     onRefresh,
-    onDisconnect,
+    onAddConnection,
 }: ExplorerSidebarProps) {
-    const [expandedDbs, setExpandedDbs] = useState<Set<string>>(new Set());
+    const { user } = useAuth();
+    const [connections, setConnections] = useState<ConnectionNode[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [editingConnectionId, setEditingConnectionId] = useState<string | null>(null);
+    const [editName, setEditName] = useState("");
 
-    const toggleDb = (dbName: string) => {
-        const newExpanded = new Set(expandedDbs);
-        if (newExpanded.has(dbName)) {
-            newExpanded.delete(dbName);
-        } else {
-            newExpanded.add(dbName);
-            onSelectDb(dbName);
+    // Dialog states
+    const [renameCollectionDialog, setRenameCollectionDialog] = useState<{ open: boolean, connection: SavedConnection | null, dbName: string, collectionName: string, newName: string }>({ open: false, connection: null, dbName: "", collectionName: "", newName: "" });
+    const [renameDatabaseDialog, setRenameDatabaseDialog] = useState<{ open: boolean, connection: SavedConnection | null, dbName: string, newName: string }>({ open: false, connection: null, dbName: "", newName: "" });
+
+    useEffect(() => {
+        if (user) {
+            loadConnections();
         }
-        setExpandedDbs(newExpanded);
+    }, [user]);
+
+    const loadConnections = async () => {
+        if (!user) return;
+        setLoading(true);
+        try {
+            const saved = await getConnections(user.uid);
+            setConnections(saved.map(conn => ({
+                connection: conn,
+                isExpanded: false,
+                databases: [],
+                isLoading: false,
+                error: null,
+                expandedDbs: new Set(),
+                dbCollections: {}
+            })));
+        } catch (error) {
+            toast.error("Failed to load connections");
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const filteredDatabases = databases.filter((db) =>
-        db.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const toggleConnection = async (index: number) => {
+        if (editingConnectionId) return; // Prevent toggle while editing
 
-    const filteredCollections = collections
-        .filter((col) => col.name.toLowerCase().includes(searchQuery.toLowerCase()))
-        .sort((a, b) => a.name.localeCompare(b.name));
+        const node = connections[index];
+        if (node.isExpanded) {
+            // Collapse
+            setConnections(prev => prev.map((c, i) => i === index ? { ...c, isExpanded: false } : c));
+            return;
+        }
+
+        // Expand
+        setConnections(prev => prev.map((c, i) => i === index ? { ...c, isExpanded: true, isLoading: true, error: null } : c));
+        await refreshDatabases(index);
+    };
+
+    const refreshDatabases = async (index: number) => {
+        const node = connections[index];
+        setConnections(prev => prev.map((c, i) => i === index ? { ...c, isLoading: true, error: null } : c));
+        try {
+            const res = await fetch("/api/nosql/connect", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ connectionString: node.connection.connectionString }),
+            });
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error);
+
+            setConnections(prev => prev.map((c, i) => i === index ? {
+                ...c,
+                isLoading: false,
+                databases: data.databases,
+            } : c));
+        } catch (error: any) {
+            setConnections(prev => prev.map((c, i) => i === index ? {
+                ...c,
+                isLoading: false,
+                error: error.message
+            } : c));
+            toast.error(`Failed to connect to ${node.connection.name}`);
+        }
+    };
+
+    const toggleDatabase = async (connIndex: number, dbName: string) => {
+        const node = connections[connIndex];
+        const isDbExpanded = node.expandedDbs.has(dbName);
+
+        if (isDbExpanded) {
+            // Collapse
+            const newExpanded = new Set(node.expandedDbs);
+            newExpanded.delete(dbName);
+            setConnections(prev => prev.map((c, i) => i === connIndex ? { ...c, expandedDbs: newExpanded } : c));
+            return;
+        }
+
+        // Expand
+        const newExpanded = new Set(node.expandedDbs);
+        newExpanded.add(dbName);
+        setConnections(prev => prev.map((c, i) => i === connIndex ? { ...c, expandedDbs: newExpanded } : c));
+
+        // Fetch collections if not already fetched
+        if (!node.dbCollections[dbName]) {
+            await refreshCollections(connIndex, dbName);
+        }
+    };
+
+    const refreshCollections = async (connIndex: number, dbName: string) => {
+        const node = connections[connIndex];
+        try {
+            const res = await fetch(
+                `/api/nosql/collections?connectionString=${encodeURIComponent(
+                    node.connection.connectionString
+                )}&dbName=${dbName}`
+            );
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error);
+
+            setConnections(prev => prev.map((c, i) => i === connIndex ? {
+                ...c,
+                dbCollections: { ...c.dbCollections, [dbName]: data.collections }
+            } : c));
+        } catch (error) {
+            toast.error(`Failed to fetch collections for ${dbName}`);
+        }
+    };
+
+    const startEditing = (e: React.MouseEvent, conn: SavedConnection) => {
+        e.stopPropagation();
+        setEditingConnectionId(conn.id || null);
+        setEditName(conn.name);
+    };
+
+    const cancelEditing = (e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        setEditingConnectionId(null);
+        setEditName("");
+    };
+
+    const saveEditing = async (e: React.MouseEvent, conn: SavedConnection) => {
+        e.stopPropagation();
+        if (!user || !conn.id) return;
+
+        try {
+            await updateConnectionName(user.uid, conn.id, editName);
+            setConnections(prev => prev.map(c => c.connection.id === conn.id ? { ...c, connection: { ...c.connection, name: editName } } : c));
+            toast.success("Connection renamed");
+            setEditingConnectionId(null);
+        } catch (error) {
+            toast.error("Failed to rename connection");
+        }
+    };
+
+    const handleDropDatabase = async (connIndex: number, dbName: string) => {
+        if (!confirm(`Are you sure you want to drop database "${dbName}"? This action cannot be undone.`)) return;
+
+        const node = connections[connIndex];
+        try {
+            const res = await fetch("/api/nosql/database/drop", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ connectionString: node.connection.connectionString, dbName }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+
+            toast.success(`Database ${dbName} dropped`);
+            refreshDatabases(connIndex);
+        } catch (error: any) {
+            toast.error(error.message);
+        }
+    };
+
+    const handleDropCollection = async (connIndex: number, dbName: string, collectionName: string) => {
+        if (!confirm(`Are you sure you want to drop collection "${collectionName}"? This action cannot be undone.`)) return;
+
+        const node = connections[connIndex];
+        try {
+            const res = await fetch("/api/nosql/collection/drop", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ connectionString: node.connection.connectionString, dbName, collectionName }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+
+            toast.success(`Collection ${collectionName} dropped`);
+            refreshCollections(connIndex, dbName);
+        } catch (error: any) {
+            toast.error(error.message);
+        }
+    };
+
+    const handleRenameCollection = async () => {
+        const { connection, dbName, collectionName, newName } = renameCollectionDialog;
+        if (!connection || !newName) return;
+
+        try {
+            const res = await fetch("/api/nosql/collection/rename", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    connectionString: connection.connectionString,
+                    dbName,
+                    collectionName,
+                    newCollectionName: newName
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+
+            toast.success(`Collection renamed to ${newName}`);
+            setRenameCollectionDialog({ ...renameCollectionDialog, open: false });
+
+            // Find connection index to refresh
+            const connIndex = connections.findIndex(c => c.connection.id === connection.id);
+            if (connIndex !== -1) {
+                refreshCollections(connIndex, dbName);
+            }
+        } catch (error: any) {
+            toast.error(error.message);
+        }
+    };
+
+    const handleRenameDatabase = async () => {
+        const { connection, dbName, newName } = renameDatabaseDialog;
+        if (!connection || !newName) return;
+
+        try {
+            const res = await fetch("/api/nosql/database/rename", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    connectionString: connection.connectionString,
+                    oldDbName: dbName,
+                    newDbName: newName
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+
+            toast.success(`Database renamed to ${newName}`);
+            setRenameDatabaseDialog({ ...renameDatabaseDialog, open: false });
+
+            // Find connection index to refresh
+            const connIndex = connections.findIndex(c => c.connection.id === connection.id);
+            if (connIndex !== -1) {
+                refreshDatabases(connIndex);
+            }
+        } catch (error: any) {
+            toast.error(error.message);
+        }
+    };
+
+    const matchesSearch = (text: string) => text.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const filteredConnections = connections.filter(node => {
+        if (!searchQuery) return true;
+        if (matchesSearch(node.connection.name)) return true;
+
+        const hasMatchingDb = node.databases.some(db => {
+            if (matchesSearch(db.name)) return true;
+            const collections = node.dbCollections[db.name] || [];
+            return collections.some(col => matchesSearch(col.name));
+        });
+
+        return hasMatchingDb;
+    });
 
     return (
         <div className="w-64 border-r bg-muted/10 flex flex-col h-full">
@@ -57,11 +313,11 @@ export function ExplorerSidebar({
                 <div className="flex items-center justify-between">
                     <span className="font-semibold text-sm">Explorer</span>
                     <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRefresh} title="Refresh">
-                            <IconRefresh className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onAddConnection} title="Add Connection">
+                            <IconPlus className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={onDisconnect} title="Disconnect">
-                            <IconLogout className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={loadConnections} title="Refresh">
+                            <IconRefresh className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>
@@ -70,67 +326,237 @@ export function ExplorerSidebar({
                     <Input
                         placeholder="Search..."
                         value={searchQuery}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className="h-8 pl-7 text-xs"
                     />
                 </div>
             </div>
             <ScrollArea className="flex-1">
                 <div className="p-2 space-y-1">
-                    {filteredDatabases.map((db) => (
-                        <div key={db.name}>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className={cn(
-                                    "w-full justify-start gap-2 px-2 font-normal",
-                                    selectedDb === db.name && "bg-accent text-accent-foreground"
-                                )}
-                                onClick={() => toggleDb(db.name)}
-                            >
-                                {expandedDbs.has(db.name) ? (
-                                    <IconChevronDown className="h-4 w-4 text-muted-foreground" />
-                                ) : (
-                                    <IconChevronRight className="h-4 w-4 text-muted-foreground" />
-                                )}
-                                <IconDatabase className="h-4 w-4 text-blue-500" />
-                                <span className="truncate">{db.name}</span>
-                            </Button>
-
-                            {expandedDbs.has(db.name) && selectedDb === db.name && (
-                                <div className="ml-6 mt-1 space-y-1 border-l pl-2">
-                                    {filteredCollections.length === 0 ? (
-                                        <div className="text-xs text-muted-foreground px-2 py-1">
-                                            {collections.length === 0 ? "No collections" : "No matches"}
+                    {loading ? (
+                        <div className="text-xs text-muted-foreground text-center p-4">Loading connections...</div>
+                    ) : filteredConnections.length === 0 ? (
+                        <div className="text-xs text-muted-foreground text-center p-4">No connections found</div>
+                    ) : (
+                        filteredConnections.map((node, index) => (
+                            <div key={node.connection.id}>
+                                <div className="flex items-center group">
+                                    {editingConnectionId === node.connection.id ? (
+                                        <div className="flex items-center gap-1 px-2 py-1 w-full">
+                                            <Input
+                                                value={editName}
+                                                onChange={(e) => setEditName(e.target.value)}
+                                                className="h-7 text-xs"
+                                                autoFocus
+                                                onClick={(e) => e.stopPropagation()}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") saveEditing(e as any, node.connection);
+                                                    if (e.key === "Escape") cancelEditing();
+                                                }}
+                                            />
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-green-500" onClick={(e) => saveEditing(e, node.connection)}>
+                                                <IconCheck className="h-3 w-3" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500" onClick={cancelEditing}>
+                                                <IconX className="h-3 w-3" />
+                                            </Button>
                                         </div>
                                     ) : (
-                                        filteredCollections.map((col) => (
-                                            <Button
-                                                key={col.name}
-                                                variant="ghost"
-                                                size="sm"
-                                                className={cn(
-                                                    "w-full justify-start gap-2 px-2 h-8 font-normal text-xs",
-                                                    selectedCollection === col.name && "bg-accent text-accent-foreground"
-                                                )}
-                                                onClick={() => onSelectCollection(col.name)}
-                                            >
-                                                <IconFolder className="h-3 w-3 text-yellow-500" />
-                                                <span className="truncate">{col.name}</span>
-                                            </Button>
-                                        ))
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="w-full justify-start gap-2 px-2 font-normal hover:bg-muted/50 relative"
+                                                        onClick={() => toggleConnection(index)}
+                                                    >
+                                                        {node.isExpanded ? (
+                                                            <IconChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                                                        ) : (
+                                                            <IconChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                                                        )}
+                                                        <IconServer className="h-4 w-4 text-purple-500 shrink-0" />
+                                                        <span className="truncate flex-1 text-left">{node.connection.name}</span>
+
+                                                        <div
+                                                            className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-1 bg-background/80 rounded-sm p-0.5"
+                                                            onClick={(e) => startEditing(e, node.connection)}
+                                                        >
+                                                            <IconPencil className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                                                        </div>
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right">
+                                                    <p className="font-mono text-xs">{node.connection.connectionString}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
                                     )}
                                 </div>
-                            )}
-                        </div>
-                    ))}
-                    {filteredDatabases.length === 0 && (
-                        <div className="p-4 text-center text-xs text-muted-foreground">
-                            No databases found
-                        </div>
+
+                                {node.isExpanded && (
+                                    <div className="ml-4 border-l pl-2 mt-1 space-y-1">
+                                        {node.isLoading ? (
+                                            <div className="text-xs text-muted-foreground px-2">Connecting...</div>
+                                        ) : node.error ? (
+                                            <div className="text-xs text-destructive px-2">{node.error}</div>
+                                        ) : node.databases.length === 0 ? (
+                                            <div className="text-xs text-muted-foreground px-2">No databases</div>
+                                        ) : (
+                                            node.databases
+                                                .filter(db => {
+                                                    if (!searchQuery) return true;
+                                                    if (matchesSearch(node.connection.name)) return true;
+                                                    if (matchesSearch(db.name)) return true;
+                                                    const collections = node.dbCollections[db.name] || [];
+                                                    return collections.some(col => matchesSearch(col.name));
+                                                })
+                                                .map((db) => (
+                                                    <div key={db.name}>
+                                                        <div className="group/db flex items-center pr-2">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="flex-1 justify-start gap-2 px-2 font-normal h-7 text-xs"
+                                                                onClick={() => toggleDatabase(index, db.name)}
+                                                            >
+                                                                {node.expandedDbs.has(db.name) ? (
+                                                                    <IconChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+                                                                ) : (
+                                                                    <IconChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                                                                )}
+                                                                <IconDatabase className="h-3 w-3 text-blue-500 shrink-0" />
+                                                                <span className="truncate">{db.name}</span>
+                                                            </Button>
+
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/db:opacity-100 transition-opacity">
+                                                                        <IconDotsVertical className="h-3 w-3" />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end">
+                                                                    <DropdownMenuItem onClick={() => refreshCollections(index, db.name)}>
+                                                                        <IconRefresh className="h-3 w-3 mr-2" /> Refresh
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem onClick={() => setRenameDatabaseDialog({
+                                                                        open: true,
+                                                                        connection: node.connection,
+                                                                        dbName: db.name,
+                                                                        newName: db.name
+                                                                    })}>
+                                                                        <IconEdit className="h-3 w-3 mr-2" /> Rename
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuSeparator />
+                                                                    <DropdownMenuItem className="text-destructive" onClick={() => handleDropDatabase(index, db.name)}>
+                                                                        <IconTrash className="h-3 w-3 mr-2" /> Drop Database
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        </div>
+
+                                                        {node.expandedDbs.has(db.name) && (
+                                                            <div className="ml-4 border-l pl-2 mt-1 space-y-1">
+                                                                {!node.dbCollections[db.name] ? (
+                                                                    <div className="text-xs text-muted-foreground px-2">Loading...</div>
+                                                                ) : node.dbCollections[db.name].length === 0 ? (
+                                                                    <div className="text-xs text-muted-foreground px-2">No collections</div>
+                                                                ) : (
+                                                                    node.dbCollections[db.name]
+                                                                        .filter(col => {
+                                                                            if (!searchQuery) return true;
+                                                                            if (matchesSearch(node.connection.name)) return true;
+                                                                            if (matchesSearch(db.name)) return true;
+                                                                            return matchesSearch(col.name);
+                                                                        })
+                                                                        .sort((a, b) => a.name.localeCompare(b.name))
+                                                                        .map((col) => (
+                                                                            <div key={col.name} className="group/col flex items-center pr-2">
+                                                                                <Button
+                                                                                    variant="ghost"
+                                                                                    size="sm"
+                                                                                    className="flex-1 justify-start gap-2 px-2 font-normal h-7 text-xs"
+                                                                                    onClick={() => onSelectCollection(node.connection, db.name, col.name)}
+                                                                                >
+                                                                                    <IconFolder className="h-3 w-3 text-yellow-500 shrink-0" />
+                                                                                    <span className="truncate">{col.name}</span>
+                                                                                </Button>
+                                                                                <DropdownMenu>
+                                                                                    <DropdownMenuTrigger asChild>
+                                                                                        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/col:opacity-100 transition-opacity">
+                                                                                            <IconDotsVertical className="h-3 w-3" />
+                                                                                        </Button>
+                                                                                    </DropdownMenuTrigger>
+                                                                                    <DropdownMenuContent align="end">
+                                                                                        <DropdownMenuItem onClick={() => setRenameCollectionDialog({
+                                                                                            open: true,
+                                                                                            connection: node.connection,
+                                                                                            dbName: db.name,
+                                                                                            collectionName: col.name,
+                                                                                            newName: col.name
+                                                                                        })}>
+                                                                                            <IconEdit className="h-3 w-3 mr-2" /> Rename
+                                                                                        </DropdownMenuItem>
+                                                                                        <DropdownMenuSeparator />
+                                                                                        <DropdownMenuItem className="text-destructive" onClick={() => handleDropCollection(index, db.name, col.name)}>
+                                                                                            <IconTrash className="h-3 w-3 mr-2" /> Drop Collection
+                                                                                        </DropdownMenuItem>
+                                                                                    </DropdownMenuContent>
+                                                                                </DropdownMenu>
+                                                                            </div>
+                                                                        ))
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ))
                     )}
                 </div>
             </ScrollArea>
+
+            <Dialog open={renameCollectionDialog.open} onOpenChange={(open) => setRenameCollectionDialog(prev => ({ ...prev, open }))}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Rename Collection</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-2 py-4">
+                        <Input
+                            value={renameCollectionDialog.newName}
+                            onChange={(e) => setRenameCollectionDialog(prev => ({ ...prev, newName: e.target.value }))}
+                            placeholder="New collection name"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setRenameCollectionDialog(prev => ({ ...prev, open: false }))}>Cancel</Button>
+                        <Button onClick={handleRenameCollection}>Rename</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={renameDatabaseDialog.open} onOpenChange={(open) => setRenameDatabaseDialog(prev => ({ ...prev, open }))}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Rename Database</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-2 py-4">
+                        <Input
+                            value={renameDatabaseDialog.newName}
+                            onChange={(e) => setRenameDatabaseDialog(prev => ({ ...prev, newName: e.target.value }))}
+                            placeholder="New database name"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setRenameDatabaseDialog(prev => ({ ...prev, open: false }))}>Cancel</Button>
+                        <Button onClick={handleRenameDatabase}>Rename</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

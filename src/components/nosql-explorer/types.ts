@@ -50,6 +50,8 @@ export interface ConnectionState {
 
 export interface ExplorerTab {
     id: string;
+    connectionId: string;
+    connectionName: string;
     dbName: string;
     collectionName: string;
     documents: Document[];

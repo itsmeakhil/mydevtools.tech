@@ -103,13 +103,13 @@ export function DocumentView({
                     <div className="relative flex-1 max-w-md">
                         <IconSearch className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Search query (JSON)..."
+                            placeholder="Filter query (JSON)..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-8"
                         />
                     </div>
-                    <Button type="submit" variant="secondary" size="sm">Search</Button>
+                    <Button type="submit" variant="secondary" size="sm">Filter</Button>
                 </form>
                 <div className="flex items-center gap-2">
                     <div className="flex items-center border rounded-md overflow-hidden">
