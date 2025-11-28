@@ -28,9 +28,20 @@ export function Logo({ size = 32, className = '', showText = true }: LogoProps) 
                 />
             </div>
             {showText && (
-                <span className="font-bold text-lg bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-                    MyDevTools
-                </span>
+                <div className="relative h-8 w-32">
+                    {/* Light Mode Text (Dark Color) */}
+                    <img
+                        src="/logo-text-light.png"
+                        alt="MyDevTools"
+                        className="dark:hidden object-contain h-full w-full"
+                    />
+                    {/* Dark Mode Text (Light Color) */}
+                    <img
+                        src="/logo-text-dark.png"
+                        alt="MyDevTools"
+                        className="hidden dark:block object-contain h-full w-full"
+                    />
+                </div>
             )}
         </div>
     );
