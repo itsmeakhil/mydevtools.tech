@@ -289,6 +289,12 @@ export function DocumentView({
                             {documents.map((doc, index) => (
                                 <div key={doc._id} className="border rounded-lg p-2 bg-card relative group">
                                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 z-10">
+                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                                            navigator.clipboard.writeText(JSON.stringify(doc, null, 2));
+                                            toast.success("Document copied to clipboard");
+                                        }}>
+                                            <IconCopy className="h-3 w-3" />
+                                        </Button>
                                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEdit(doc)}>
                                             <IconPencil className="h-3 w-3" />
                                         </Button>
@@ -303,7 +309,7 @@ export function DocumentView({
                     </ScrollArea>
                 ) : (
                     <ScrollArea className="h-full w-full" horizontal>
-                        <div className="min-w-full inline-block align-middle">
+                        <div className="min-w-full w-max">
                             <table className="w-full text-sm text-left relative">
                                 <thead className="text-xs text-muted-foreground uppercase bg-muted/50 sticky top-0 z-10">
                                     <tr>
