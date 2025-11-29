@@ -11,6 +11,16 @@ import useAuth from "@/utils/useAuth";
 import { getConnections } from "@/components/nosql-explorer/connection-service";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function NoSQLExplorerPage() {
     const { user } = useAuth();
@@ -32,6 +42,10 @@ export default function NoSQLExplorerPage() {
     const [activeTabId, setActiveTabId] = useState<string | null>(null);
     const [isConnectionDialogOpen, setIsConnectionDialogOpen] = useState(false);
     const [isInitialized, setIsInitialized] = useState(false);
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{ isOpen: boolean; documentId: string | null }>({
+        isOpen: false,
+        documentId: null,
+    });
 
     // Load tabs from localStorage on mount
     useEffect(() => {
@@ -249,8 +263,13 @@ export default function NoSQLExplorerPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!activeTab || !user) return;
-        if (!confirm("Are you sure you want to delete this document?")) return;
+        setDeleteConfirmation({ isOpen: true, documentId: id });
+    };
+
+    const confirmDelete = async () => {
+        const id = deleteConfirmation.documentId;
+        if (!activeTab || !user || !id) return;
+
         try {
             const connections = await getConnections(user.uid);
             const conn = connections.find(c => c.id === activeTab.connectionId);
@@ -272,6 +291,8 @@ export default function NoSQLExplorerPage() {
             handleRefresh();
         } catch (error: any) {
             toast.error(error.message);
+        } finally {
+            setDeleteConfirmation({ isOpen: false, documentId: null });
         }
     };
 
@@ -279,12 +300,7 @@ export default function NoSQLExplorerPage() {
         if (activeTab) {
             const updatedTab = { ...activeTab, query, page: 1 };
             updateTab(activeTab.id, updatedTab);
-            // We need to trigger fetch, but we need connection string. 
-            // Reuse handleRefresh logic or pass it?
-            // Let's just call handleRefresh which re-fetches with current tab state
-            // But handleRefresh fetches fresh connections.
-            // Let's extract the fetch-with-lookup logic.
-            handleRefresh();
+            performFetch(updatedTab);
         }
     };
 
@@ -443,6 +459,23 @@ export default function NoSQLExplorerPage() {
                     />
                 </DialogContent>
             </Dialog>
+
+            <AlertDialog open={deleteConfirmation.isOpen} onOpenChange={(open) => setDeleteConfirmation(prev => ({ ...prev, isOpen: open }))}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the document from your collection.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
