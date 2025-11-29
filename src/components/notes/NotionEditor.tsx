@@ -74,7 +74,7 @@ export default function NotionEditor() {
 
     return (
         <div className="flex-1 flex flex-col h-full overflow-hidden bg-background">
-            <div className="p-8 pb-4 max-w-4xl mx-auto w-full">
+            <div className="p-8 pb-4 max-w-6xl mx-auto w-full">
                 <Input
                     value={title}
                     onChange={handleTitleChange}
@@ -83,7 +83,7 @@ export default function NotionEditor() {
                 />
             </div>
 
-            <div className="flex-1 overflow-y-auto px-8 max-w-4xl mx-auto w-full pb-20">
+            <div className="flex-1 overflow-y-auto px-8 max-w-6xl mx-auto w-full pb-20">
                 {/* Key forces re-mount when switching notes to ensure clean state */}
                 <EditorProvider
                     key={activeNoteId}
