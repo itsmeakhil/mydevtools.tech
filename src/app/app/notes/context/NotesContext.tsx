@@ -46,7 +46,7 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
         const q = query(
             collection(db, "notes"),
             where("userId", "==", user.uid),
-            orderBy("updatedAt", "desc")
+            orderBy("createdAt", "asc")
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {

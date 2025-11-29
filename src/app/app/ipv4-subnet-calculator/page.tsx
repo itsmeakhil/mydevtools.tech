@@ -26,7 +26,7 @@ interface SubnetInfo {
 function calculateSubnetDetails(ipWithCidr: string): SubnetInfo {
   try {
     const block = new Netmask(ipWithCidr.trim())
-    
+
     const binaryMask = ('1'.repeat(block.bitmask) + '0'.repeat(32 - block.bitmask))
       .match(/.{8}/g)?.join('.') ?? ''
 
@@ -40,7 +40,7 @@ function calculateSubnetDetails(ipWithCidr: string): SubnetInfo {
       networkSize: String(block.size),
       firstAddress: block.first,
       lastAddress: block.last,
-      broadcastAddress: block.broadcast,
+      broadcastAddress: block.broadcast || '',
       ipClass: getIPClass({ ip: block.base })
     }
   } catch (error) {
@@ -66,7 +66,7 @@ export default function SubnetCalculator() {
       const block = new Netmask(ipAddress)
       const octets = block.base.split('.').map(Number)
       const size = block.size
-      
+
       // Calculate the step size for the appropriate octet
       let octetIndex
       if (size >= 16777216) octetIndex = 0        // Class A
@@ -76,13 +76,13 @@ export default function SubnetCalculator() {
 
       // Calculate the step size for the target octet
       const stepSize = size / Math.pow(256, 3 - octetIndex)
-      
+
       // Decrease the appropriate octet
       octets[octetIndex] = Math.max(0, octets[octetIndex] - stepSize)
-      
+
       // Construct the new IP address
       const previousBase = `${octets.join('.')}/${block.bitmask}`
-      
+
       try {
         const prev = new Netmask(previousBase)
         setIpAddress(prev.toString())
@@ -107,14 +107,14 @@ export default function SubnetCalculator() {
     }
   }
 
-    function calculateSubnet(value: string) {
-        try {
-            const result = calculateSubnetDetails(value)
-            setSubnetInfo(result)
-        } catch {
-            setSubnetInfo(null)
-        }
+  function calculateSubnet(value: string) {
+    try {
+      const result = calculateSubnetDetails(value)
+      setSubnetInfo(result)
+    } catch {
+      setSubnetInfo(null)
     }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
@@ -135,25 +135,25 @@ export default function SubnetCalculator() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-          <Label htmlFor="ipAddress">An IPv4 address with or without mask</Label>
-          <Input
-            id="ipAddress"
-            value={ipAddress}
-            onChange={(e) => {
-              setIpAddress(e.target.value)
-              calculateSubnet(e.target.value)
-            }}
-            className="mt-1"
-          />
+              <Label htmlFor="ipAddress">An IPv4 address with or without mask</Label>
+              <Input
+                id="ipAddress"
+                value={ipAddress}
+                onChange={(e) => {
+                  setIpAddress(e.target.value)
+                  calculateSubnet(e.target.value)
+                }}
+                className="mt-1"
+              />
             </div>
 
             <div className="space-y-4 bg-muted/50 p-4 rounded-lg">
-          {subnetInfo && Object.entries(subnetInfo).map(([key, value]) => (
-            <div key={key} className="grid grid-cols-2 gap-4">
-              <div className="font-medium capitalize">{key.replace(/([A-Z])/g, " $1").trim()}</div>
-              <div className="font-mono">{value}</div>
-            </div>
-          ))}
+              {subnetInfo && Object.entries(subnetInfo).map(([key, value]) => (
+                <div key={key} className="grid grid-cols-2 gap-4">
+                  <div className="font-medium capitalize">{key.replace(/([A-Z])/g, " $1").trim()}</div>
+                  <div className="font-mono">{value}</div>
+                </div>
+              ))}
             </div>
 
             <div className="flex justify-between">
