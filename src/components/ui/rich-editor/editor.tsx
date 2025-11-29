@@ -9,7 +9,7 @@ import { AddBlockButton } from "./add-block-button"
 import { Block } from "./block"
 import { CoverImage } from "./CoverImage"
 import { CustomClassPopover } from "./custom-class-popover"
-import { EditorToolbar } from "./editor-toolbar"
+
 import { ExportFloatingButton } from "./ExportFloatingButton"
 import { FreeImageBlock } from "./FreeImageBlock"
 import { GroupImagesButton } from "./group-images-button"
@@ -1018,17 +1018,7 @@ export function Editor({
           onNotionBasedChange={onNotionBasedChange}
         />
         {/* Toolbar - always shown now with read-only toggle */}
-        <EditorToolbar
-          isUploading={isUploading}
-          readOnly={readOnly}
-          onReadOnlyChange={setReadOnly}
-          onImageUploadClick={handleImageUploadClick}
-          onMultipleImagesUploadClick={handleMultipleImagesUploadClick}
-          onVideoUploadClick={handleVideoUploadClick}
-          onInsertComponentClick={handleInsertComponentClick}
-          onCreateList={handleCreateList}
-          onCreateTable={() => setTableDialogOpen(true)}
-        />
+        {/* Toolbar removed as per user request */}
         <div className="relative flex flex-1 flex-col gap-3 rounded-none transition-all duration-300">
           {/* Table Dialog */}
           <TableDialog
