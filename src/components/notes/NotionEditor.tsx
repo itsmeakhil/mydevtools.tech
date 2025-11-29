@@ -18,27 +18,36 @@ export default function NotionEditor() {
         setIsMounted(true);
     }, []);
 
-    useEffect(() => {
-        if (activeNote) {
-            setTitle(activeNote.title);
-        }
-    }, [activeNoteId, activeNote]);
+    const [lastSyncedNoteId, setLastSyncedNoteId] = useState<string | null>(null);
 
-    const debouncedUpdate = useDebouncedCallback(async (updates: any) => {
-        if (activeNoteId) {
-            await updateNote(activeNoteId, updates);
+    // Only update title from store when switching notes, not on every store update
+    // This prevents local typing from being overwritten by slightly delayed store updates
+    useEffect(() => {
+        if (activeNote && activeNote.id !== lastSyncedNoteId) {
+            setTitle(activeNote.title);
+            setLastSyncedNoteId(activeNote.id);
+        }
+    }, [activeNoteId, activeNote, lastSyncedNoteId]);
+
+    const debouncedUpdate = useDebouncedCallback(async (id: string, updates: any) => {
+        if (id) {
+            await updateNote(id, updates);
         }
     }, 1000);
 
     const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newTitle = e.target.value;
         setTitle(newTitle);
-        debouncedUpdate({ title: newTitle });
+        if (activeNoteId) {
+            debouncedUpdate(activeNoteId, { title: newTitle });
+        }
     };
 
     const handleEditorChange = (state: EditorState) => {
         const currentContent = state.history[state.historyIndex];
-        debouncedUpdate({ content: currentContent });
+        if (activeNoteId) {
+            debouncedUpdate(activeNoteId, { content: currentContent });
+        }
     };
 
     // Memoize initial content to prevent unnecessary re-renders/resets
