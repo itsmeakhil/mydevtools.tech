@@ -308,63 +308,61 @@ export function DocumentView({
                         </div>
                     </ScrollArea>
                 ) : (
-                    <ScrollArea className="h-full w-full" horizontal>
-                        <div className="min-w-full w-max">
-                            <table className="w-full text-sm text-left relative">
-                                <thead className="text-xs text-muted-foreground uppercase bg-muted/50 sticky top-0 z-10">
-                                    <tr>
-                                        <th className="px-4 py-3 w-[50px] whitespace-nowrap font-medium text-center">#</th>
+                    <ScrollArea className="h-full w-full max-w-full" horizontal>
+                        <table className="min-w-full w-max text-sm text-left relative">
+                            <thead className="text-xs text-muted-foreground uppercase bg-muted/50 sticky top-0 z-10">
+                                <tr>
+                                    <th className="px-4 py-3 w-[50px] whitespace-nowrap font-medium text-center">#</th>
+                                    {Array.from(new Set(documents.flatMap(Object.keys)))
+                                        .filter(key => key !== "_id")
+                                        .reduce((acc, key) => [...acc, key], ["_id"])
+                                        .map((key) => (
+                                            <th key={key} className="px-4 py-3 whitespace-nowrap font-medium">
+                                                {key}
+                                            </th>
+                                        ))}
+                                    <th className="px-4 py-3 w-[100px] bg-muted/50 sticky right-0 z-20">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {documents.map((doc, index) => (
+                                    <tr key={doc._id} className="border-b hover:bg-muted/50 group">
+                                        <td className="px-4 py-3 font-mono text-xs text-center text-muted-foreground">
+                                            {index + 1 + (page - 1) * limit}
+                                        </td>
                                         {Array.from(new Set(documents.flatMap(Object.keys)))
                                             .filter(key => key !== "_id")
                                             .reduce((acc, key) => [...acc, key], ["_id"])
                                             .map((key) => (
-                                                <th key={key} className="px-4 py-3 whitespace-nowrap font-medium">
-                                                    {key}
-                                                </th>
+                                                <td key={key} className="px-4 py-3 font-mono text-xs align-top max-w-[300px] truncate" title={typeof doc[key] === 'object' ? JSON.stringify(doc[key]) : String(doc[key])}>
+                                                    {doc[key] === undefined ? (
+                                                        ""
+                                                    ) : typeof doc[key] === 'object' && doc[key] !== null ? (
+                                                        <button
+                                                            onClick={() => handleViewValue(doc[key])}
+                                                            className="text-blue-500 hover:underline focus:outline-none"
+                                                        >
+                                                            {Array.isArray(doc[key]) ? `Array(${doc[key].length})` : '{...}'}
+                                                        </button>
+                                                    ) : (
+                                                        String(doc[key])
+                                                    )}
+                                                </td>
                                             ))}
-                                        <th className="px-4 py-3 w-[100px] bg-muted/50 sticky right-0 z-20">Actions</th>
+                                        <td className="px-4 py-3 align-top sticky right-0 bg-background group-hover:bg-muted/50 border-l z-10">
+                                            <div className="flex gap-1">
+                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEdit(doc)}>
+                                                    <IconPencil className="h-3 w-3" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => onDelete(doc._id)}>
+                                                    <IconTrash className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    {documents.map((doc, index) => (
-                                        <tr key={doc._id} className="border-b hover:bg-muted/50 group">
-                                            <td className="px-4 py-3 font-mono text-xs text-center text-muted-foreground">
-                                                {index + 1 + (page - 1) * limit}
-                                            </td>
-                                            {Array.from(new Set(documents.flatMap(Object.keys)))
-                                                .filter(key => key !== "_id")
-                                                .reduce((acc, key) => [...acc, key], ["_id"])
-                                                .map((key) => (
-                                                    <td key={key} className="px-4 py-3 font-mono text-xs align-top max-w-[300px] truncate" title={typeof doc[key] === 'object' ? JSON.stringify(doc[key]) : String(doc[key])}>
-                                                        {doc[key] === undefined ? (
-                                                            ""
-                                                        ) : typeof doc[key] === 'object' && doc[key] !== null ? (
-                                                            <button
-                                                                onClick={() => handleViewValue(doc[key])}
-                                                                className="text-blue-500 hover:underline focus:outline-none"
-                                                            >
-                                                                {Array.isArray(doc[key]) ? `Array(${doc[key].length})` : '{...}'}
-                                                            </button>
-                                                        ) : (
-                                                            String(doc[key])
-                                                        )}
-                                                    </td>
-                                                ))}
-                                            <td className="px-4 py-3 align-top sticky right-0 bg-background group-hover:bg-muted/50 border-l z-10">
-                                                <div className="flex gap-1">
-                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEdit(doc)}>
-                                                        <IconPencil className="h-3 w-3" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => onDelete(doc._id)}>
-                                                        <IconTrash className="h-3 w-3" />
-                                                    </Button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                ))}
+                            </tbody>
+                        </table>
                     </ScrollArea>
                 )}
             </div>
