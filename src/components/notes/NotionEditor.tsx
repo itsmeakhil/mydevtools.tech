@@ -29,9 +29,25 @@ export default function NotionEditor() {
         }
     }, [activeNoteId, activeNote, lastSyncedNoteId]);
 
+    const sanitizeForFirestore = (obj: any): any => {
+        if (obj === null || obj === undefined) return null;
+        if (typeof obj !== 'object') return obj;
+        if (Array.isArray(obj)) return obj.map(sanitizeForFirestore);
+
+        const sanitized: any = {};
+        for (const key in obj) {
+            const value = obj[key];
+            if (value !== undefined) {
+                sanitized[key] = sanitizeForFirestore(value);
+            }
+        }
+        return sanitized;
+    };
+
     const debouncedUpdate = useDebouncedCallback(async (id: string, updates: any) => {
         if (id) {
-            await updateNote(id, updates);
+            const sanitizedUpdates = sanitizeForFirestore(updates);
+            await updateNote(id, sanitizedUpdates);
         }
     }, 1000);
 
