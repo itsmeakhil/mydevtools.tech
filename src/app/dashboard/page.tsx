@@ -60,7 +60,7 @@ const findItemById = (id: string): ToolItem | undefined => {
 // Auth requirements are now centralized in tool-config.ts
 
 const DashboardPage: React.FC = () => {
-  const { user, loading } = useAuth(false); // Dashboard is public
+  const { user, loading } = useAuth(true); // Dashboard is private
   const { favorites, isFavorite, toggleFavorite } = useFavoriteTool();
   const { getRecentlyUsedTools } = useToolUsage();
   const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
