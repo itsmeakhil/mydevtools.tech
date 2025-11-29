@@ -67,7 +67,9 @@ export default function NotionEditor() {
             children: createEmptyContent(),
             attributes: {},
         } as ContainerNode;
-    }, [activeNoteId, activeNote]); // Only change when note ID changes
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeNoteId]); // Only change when note ID changes, ignore content updates
 
     if (!activeNoteId) {
         return (
