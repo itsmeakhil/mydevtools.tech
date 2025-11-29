@@ -83,12 +83,7 @@ export const sidebarData: SidebarData = {
           description: 'Advanced JSON editor and formatter.',
           icon: IconJson
         },
-        {
-          title: 'URL Shortener',
-          url: '/app/url-shortener',
-          icon: IconUnlink,
-          description: 'Shorten long URLs for easy sharing.'
-        },
+
         {
           title: 'API Client',
           url: '/app/api-client',
@@ -100,6 +95,12 @@ export const sidebarData: SidebarData = {
           url: '/app/nosql-explorer',
           icon: IconDatabase,
           description: 'Explore MongoDB databases.'
+        },
+        {
+          title: 'URL Shortener',
+          url: '/app/url-shortener',
+          icon: IconUnlink,
+          description: 'Shorten long URLs for easy sharing.'
         },
       ],
     },
