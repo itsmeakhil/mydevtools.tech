@@ -25,6 +25,9 @@ export function Header() {
               <Link href="/#features" className="transition hover:text-foreground/80">
                 Features
               </Link>
+              <Link href="/#pricing" className="transition hover:text-foreground/80">
+                Pricing
+              </Link>
               {/* <Link href="#docs" className="transition hover:text-foreground/80">
                 Docs
               </Link> */}
@@ -68,6 +71,9 @@ export function Header() {
             </Link>
             <Link href="#features" className="transition hover:text-foreground/80 font-medium">
               Features
+            </Link>
+            <Link href="#pricing" className="transition hover:text-foreground/80 font-medium">
+              Pricing
             </Link>
             <Link href="#docs" className="transition hover:text-foreground/80 font-medium">
               Docs

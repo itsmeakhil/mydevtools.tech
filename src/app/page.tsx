@@ -91,11 +91,6 @@ export default function Page() {
       title: "Developer First",
       description: "Built by developers, for developers. Clean APIs and intuitive UI.",
     },
-    {
-      icon: Sparkles,
-      title: "Free Forever",
-      description: "Open source and free to use. No hidden subscriptions.",
-    },
   ];
 
   return (
@@ -167,11 +162,11 @@ export default function Page() {
         </div>
 
         <div className="container px-4 md:px-6 mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {features.map((feature, index) => (
               <Card key={index} className="border-none shadow-none bg-transparent">
-                <CardHeader className="pb-3 md:pb-6">
-                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-3 md:mb-4">
+                <CardHeader className="pb-3 md:pb-6 flex flex-row items-center gap-4">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     <feature.icon className="w-5 h-5 md:w-6 md:h-6 text-primary" />
                   </div>
                   <CardTitle className="text-lg md:text-xl">{feature.title}</CardTitle>
@@ -199,8 +194,8 @@ export default function Page() {
             {tools.map((tool, index) => (
               <Link key={index} href={tool.href}>
                 <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-border/50 hover:border-primary/50 group cursor-pointer">
-                  <CardHeader className="pb-3 md:pb-6">
-                    <div className={`w-10 h-10 md:w-12 md:h-12 rounded-lg ${tool.bgColor} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-300`}>
+                  <CardHeader className="pb-3 md:pb-6 flex flex-row items-center gap-4">
+                    <div className={`w-10 h-10 md:w-12 md:h-12 rounded-lg ${tool.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shrink-0`}>
                       <tool.icon className={`w-5 h-5 md:w-6 md:h-6 ${tool.color}`} />
                     </div>
                     <CardTitle className="text-lg md:text-xl group-hover:text-primary transition-colors">
@@ -223,6 +218,106 @@ export default function Page() {
                 Explore All Tools <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-16 md:py-24 bg-muted/30">
+        <div className="container px-4 md:px-6 mx-auto">
+          <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-3 md:mb-4">Simple Pricing</h2>
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
+              Choose the plan that fits your needs.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* Free Plan */}
+            <Card className="flex flex-col border-primary/20 shadow-lg relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-3">
+                <Badge variant="secondary" className="bg-primary/10 text-primary">Popular</Badge>
+              </div>
+              <CardHeader>
+                <CardTitle className="text-2xl">Self-Hosted</CardTitle>
+                <CardDescription>Perfect for individuals and hobbyists</CardDescription>
+                <div className="mt-4">
+                  <span className="text-4xl font-bold">$0</span>
+                  <span className="text-muted-foreground">/forever</span>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1">
+                <ul className="space-y-3">
+                  <li className="flex items-center">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-2" />
+                    <span>All Features Included</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-2" />
+                    <span>Unlimited Usage</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-2" />
+                    <span>Community Support</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-2" />
+                    <span>Self-Hosted</span>
+                  </li>
+                </ul>
+              </CardContent>
+              <div className="p-6 pt-0">
+                <Button className="w-full" asChild>
+                  <Link href="https://github.com/itsmeakhil/mydevtools.tech" target="_blank">
+                    Get Started
+                  </Link>
+                </Button>
+              </div>
+            </Card>
+
+            {/* Monthly Plan */}
+            <Card className="flex flex-col opacity-75 border-dashed">
+              <CardHeader>
+                <CardTitle className="text-2xl">Monthly</CardTitle>
+                <CardDescription>For power users who want cloud convenience</CardDescription>
+                <div className="mt-4">
+                  <span className="text-4xl font-bold">--</span>
+                  <span className="text-muted-foreground">/month</span>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1">
+                <div className="flex items-center justify-center h-full min-h-[150px]">
+                  <Badge variant="outline" className="text-lg py-2 px-4">Coming Soon</Badge>
+                </div>
+              </CardContent>
+              <div className="p-6 pt-0">
+                <Button variant="outline" disabled className="w-full">
+                  Subscribe
+                </Button>
+              </div>
+            </Card>
+
+            {/* Yearly Plan */}
+            <Card className="flex flex-col opacity-75 border-dashed">
+              <CardHeader>
+                <CardTitle className="text-2xl">Yearly</CardTitle>
+                <CardDescription>Best value for long-term users</CardDescription>
+                <div className="mt-4">
+                  <span className="text-4xl font-bold">--</span>
+                  <span className="text-muted-foreground">/year</span>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1">
+                <div className="flex items-center justify-center h-full min-h-[150px]">
+                  <Badge variant="outline" className="text-lg py-2 px-4">Coming Soon</Badge>
+                </div>
+              </CardContent>
+              <div className="p-6 pt-0">
+                <Button variant="outline" disabled className="w-full">
+                  Subscribe
+                </Button>
+              </div>
+            </Card>
           </div>
         </div>
       </section>
