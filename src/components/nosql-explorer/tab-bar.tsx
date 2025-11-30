@@ -28,7 +28,12 @@ export function TabBar({ tabs, activeTabId, onTabChange, onTabClose, onCloseAll 
                             )}
                             onClick={() => onTabChange(tab.id)}
                         >
-                            <span className="truncate flex-1">{tab.collectionName}</span>
+                            <span
+                                className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap [direction:rtl] text-left"
+                                title={`${tab.connectionName} - ${tab.dbName} - ${tab.collectionName}`}
+                            >
+                                {`${tab.connectionName} - ${tab.dbName} - ${tab.collectionName}`}
+                            </span>
                             <Button
                                 variant="ghost"
                                 size="icon"
