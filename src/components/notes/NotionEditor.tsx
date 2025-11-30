@@ -1,15 +1,17 @@
-"use client";
-
 import React, { useEffect, useState, useMemo } from "react";
 import { useNotes } from "@/app/app/notes/context/NotesContext";
 import { Editor, EditorProvider, createEmptyContent } from "@/components/ui/rich-editor";
 import { useDebouncedCallback } from "use-debounce";
 import { Input } from "@/components/ui/input";
 import { ContainerNode, EditorState } from "@/components/ui/rich-editor/types";
+import { storage } from "@/database/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import useAuth from "@/utils/useAuth";
 
 export default function NotionEditor() {
     const { notes, activeNoteId, updateNote } = useNotes();
     const activeNote = notes.find(n => n.id === activeNoteId);
+    const { user } = useAuth();
 
     const [title, setTitle] = useState("");
     const [isMounted, setIsMounted] = useState(false);
@@ -66,6 +68,17 @@ export default function NotionEditor() {
         }
     };
 
+    const handleUploadImage = async (file: File): Promise<string> => {
+        if (!user) throw new Error("User not authenticated");
+
+        const timestamp = Date.now();
+        const storageRef = ref(storage, `notes/${user.uid}/${activeNoteId}/${timestamp}_${file.name}`);
+
+        await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(storageRef);
+        return url;
+    };
+
     // Memoize initial content to prevent unnecessary re-renders/resets
     const initialContent = useMemo(() => {
         if (activeNote && activeNote.content) {
@@ -117,7 +130,7 @@ export default function NotionEditor() {
                     initialContainer={initialContent}
                     onChange={handleEditorChange}
                 >
-                    <Editor />
+                    <Editor onUploadImage={handleUploadImage} />
                 </EditorProvider>
             </div>
         </div>

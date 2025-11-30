@@ -97,12 +97,12 @@ export function TemplateSwitcherButton({
     value: "all" | TemplateMetadata["category"]
     label: string
   }> = [
-    { value: "all", label: "All Templates" },
-    { value: "productivity", label: "Productivity" },
-    { value: "creative", label: "Creative" },
-    { value: "business", label: "Business" },
-    { value: "personal", label: "Personal" },
-  ]
+      { value: "all", label: "All Templates" },
+      { value: "productivity", label: "Productivity" },
+      { value: "creative", label: "Creative" },
+      { value: "business", label: "Business" },
+      { value: "personal", label: "Personal" },
+    ]
 
   // Check if there's existing content
   const hasExistingContent = () => {
@@ -215,7 +215,7 @@ export function TemplateSwitcherButton({
   return (
     <>
       {/* Floating Button */}
-      <div className="fixed bottom-6 left-6 z-50">
+      <div className="fixed bottom-6 left-6 md:left-[280px] z-50">
         <Button
           onClick={() => {
             setIsOpen(true)
@@ -264,8 +264,8 @@ export function TemplateSwitcherButton({
                 category.value === "all"
                   ? BookOpen
                   : categoryIcons[
-                      category.value as TemplateMetadata["category"]
-                    ]
+                  category.value as TemplateMetadata["category"]
+                  ]
               const isActive = selectedCategory === category.value
 
               return (
@@ -307,10 +307,10 @@ export function TemplateSwitcherButton({
                       "bg-background/50 backdrop-blur-sm",
                       "text-left",
                       isApplying &&
-                        !isCurrentlyApplying &&
-                        "cursor-not-allowed opacity-50",
+                      !isCurrentlyApplying &&
+                      "cursor-not-allowed opacity-50",
                       isCurrentlyApplying &&
-                        "border-primary/80 shadow-primary/20 scale-[1.02] shadow-lg"
+                      "border-primary/80 shadow-primary/20 scale-[1.02] shadow-lg"
                     )}
                   >
                     {/* Category badge */}

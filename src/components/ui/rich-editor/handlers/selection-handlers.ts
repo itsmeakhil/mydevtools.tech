@@ -29,7 +29,7 @@ export function createHandleSelectionChange(
     // Also track collapsed cursor (even when no text selected)
     const hasCursor = selection !== null && selection.isCollapsed
 
-    if ((hasText || hasCursor) && selection) {
+    if ((hasText || hasCursor) && selection && selection.rangeCount > 0) {
       // NEW APPROACH: Find the actual node by traversing the DOM upwards from the selection
       const range = selection.getRangeAt(0)
       let currentElement: HTMLElement | null = null
@@ -57,8 +57,8 @@ export function createHandleSelectionChange(
         // Fallback to old behavior if we can't find via DOM
         const freshCurrentNode = state.activeNodeId
           ? (findNodeById(container, state.activeNodeId) as
-              | TextNode
-              | undefined)
+            | TextNode
+            | undefined)
           : (container.children[0] as TextNode | undefined)
 
         if (freshCurrentNode) {

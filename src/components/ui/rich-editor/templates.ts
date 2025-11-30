@@ -3885,6 +3885,106 @@ export function createHalloweenPartyTemplate(): Template {
 }
 
 // ========================================
+// DAILY JOURNAL TEMPLATE
+// ========================================
+
+export function createDailyJournalTemplate(): Template {
+  const tid = "daily-journal"
+  return {
+    metadata: {
+      id: tid,
+      name: "Daily Journal",
+      description: "Track your day, mood, and priorities",
+      category: "personal",
+      icon: "📓",
+    },
+    content: [
+      {
+        id: id(tid, "title"),
+        type: "h1",
+        content: "Daily Journal - [Date]",
+        attributes: {},
+      } as TextNode,
+      {
+        id: id(tid, "mood-section"),
+        type: "blockquote",
+        children: [
+          { content: "🌟 Mood: ", bold: true },
+          { content: "[1-10]", italic: true },
+          { content: " | 🔋 Energy: ", bold: true },
+          { content: "[High/Medium/Low]", italic: true },
+        ],
+        attributes: {
+          className: "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500",
+        },
+      } as TextNode,
+      {
+        id: id(tid, "priorities-heading"),
+        type: "h2",
+        content: "🎯 Top 3 Priorities",
+        attributes: {},
+      } as TextNode,
+      {
+        id: id(tid, "priorities-list"),
+        type: "container",
+        attributes: { listType: "ol" },
+        children: [
+          {
+            id: id(tid, "p1"),
+            type: "li",
+            content: "[Priority 1]",
+            attributes: {},
+          } as TextNode,
+          {
+            id: id(tid, "p2"),
+            type: "li",
+            content: "[Priority 2]",
+            attributes: {},
+          } as TextNode,
+          {
+            id: id(tid, "p3"),
+            type: "li",
+            content: "[Priority 3]",
+            attributes: {},
+          } as TextNode,
+        ],
+      } as ContainerNode,
+      {
+        id: id(tid, "notes-heading"),
+        type: "h2",
+        content: "📝 Notes & Thoughts",
+        attributes: {},
+      } as TextNode,
+      {
+        id: id(tid, "notes-content"),
+        type: "p",
+        content: "Write about your day here...",
+        attributes: {},
+      } as TextNode,
+      {
+        id: id(tid, "gratitude-heading"),
+        type: "h2",
+        content: "🙏 Gratitude",
+        attributes: {},
+      } as TextNode,
+      {
+        id: id(tid, "gratitude-list"),
+        type: "container",
+        attributes: { listType: "ul" },
+        children: [
+          {
+            id: id(tid, "g1"),
+            type: "li",
+            content: "I am grateful for...",
+            attributes: {},
+          } as TextNode,
+        ],
+      } as ContainerNode,
+    ],
+  }
+}
+
+// ========================================
 // TEMPLATE REGISTRY
 // ========================================
 
@@ -3901,6 +4001,7 @@ export const TEMPLATES: Record<string, () => Template> = {
   blog: createBlogPostTemplate,
   recipe: createRecipeTemplate,
   "halloween-party": createHalloweenPartyTemplate,
+  "daily-journal": createDailyJournalTemplate,
 }
 
 /**
