@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useNotes } from "@/app/app/notes/context/NotesContext";
 import { Editor, EditorProvider, createEmptyContent } from "@/components/ui/rich-editor";
 import { useDebouncedCallback } from "use-debounce";
@@ -46,12 +46,14 @@ export default function NotionEditor() {
         return sanitized;
     };
 
-    const debouncedUpdate = useDebouncedCallback(async (id: string, updates: any) => {
+    const handleUpdate = useCallback(async (id: string, updates: any) => {
         if (id) {
             const sanitizedUpdates = sanitizeForFirestore(updates);
             await updateNote(id, sanitizedUpdates);
         }
-    }, 1000);
+    }, [updateNote]);
+
+    const debouncedUpdate = useDebouncedCallback(handleUpdate, 1000);
 
     const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newTitle = e.target.value;
@@ -114,7 +116,7 @@ export default function NotionEditor() {
 
     return (
         <div className="flex-1 flex flex-col h-full overflow-hidden bg-background">
-            <div className="p-8 pb-4 max-w-6xl mx-auto w-full">
+            <div className="p-6 pb-4 max-w-6xl mx-auto w-full">
                 <Input
                     value={title}
                     onChange={handleTitleChange}

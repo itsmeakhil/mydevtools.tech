@@ -5,31 +5,42 @@ import { useNotes } from "@/app/app/notes/context/NotesContext";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
 import {
     ChevronRight,
     ChevronDown,
-    FileText,
     Plus,
     MoreHorizontal,
     Trash2,
-    Edit2
+    Search,
 } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-    DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Note } from "@/app/app/notes/types/Note";
 
 interface NoteItemProps {
     note: Note;
     level: number;
+    onDeleteClick: (note: Note) => void;
+    parentTitle?: string;
 }
 
-const NoteItem = ({ note, level }: NoteItemProps) => {
-    const { notes, activeNoteId, setActiveNoteId, createNote, deleteNote } = useNotes();
+const NoteItem = ({ note, level, onDeleteClick, parentTitle }: NoteItemProps) => {
+    const { notes, activeNoteId, setActiveNoteId, createNote } = useNotes();
     const [isExpanded, setIsExpanded] = useState(false);
 
     const children = notes.filter(n => n.parentId === note.id);
@@ -51,11 +62,9 @@ const NoteItem = ({ note, level }: NoteItemProps) => {
         setIsExpanded(true);
     };
 
-    const handleDelete = async (e: React.MouseEvent) => {
+    const handleDeleteClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (confirm("Are you sure you want to delete this note?")) {
-            await deleteNote(note.id);
-        }
+        onDeleteClick(note);
     };
 
     return (
@@ -71,7 +80,7 @@ const NoteItem = ({ note, level }: NoteItemProps) => {
                 <div
                     className={cn(
                         "h-5 w-5 flex items-center justify-center rounded-sm hover:bg-muted-foreground/20 transition-colors",
-                        !hasChildren && "opacity-0 group-hover:opacity-100" // Show expander on hover even if no children (to allow adding?) No, only if children.
+                        !hasChildren && "opacity-0 group-hover:opacity-100"
                     )}
                     onClick={hasChildren ? handleExpand : undefined}
                 >
@@ -81,7 +90,14 @@ const NoteItem = ({ note, level }: NoteItemProps) => {
                 </div>
 
                 <span className="mr-1 text-sm">{note.icon || "📄"}</span>
-                <span className="flex-1 truncate text-sm font-medium">{note.title || "Untitled"}</span>
+                <div className="flex-1 min-w-0 overflow-hidden">
+                    {parentTitle && (
+                        <div className="text-[10px] text-muted-foreground truncate leading-tight">
+                            in {parentTitle}
+                        </div>
+                    )}
+                    <div className="truncate text-sm font-medium leading-tight">{note.title || "Untitled"}</div>
+                </div>
 
                 <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button
@@ -105,8 +121,8 @@ const NoteItem = ({ note, level }: NoteItemProps) => {
                                 <MoreHorizontal className="h-3 w-3" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                            <DropdownMenuItem onClick={handleDelete} className="text-red-500 focus:text-red-500">
+                        <DropdownMenuContent side="right" align="start" className="w-48">
+                            <DropdownMenuItem onClick={handleDeleteClick} className="text-red-500 focus:text-red-500 cursor-pointer">
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Delete
                             </DropdownMenuItem>
@@ -118,7 +134,7 @@ const NoteItem = ({ note, level }: NoteItemProps) => {
             {isExpanded && hasChildren && (
                 <div>
                     {children.map(child => (
-                        <NoteItem key={child.id} note={child} level={level + 1} />
+                        <NoteItem key={child.id} note={child} level={level + 1} onDeleteClick={onDeleteClick} />
                     ))}
                 </div>
             )}
@@ -127,40 +143,95 @@ const NoteItem = ({ note, level }: NoteItemProps) => {
 };
 
 export default function NotesSidebar() {
-    const { notes, createNote, isLoading } = useNotes();
+    const { notes, createNote, deleteNote, isLoading } = useNotes();
+    const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
 
     // Get top-level notes
     const rootNotes = notes.filter(n => !n.parentId);
 
+    // Filter notes for search
+    const filteredNotes = searchQuery
+        ? notes.filter(note =>
+            (note.title || "").toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        : rootNotes;
+
+    const handleDeleteConfirm = async () => {
+        if (noteToDelete) {
+            await deleteNote(noteToDelete.id);
+            setNoteToDelete(null);
+        }
+    };
+
     return (
-        <div className="flex flex-col h-full border-r bg-muted/10 w-64 flex-shrink-0">
-            <div className="p-4 border-b flex items-center justify-between">
-                <div className="flex items-center gap-2 font-semibold text-sm">
-                    <span className="h-6 w-6 rounded-md bg-primary/10 flex items-center justify-center text-primary">
-                        📝
-                    </span>
-                    Notes
+        <>
+            <div className="flex flex-col h-full border-r bg-muted/10 w-64 flex-shrink-0">
+                <div className="p-4 border-b flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 font-semibold text-sm">
+                            <span className="h-6 w-6 rounded-md bg-primary/10 flex items-center justify-center text-primary">
+                                📝
+                            </span>
+                            Notes
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => createNote(null)} className="h-8 w-8">
+                            <Plus className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <div className="relative">
+                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search notes..."
+                            className="pl-8 h-9 text-sm"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => createNote(null)} className="h-8 w-8">
-                    <Plus className="h-4 w-4" />
-                </Button>
+
+                <ScrollArea className="flex-1">
+                    <div className="p-2">
+                        {isLoading ? (
+                            <div className="p-4 text-xs text-muted-foreground text-center">Loading...</div>
+                        ) : filteredNotes.length === 0 ? (
+                            <div className="p-4 text-xs text-muted-foreground text-center">
+                                {searchQuery ? "No notes found." : "No notes yet. Click + to create one."}
+                            </div>
+                        ) : (
+                            filteredNotes.map(note => {
+                                const parent = searchQuery && note.parentId ? notes.find(n => n.id === note.parentId) : undefined;
+                                return (
+                                    <NoteItem
+                                        key={note.id}
+                                        note={note}
+                                        level={0}
+                                        onDeleteClick={setNoteToDelete}
+                                        parentTitle={parent?.title}
+                                    />
+                                );
+                            })
+                        )}
+                    </div>
+                </ScrollArea>
             </div>
 
-            <ScrollArea className="flex-1">
-                <div className="p-2">
-                    {isLoading ? (
-                        <div className="p-4 text-xs text-muted-foreground text-center">Loading...</div>
-                    ) : rootNotes.length === 0 ? (
-                        <div className="p-4 text-xs text-muted-foreground text-center">
-                            No notes yet. Click + to create one.
-                        </div>
-                    ) : (
-                        rootNotes.map(note => (
-                            <NoteItem key={note.id} note={note} level={0} />
-                        ))
-                    )}
-                </div>
-            </ScrollArea>
-        </div>
+            <AlertDialog open={!!noteToDelete} onOpenChange={(open) => !open && setNoteToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Note?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete "{noteToDelete?.title || 'Untitled'}"? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive hover:bg-destructive/90">
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import {
     collection,
     query,
@@ -66,7 +66,7 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
         return () => unsubscribe();
     }, [user]);
 
-    const createNote = async (parentId: string | null = null) => {
+    const createNote = useCallback(async (parentId: string | null = null) => {
         if (!user) throw new Error("User not authenticated");
 
         const newNote = {
@@ -82,9 +82,9 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
         const docRef = await addDoc(collection(db, "notes"), newNote);
         setActiveNoteId(docRef.id);
         return docRef.id;
-    };
+    }, [user]);
 
-    const updateNote = async (id: string, updates: Partial<Note>) => {
+    const updateNote = useCallback(async (id: string, updates: Partial<Note>) => {
         if (!user) return;
 
         const noteRef = doc(db, "notes", id);
@@ -92,9 +92,9 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
             ...updates,
             updatedAt: serverTimestamp(),
         });
-    };
+    }, [user]);
 
-    const deleteNote = async (id: string) => {
+    const deleteNote = useCallback(async (id: string) => {
         if (!user) return;
 
         // Recursively delete children (optional, but good practice)
@@ -105,7 +105,7 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
         if (activeNoteId === id) {
             setActiveNoteId(null);
         }
-    };
+    }, [user, activeNoteId]);
 
     return (
         <NotesContext.Provider
