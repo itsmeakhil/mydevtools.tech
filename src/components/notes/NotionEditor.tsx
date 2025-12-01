@@ -116,16 +116,16 @@ export default function NotionEditor() {
 
     return (
         <div className="flex-1 flex flex-col h-full overflow-hidden bg-background">
-            <div className="p-6 pb-4 max-w-6xl mx-auto w-full">
+            <div className="p-4 md:p-6 pb-2 md:pb-4 max-w-6xl mx-auto w-full">
                 <Input
                     value={title}
                     onChange={handleTitleChange}
-                    className="text-4xl font-bold border-none shadow-none focus-visible:ring-0 px-0 placeholder:text-muted-foreground/50 h-auto bg-transparent"
+                    className="text-3xl md:text-4xl font-bold border-none shadow-none focus-visible:ring-0 px-0 placeholder:text-muted-foreground/50 h-auto bg-transparent"
                     placeholder="Untitled"
                 />
             </div>
 
-            <div className="flex-1 overflow-y-auto px-8 max-w-6xl mx-auto w-full pb-20">
+            <div className="flex-1 overflow-y-auto px-4 md:px-8 max-w-6xl mx-auto w-full pb-20">
                 {/* Key forces re-mount when switching notes to ensure clean state */}
                 <EditorProvider
                     key={activeNoteId}

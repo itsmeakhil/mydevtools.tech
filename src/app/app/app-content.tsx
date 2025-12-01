@@ -17,7 +17,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen w-full">
         <aside
           className={`${state === 'collapsed' ? 'w-[var(--sidebar-width-icon)]' : 'w-[var(--sidebar-width)]'} ${state === 'collapsed' ? '' : 'border-r'
-            } p-4 flex flex-col z-30 relative`}
+            } p-4 hidden md:flex flex-col z-30 relative`}
         >
           <div className="flex-1">
             <AppSidebar />
