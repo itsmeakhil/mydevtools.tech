@@ -411,6 +411,9 @@ export default function NoSQLExplorerPage() {
                     {activeTab ? (
                         <DocumentView
                             key={activeTab.id}
+                            connectionName={activeTab.connectionName}
+                            dbName={activeTab.dbName}
+                            collectionName={activeTab.collectionName}
                             documents={activeTab.documents}
                             total={activeTab.total}
                             page={activeTab.page}

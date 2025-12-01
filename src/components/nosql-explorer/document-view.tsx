@@ -5,7 +5,7 @@ import { Document } from "./types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { IconPlus, IconRefresh, IconSearch, IconTrash, IconPencil, IconCode, IconTable, IconCopy, IconAlignLeft, IconMinimize, IconJson, IconBinaryTree } from "@tabler/icons-react";
+import { IconPlus, IconRefresh, IconSearch, IconTrash, IconPencil, IconCode, IconTable, IconCopy, IconAlignLeft, IconMinimize, IconJson, IconBinaryTree, IconHistory, IconX } from "@tabler/icons-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -13,8 +13,12 @@ import Editor from "@monaco-editor/react";
 import CodeEditor from "@/components/ui/code-editor";
 import { JsonTree } from "./json-tree";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface DocumentViewProps {
+    connectionName: string;
+    dbName: string;
+    collectionName: string;
     documents: Document[];
     total: number;
     page: number;
@@ -30,6 +34,9 @@ interface DocumentViewProps {
 }
 
 export function DocumentView({
+    connectionName,
+    dbName,
+    collectionName,
     documents,
     total,
     page,
@@ -53,9 +60,43 @@ export function DocumentView({
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
     const [jsonViewContent, setJsonViewContent] = useState("");
 
+    const [historyOpen, setHistoryOpen] = useState(false);
+    const [queryHistory, setQueryHistory] = useState<string[]>([]);
+
     useEffect(() => {
         setJsonViewContent(JSON.stringify(documents, null, 2));
     }, [documents]);
+
+    useEffect(() => {
+        const key = `nosql_query_history_${connectionName}_${dbName}_${collectionName}`;
+        const saved = localStorage.getItem(key);
+        if (saved) {
+            try {
+                setQueryHistory(JSON.parse(saved));
+            } catch (e) {
+                console.error("Failed to parse query history", e);
+            }
+        } else {
+            setQueryHistory([]);
+        }
+    }, [connectionName, dbName, collectionName]);
+
+    const saveQueryToHistory = (query: string) => {
+        if (!query || query === "{}") return;
+
+        const key = `nosql_query_history_${connectionName}_${dbName}_${collectionName}`;
+        const newHistory = [query, ...queryHistory.filter(q => q !== query)].slice(0, 10); // Keep last 10 unique queries
+        setQueryHistory(newHistory);
+        localStorage.setItem(key, JSON.stringify(newHistory));
+    };
+
+    const deleteFromHistory = (e: React.MouseEvent, query: string) => {
+        e.stopPropagation();
+        const key = `nosql_query_history_${connectionName}_${dbName}_${collectionName}`;
+        const newHistory = queryHistory.filter(q => q !== query);
+        setQueryHistory(newHistory);
+        localStorage.setItem(key, JSON.stringify(newHistory));
+    };
 
     const handlePrettify = () => {
         try {
@@ -87,6 +128,7 @@ export function DocumentView({
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
+        saveQueryToHistory(searchQuery);
         onSearch(searchQuery);
     };
 
@@ -141,6 +183,50 @@ export function DocumentView({
                         />
                     </div>
                     <Button type="submit" variant="secondary" size="sm">Filter</Button>
+                    <Popover open={historyOpen} onOpenChange={setHistoryOpen}>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-9 w-9" title="Query History">
+                                <IconHistory className="h-4 w-4" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="start" className="w-[400px] p-0">
+                            <div className="p-2 border-b bg-muted/50 text-xs font-medium text-muted-foreground">
+                                Query History for {collectionName}
+                            </div>
+                            <ScrollArea className="h-[300px]">
+                                {queryHistory.length === 0 ? (
+                                    <div className="p-4 text-center text-xs text-muted-foreground">
+                                        No saved queries yet
+                                    </div>
+                                ) : (
+                                    <div className="p-1">
+                                        {queryHistory.map((query, i) => (
+                                            <div
+                                                key={i}
+                                                className="flex items-center justify-between p-2 hover:bg-muted rounded-sm cursor-pointer group text-xs font-mono"
+                                                onClick={() => {
+                                                    setSearchQuery(query);
+                                                    setHistoryOpen(false);
+                                                }}
+                                            >
+                                                <div className="truncate flex-1 mr-2" title={query}>
+                                                    {query}
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                                                    onClick={(e) => deleteFromHistory(e, query)}
+                                                >
+                                                    <IconX className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </ScrollArea>
+                        </PopoverContent>
+                    </Popover>
                 </form>
                 <div className="flex items-center gap-2">
                     <div className="flex items-center border rounded-md overflow-hidden">
