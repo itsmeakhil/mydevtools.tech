@@ -32,8 +32,8 @@ function Layout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Scrollable content */}
-        <main className="p-1 font-mono">
-          <div className="mx-auto w-full max-w-[1200px]">
+        <main className="font-mono">
+          <div className="mx-auto w-full">
             {children}
           </div>
         </main>
