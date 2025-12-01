@@ -96,12 +96,7 @@ export const sidebarData: SidebarData = {
           icon: IconDatabase,
           description: 'Explore MongoDB databases.'
         },
-        {
-          title: 'URL Shortener',
-          url: '/app/url-shortener',
-          icon: IconUnlink,
-          description: 'Shorten long URLs for easy sharing.'
-        },
+
       ],
     },
     {

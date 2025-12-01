@@ -63,7 +63,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         'to-do',
         'url-encoder',
         'url-parser',
-        'url-shortener',
+
         'uuid-generator',
         'wifi-qr-generator',
     ].map((tool) => ({

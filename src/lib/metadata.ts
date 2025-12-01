@@ -113,11 +113,7 @@ export const toolsMetadata: Record<string, {
         description: 'Securely store and manage passwords with client-side encryption. Free password manager with vault protection.',
         keywords: ['password manager', 'password vault', 'secure passwords', 'password storage', 'encrypted vault']
     },
-    'url-shortener': {
-        title: 'URL Shortener - Shorten Long URLs',
-        description: 'Create short URLs and track clicks. Free URL shortener tool with analytics.',
-        keywords: ['url shortener', 'short url', 'link shortener', 'shorten link', 'tiny url']
-    },
+
     'notes': {
         title: 'Notes - Quick Note Taking App',
         description: 'Create and manage notes quickly. Simple note-taking app for developers.',

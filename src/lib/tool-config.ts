@@ -5,7 +5,6 @@
 
 export const AUTH_REQUIRED_URLS = [
   '/app/to-do',
-  '/app/url-shortener',
 ] as const;
 
 /**
