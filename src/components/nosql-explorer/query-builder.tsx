@@ -5,12 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { IconSearch, IconHistory, IconX, IconPlus, IconTrash, IconMaximize, IconCode, IconAdjustments, IconCheck } from "@tabler/icons-react";
-import CodeEditor from "@/components/ui/code-editor";
+import { IconSearch, IconHistory, IconX, IconPlus, IconTrash, IconCheck, IconFilter } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface QueryBuilderProps {
     query: string;
@@ -41,9 +40,9 @@ export function QueryBuilder({
     const [mode, setMode] = useState<"text" | "builder">("text");
     const [textQuery, setTextQuery] = useState(query);
     const [rules, setRules] = useState<FilterRule[]>([]);
-    const [isExpanded, setIsExpanded] = useState(false);
     const [historyOpen, setHistoryOpen] = useState(false);
     const [queryHistory, setQueryHistory] = useState<string[]>([]);
+    const [builderOpen, setBuilderOpen] = useState(false);
 
     // Sync internal state with props
     useEffect(() => {
@@ -84,7 +83,6 @@ export function QueryBuilder({
             JSON.parse(textQuery); // Validate JSON
             saveQueryToHistory(textQuery);
             onSearch(textQuery);
-            setIsExpanded(false);
         } catch (e) {
             toast.error("Invalid JSON query");
         }
@@ -118,7 +116,7 @@ export function QueryBuilder({
         setTextQuery(jsonQuery); // Sync text mode
         saveQueryToHistory(jsonQuery);
         onSearch(jsonQuery);
-        setIsExpanded(false);
+        setBuilderOpen(false);
     };
 
     const addRule = () => {
@@ -179,49 +177,110 @@ export function QueryBuilder({
 
     return (
         <div className="flex items-center gap-2 flex-1">
+            <Tabs value={mode} onValueChange={(val) => val === "builder" ? switchToBuilder() : setMode("text")} className="w-auto">
+                <TabsList className="grid w-full grid-cols-2 h-9">
+                    <TabsTrigger value="text" className="text-xs">Text</TabsTrigger>
+                    <TabsTrigger value="builder" className="text-xs">Builder</TabsTrigger>
+                </TabsList>
+            </Tabs>
+
             <div className="flex-1 flex items-center gap-2">
                 {mode === "text" ? (
                     <div className="relative flex-1">
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10">
-                            <IconCode className="h-4 w-4" />
-                        </div>
                         <Input
                             value={textQuery}
                             onChange={(e) => setTextQuery(e.target.value)}
                             placeholder='{ "field": "value" }'
-                            className="pl-9 font-mono text-xs"
+                            className="font-mono text-xs"
                             onKeyDown={(e) => {
                                 if (e.key === "Enter") handleTextSearch();
                             }}
                         />
                     </div>
                 ) : (
-                    <div className="flex-1 border rounded-md px-3 py-1.5 text-sm text-muted-foreground bg-background flex items-center justify-between cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setIsExpanded(true)}>
-                        <span>{rules.length} active filter{rules.length !== 1 ? 's' : ''}</span>
-                        <IconAdjustments className="h-4 w-4" />
-                    </div>
+                    <Popover open={builderOpen} onOpenChange={setBuilderOpen}>
+                        <PopoverTrigger asChild>
+                            <div className="flex-1 border rounded-md px-3 py-2 text-xs text-muted-foreground bg-background flex items-center justify-between cursor-pointer hover:bg-accent/50 transition-colors h-9">
+                                <span>{rules.length} active filter{rules.length !== 1 ? 's' : ''}</span>
+                                <IconFilter className="h-3 w-3" />
+                            </div>
+                        </PopoverTrigger>
+                        <PopoverContent align="start" className="w-[600px] p-4">
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between border-b pb-2">
+                                    <h4 className="font-medium text-sm">Filter Rules</h4>
+                                    <Button variant="ghost" size="sm" onClick={addRule} className="h-7 text-xs">
+                                        <IconPlus className="h-3 w-3 mr-1" />
+                                        Add Rule
+                                    </Button>
+                                </div>
+                                <ScrollArea className="max-h-[300px]">
+                                    <div className="space-y-2">
+                                        {rules.length === 0 && (
+                                            <div className="text-center text-xs text-muted-foreground py-4">
+                                                No filters applied. Add a rule to filter documents.
+                                            </div>
+                                        )}
+                                        {rules.map((rule, index) => (
+                                            <div key={rule.id} className="flex items-center gap-2 p-2 border rounded-md bg-card/50">
+                                                <div className="w-12 text-[10px] font-mono text-muted-foreground uppercase text-center">
+                                                    {index === 0 ? "WHERE" : "AND"}
+                                                </div>
+
+                                                <Select value={rule.field} onValueChange={(val) => updateRule(rule.id, { field: val })}>
+                                                    <SelectTrigger className="h-8 text-xs w-[140px]">
+                                                        <SelectValue placeholder="Field" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {fields.map(f => (
+                                                            <SelectItem key={f} value={f}>{f}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+
+                                                <Select value={rule.operator} onValueChange={(val) => updateRule(rule.id, { operator: val as FilterOperator })}>
+                                                    <SelectTrigger className="h-8 text-xs w-[110px]">
+                                                        <SelectValue placeholder="Op" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="$eq">=</SelectItem>
+                                                        <SelectItem value="$ne">!=</SelectItem>
+                                                        <SelectItem value="$gt">&gt;</SelectItem>
+                                                        <SelectItem value="$gte">&gt;=</SelectItem>
+                                                        <SelectItem value="$lt">&lt;</SelectItem>
+                                                        <SelectItem value="$lte">&lt;=</SelectItem>
+                                                        <SelectItem value="$regex">Regex</SelectItem>
+                                                        <SelectItem value="$in">In</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+
+                                                <Input
+                                                    value={rule.value}
+                                                    onChange={(e) => updateRule(rule.id, { value: e.target.value })}
+                                                    placeholder="Value"
+                                                    className="h-8 text-xs flex-1"
+                                                />
+
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => removeRule(rule.id)}>
+                                                    <IconTrash className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
+                                <div className="flex justify-end pt-2 border-t">
+                                    <Button size="sm" onClick={handleBuilderSearch}>
+                                        <IconCheck className="h-3 w-3 mr-1" />
+                                        Apply Filters
+                                    </Button>
+                                </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                 )}
-
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setIsExpanded(true)}
-                    title="Expand Query Editor"
-                >
-                    <IconMaximize className="h-4 w-4" />
-                </Button>
-
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => mode === "text" ? switchToBuilder() : setMode("text")}
-                    title={mode === "text" ? "Switch to Builder" : "Switch to Text"}
-                >
-                    {mode === "text" ? <IconAdjustments className="h-4 w-4" /> : <IconCode className="h-4 w-4" />}
-                </Button>
             </div>
 
-            <Button onClick={mode === "text" ? handleTextSearch : handleBuilderSearch} size="sm">
+            <Button onClick={mode === "text" ? handleTextSearch : handleBuilderSearch} size="sm" variant="secondary">
                 <IconSearch className="h-4 w-4 mr-2" />
                 Filter
             </Button>
@@ -272,115 +331,6 @@ export function QueryBuilder({
                     </ScrollArea>
                 </PopoverContent>
             </Popover>
-
-            <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
-                <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            Advanced Query Builder
-                            <div className="flex items-center border rounded-md ml-4">
-                                <Button
-                                    variant={mode === "text" ? "secondary" : "ghost"}
-                                    size="sm"
-                                    className="h-7 text-xs"
-                                    onClick={() => setMode("text")}
-                                >
-                                    JSON
-                                </Button>
-                                <Button
-                                    variant={mode === "builder" ? "secondary" : "ghost"}
-                                    size="sm"
-                                    className="h-7 text-xs"
-                                    onClick={switchToBuilder}
-                                >
-                                    Builder
-                                </Button>
-                            </div>
-                        </DialogTitle>
-                    </DialogHeader>
-
-                    <div className="flex-1 overflow-hidden p-1">
-                        {mode === "text" ? (
-                            <CodeEditor
-                                value={textQuery}
-                                language="json"
-                                onChange={(val) => setTextQuery(val || "")}
-                                minimap={false}
-                            />
-                        ) : (
-                            <ScrollArea className="h-full pr-4">
-                                <div className="space-y-4 p-1">
-                                    {rules.map((rule, index) => (
-                                        <div key={rule.id} className="flex items-center gap-2 p-3 border rounded-lg bg-card shadow-sm">
-                                            <div className="w-8 h-8 flex items-center justify-center bg-muted rounded-full text-xs font-medium text-muted-foreground">
-                                                {index === 0 ? "IF" : "AND"}
-                                            </div>
-
-                                            <div className="flex-1 grid grid-cols-12 gap-2">
-                                                <div className="col-span-4">
-                                                    <Select value={rule.field} onValueChange={(val) => updateRule(rule.id, { field: val })}>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select field" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {fields.map(f => (
-                                                                <SelectItem key={f} value={f}>{f}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-
-                                                <div className="col-span-3">
-                                                    <Select value={rule.operator} onValueChange={(val) => updateRule(rule.id, { operator: val as FilterOperator })}>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Operator" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="$eq">Equals (=)</SelectItem>
-                                                            <SelectItem value="$ne">Not Equals (!=)</SelectItem>
-                                                            <SelectItem value="$gt">Greater Than (&gt;)</SelectItem>
-                                                            <SelectItem value="$gte">Greater/Equal (&gt;=)</SelectItem>
-                                                            <SelectItem value="$lt">Less Than (&lt;)</SelectItem>
-                                                            <SelectItem value="$lte">Less/Equal (&lt;=)</SelectItem>
-                                                            <SelectItem value="$regex">Contains (Regex)</SelectItem>
-                                                            <SelectItem value="$in">In List</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-
-                                                <div className="col-span-5">
-                                                    <Input
-                                                        value={rule.value}
-                                                        onChange={(e) => updateRule(rule.id, { value: e.target.value })}
-                                                        placeholder="Value"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => removeRule(rule.id)}>
-                                                <IconTrash className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    ))}
-
-                                    <Button variant="outline" className="w-full border-dashed" onClick={addRule}>
-                                        <IconPlus className="h-4 w-4 mr-2" />
-                                        Add Filter Rule
-                                    </Button>
-                                </div>
-                            </ScrollArea>
-                        )}
-                    </div>
-
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsExpanded(false)}>Cancel</Button>
-                        <Button onClick={mode === "text" ? handleTextSearch : handleBuilderSearch}>
-                            <IconCheck className="h-4 w-4 mr-2" />
-                            Apply Filter
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }
