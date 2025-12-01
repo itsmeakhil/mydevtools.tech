@@ -11,6 +11,8 @@ import useAuth from "@/utils/useAuth";
 import { getConnections } from "@/components/nosql-explorer/connection-service";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { IconDatabase, IconServer, IconBrandMongodb, IconSearch, IconPlus } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -428,8 +430,52 @@ export default function NoSQLExplorerPage() {
                             onLimitChange={handleLimitChange}
                         />
                     ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground">
-                            Select a collection from the sidebar to view documents
+                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-8 animate-in fade-in zoom-in duration-300">
+                            <div className="max-w-2xl w-full space-y-8 text-center">
+                                <div className="space-y-2">
+                                    <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                                        <IconDatabase className="w-10 h-10 text-primary" />
+                                    </div>
+                                    <h2 className="text-3xl font-bold tracking-tight text-foreground">NoSQL Explorer</h2>
+                                    <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+                                        Connect to your databases to manage collections, execute queries, and visualize your data.
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+                                    <div className="p-4 rounded-xl bg-card border shadow-sm hover:shadow-md transition-all">
+                                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center mb-3">
+                                            <IconServer className="w-4 h-4 text-blue-500" />
+                                        </div>
+                                        <h3 className="font-semibold text-foreground mb-1">Multi-Connection</h3>
+                                        <p className="text-xs text-muted-foreground">Manage multiple database connections simultaneously.</p>
+                                    </div>
+                                    <div className="p-4 rounded-xl bg-card border shadow-sm hover:shadow-md transition-all">
+                                        <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center mb-3">
+                                            <IconBrandMongodb className="w-4 h-4 text-green-500" />
+                                        </div>
+                                        <h3 className="font-semibold text-foreground mb-1">MongoDB Support</h3>
+                                        <p className="text-xs text-muted-foreground">Native support for MongoDB with advanced filtering.</p>
+                                    </div>
+                                    <div className="p-4 rounded-xl bg-card border shadow-sm hover:shadow-md transition-all">
+                                        <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center mb-3">
+                                            <IconSearch className="w-4 h-4 text-orange-500" />
+                                        </div>
+                                        <h3 className="font-semibold text-foreground mb-1">Smart Query</h3>
+                                        <p className="text-xs text-muted-foreground">Powerful query builder with syntax highlighting.</p>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4">
+                                    <Button size="lg" onClick={() => setIsConnectionDialogOpen(true)} className="gap-2 shadow-lg hover:shadow-primary/25 transition-all">
+                                        <IconPlus className="w-5 h-5" />
+                                        Connect to MongoDB
+                                    </Button>
+                                    <p className="text-xs text-muted-foreground mt-4">
+                                        Currently supports <span className="font-medium text-foreground">MongoDB</span>. More databases coming soon.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
