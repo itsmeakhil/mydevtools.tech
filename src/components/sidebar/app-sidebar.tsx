@@ -76,28 +76,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible='icon' variant='floating' {...props}>
       <SidebarHeader className="border-b border-border/40 pb-3">
         <div
-          className="flex items-center space-x-3 px-3 py-2 transition-all duration-200 hover:cursor-pointer hover:bg-accent/50 rounded-md bg-accent/20"
+          className="flex items-center space-x-3 px-3 py-3 transition-all duration-200 hover:cursor-pointer hover:bg-accent/50 rounded-lg bg-accent/10 border border-transparent hover:border-border/50"
           onClick={() => router.push('/dashboard')}
         >
           <div className="group-data-[state=collapsed]:hidden">
-            <Logo size={32} showText={false} />
+            <Logo size={36} showText={false} />
           </div>
-          <div className="group-data-[state=collapsed]:hidden">
-            <div className="relative h-6 w-28">
+          <div className="group-data-[state=collapsed]:hidden flex flex-col justify-center">
+            <div className="relative h-6 w-28 -ml-1">
               {/* Light Mode Text (Dark Color) */}
               <img
                 src="/logo-text-light.png"
                 alt="MyDevTools"
-                className="dark:hidden object-contain h-full w-full"
+                className="dark:hidden object-contain h-full w-full object-left"
               />
               {/* Dark Mode Text (Light Color) */}
               <img
                 src="/logo-text-dark.png"
                 alt="MyDevTools"
-                className="hidden dark:block object-contain h-full w-full"
+                className="hidden dark:block object-contain h-full w-full object-left"
               />
             </div>
-            <p className="text-xs text-muted-foreground/70 font-medium tracking-wide">Developer&apos;s Toolkit</p>
+            <p className="text-[10px] text-muted-foreground/80 font-medium tracking-wider uppercase pl-0.5">Developer&apos;s Toolkit</p>
           </div>
         </div>
       </SidebarHeader>
