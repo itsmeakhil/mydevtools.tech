@@ -134,19 +134,21 @@ export function DocumentView({
 
     return (
         <div className="flex flex-col h-full">
-            <div className="p-4 border-b flex items-center justify-between gap-4">
-                <QueryBuilder
-                    query={searchQuery}
-                    onSearch={(q: string) => {
-                        setSearchQuery(q);
-                        onSearch(q);
-                    }}
-                    fields={fields}
-                    connectionName={connectionName}
-                    dbName={dbName}
-                    collectionName={collectionName}
-                />
-                <div className="flex items-center gap-2">
+            <div className="p-4 border-b flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="w-full md:w-auto flex-1">
+                    <QueryBuilder
+                        query={searchQuery}
+                        onSearch={(q: string) => {
+                            setSearchQuery(q);
+                            onSearch(q);
+                        }}
+                        fields={fields}
+                        connectionName={connectionName}
+                        dbName={dbName}
+                        collectionName={collectionName}
+                    />
+                </div>
+                <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end overflow-x-auto">
                     <div className="flex items-center border rounded-md overflow-hidden">
                         <TooltipProvider>
                             <Tooltip>

@@ -13,6 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { cn } from "@/lib/utils";
 import { IconDatabase, IconServer, IconBrandMongodb, IconSearch, IconPlus, IconArrowLeft } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -405,24 +408,52 @@ export default function NoSQLExplorerPage() {
         }
     }, [isResizing]);
 
+    const isDesktop = useMediaQuery("(min-width: 768px)");
+
     return (
-        <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
-            <ExplorerSidebar
-                width={sidebarWidth}
-                onSelectCollection={handleSelectCollection}
-                onRefresh={() => { /* Sidebar handles its own refresh */ }}
-                onAddConnection={() => setIsConnectionDialogOpen(true)}
-            />
-            <div
-                className={cn(
-                    "w-2 hover:w-2 bg-border/50 hover:bg-primary/50 cursor-col-resize flex-shrink-0 transition-all z-50",
-                    isResizing && "bg-primary/50 w-2"
-                )}
-                onMouseDown={(e) => {
-                    setIsResizing(true);
-                    resizeStartRef.current = { x: e.clientX, width: sidebarWidth };
-                }}
-            />
+        <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden relative">
+            {isDesktop ? (
+                <>
+                    <ExplorerSidebar
+                        width={sidebarWidth}
+                        onSelectCollection={handleSelectCollection}
+                        onRefresh={() => { /* Sidebar handles its own refresh */ }}
+                        onAddConnection={() => setIsConnectionDialogOpen(true)}
+                    />
+                    <div
+                        className={cn(
+                            "w-2 hover:w-2 bg-border/50 hover:bg-primary/50 cursor-col-resize flex-shrink-0 transition-all z-50",
+                            isResizing && "bg-primary/50 w-2"
+                        )}
+                        onMouseDown={(e) => {
+                            setIsResizing(true);
+                            resizeStartRef.current = { x: e.clientX, width: sidebarWidth };
+                        }}
+                    />
+                </>
+            ) : (
+                <div className="absolute top-4 left-4 z-50">
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-8 w-8 bg-background shadow-sm">
+                                <Menu className="h-4 w-4" />
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="left" className="p-0 w-[300px] sm:w-[350px]">
+                            <ExplorerSidebar
+                                width={300} // Fixed width for mobile sheet
+                                onSelectCollection={(conn, db, col) => {
+                                    handleSelectCollection(conn, db, col);
+                                    // We might want to close the sheet here, but we don't have control over sheet open state easily unless we lift it up.
+                                    // For now, user can click outside to close.
+                                }}
+                                onRefresh={() => { }}
+                                onAddConnection={() => setIsConnectionDialogOpen(true)}
+                            />
+                        </SheetContent>
+                    </Sheet>
+                </div>
+            )}
             <div className="flex-1 flex flex-col overflow-hidden bg-background min-w-0 w-full max-w-full">
                 <TabBar
                     tabs={tabs}
