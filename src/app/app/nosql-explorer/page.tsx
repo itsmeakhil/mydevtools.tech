@@ -11,7 +11,7 @@ import useAuth from "@/utils/useAuth";
 import { getConnections } from "@/components/nosql-explorer/connection-service";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { IconDatabase, IconServer, IconBrandMongodb, IconSearch, IconPlus } from "@tabler/icons-react";
+import { IconDatabase, IconServer, IconBrandMongodb, IconSearch, IconPlus, IconArrowLeft } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import {
     AlertDialog,
@@ -44,15 +44,36 @@ export default function NoSQLExplorerPage() {
     const [activeTabId, setActiveTabId] = useState<string | null>(null);
     const [isConnectionDialogOpen, setIsConnectionDialogOpen] = useState(false);
     const [isInitialized, setIsInitialized] = useState(false);
+    const [hasConnections, setHasConnections] = useState<boolean | null>(null); // null = loading
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ isOpen: boolean; documentId: string | null }>({
         isOpen: false,
         documentId: null,
     });
 
+    // Check for connections
+    useEffect(() => {
+        const checkConnections = async () => {
+            if (user) {
+                try {
+                    const connections = await getConnections(user.uid);
+                    setHasConnections(connections.length > 0);
+                } catch (error) {
+                    console.error("Failed to check connections", error);
+                    setHasConnections(false);
+                }
+            } else {
+                setHasConnections(false);
+            }
+        };
+        checkConnections();
+    }, [user]);
+
     // Load tabs from localStorage on mount
     useEffect(() => {
-        const savedTabs = localStorage.getItem("nosql_tabs");
-        const savedActiveTabId = localStorage.getItem("nosql_active_tab_id");
+        if (!user) return;
+
+        const savedTabs = localStorage.getItem(`nosql_tabs_${user.uid}`);
+        const savedActiveTabId = localStorage.getItem(`nosql_active_tab_id_${user.uid}`);
 
         if (savedTabs) {
             try {
@@ -66,23 +87,23 @@ export default function NoSQLExplorerPage() {
             setActiveTabId(savedActiveTabId);
         }
         setIsInitialized(true);
-    }, []);
+    }, [user]);
 
     // Save tabs to localStorage whenever they change
     useEffect(() => {
-        if (!isInitialized) return;
-        localStorage.setItem("nosql_tabs", JSON.stringify(tabs));
-    }, [tabs, isInitialized]);
+        if (!isInitialized || !user) return;
+        localStorage.setItem(`nosql_tabs_${user.uid}`, JSON.stringify(tabs));
+    }, [tabs, isInitialized, user]);
 
     // Save activeTabId to localStorage whenever it changes
     useEffect(() => {
-        if (!isInitialized) return;
+        if (!isInitialized || !user) return;
         if (activeTabId) {
-            localStorage.setItem("nosql_active_tab_id", activeTabId);
+            localStorage.setItem(`nosql_active_tab_id_${user.uid}`, activeTabId);
         } else {
-            localStorage.removeItem("nosql_active_tab_id");
+            localStorage.removeItem(`nosql_active_tab_id_${user.uid}`);
         }
-    }, [activeTabId, isInitialized]);
+    }, [activeTabId, isInitialized, user]);
 
     // Auto-connect logic is now handled by the sidebar tree view mostly, 
     // but we might want to keep the "initial load" behavior if needed.
@@ -94,6 +115,7 @@ export default function NoSQLExplorerPage() {
             // We just verify connection here, saving is done by ConnectionForm if we update it
             // Actually ConnectionForm handles saving. We just need to close dialog and refresh sidebar.
             setIsConnectionDialogOpen(false);
+            setHasConnections(true);
             // Sidebar will refresh itself or we trigger a refresh
         } catch (error: any) {
             toast.error(error.message);
@@ -431,51 +453,65 @@ export default function NoSQLExplorerPage() {
                         />
                     ) : (
                         <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-8 animate-in fade-in zoom-in duration-300">
-                            <div className="max-w-2xl w-full space-y-8 text-center">
-                                <div className="space-y-2">
-                                    <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                                        <IconDatabase className="w-10 h-10 text-primary" />
+                            {!hasConnections ? (
+                                <div className="max-w-2xl w-full space-y-8 text-center">
+                                    <div className="space-y-2">
+                                        <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                                            <IconDatabase className="w-10 h-10 text-primary" />
+                                        </div>
+                                        <h2 className="text-3xl font-bold tracking-tight text-foreground">NoSQL Explorer</h2>
+                                        <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+                                            Connect to your databases to manage collections, execute queries, and visualize your data.
+                                        </p>
                                     </div>
-                                    <h2 className="text-3xl font-bold tracking-tight text-foreground">NoSQL Explorer</h2>
-                                    <p className="text-lg text-muted-foreground max-w-lg mx-auto">
-                                        Connect to your databases to manage collections, execute queries, and visualize your data.
-                                    </p>
-                                </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-                                    <div className="p-4 rounded-xl bg-card border shadow-sm hover:shadow-md transition-all">
-                                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center mb-3">
-                                            <IconServer className="w-4 h-4 text-blue-500" />
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+                                        <div className="p-4 rounded-xl bg-card border shadow-sm hover:shadow-md transition-all">
+                                            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center mb-3">
+                                                <IconServer className="w-4 h-4 text-blue-500" />
+                                            </div>
+                                            <h3 className="font-semibold text-foreground mb-1">Multi-Connection</h3>
+                                            <p className="text-xs text-muted-foreground">Manage multiple database connections simultaneously.</p>
                                         </div>
-                                        <h3 className="font-semibold text-foreground mb-1">Multi-Connection</h3>
-                                        <p className="text-xs text-muted-foreground">Manage multiple database connections simultaneously.</p>
-                                    </div>
-                                    <div className="p-4 rounded-xl bg-card border shadow-sm hover:shadow-md transition-all">
-                                        <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center mb-3">
-                                            <IconBrandMongodb className="w-4 h-4 text-green-500" />
+                                        <div className="p-4 rounded-xl bg-card border shadow-sm hover:shadow-md transition-all">
+                                            <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center mb-3">
+                                                <IconBrandMongodb className="w-4 h-4 text-green-500" />
+                                            </div>
+                                            <h3 className="font-semibold text-foreground mb-1">MongoDB Support</h3>
+                                            <p className="text-xs text-muted-foreground">Native support for MongoDB with advanced filtering.</p>
                                         </div>
-                                        <h3 className="font-semibold text-foreground mb-1">MongoDB Support</h3>
-                                        <p className="text-xs text-muted-foreground">Native support for MongoDB with advanced filtering.</p>
-                                    </div>
-                                    <div className="p-4 rounded-xl bg-card border shadow-sm hover:shadow-md transition-all">
-                                        <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center mb-3">
-                                            <IconSearch className="w-4 h-4 text-orange-500" />
+                                        <div className="p-4 rounded-xl bg-card border shadow-sm hover:shadow-md transition-all">
+                                            <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center mb-3">
+                                                <IconSearch className="w-4 h-4 text-orange-500" />
+                                            </div>
+                                            <h3 className="font-semibold text-foreground mb-1">Smart Query</h3>
+                                            <p className="text-xs text-muted-foreground">Powerful query builder with syntax highlighting.</p>
                                         </div>
-                                        <h3 className="font-semibold text-foreground mb-1">Smart Query</h3>
-                                        <p className="text-xs text-muted-foreground">Powerful query builder with syntax highlighting.</p>
                                     </div>
-                                </div>
 
-                                <div className="pt-4">
-                                    <Button size="lg" onClick={() => setIsConnectionDialogOpen(true)} className="gap-2 shadow-lg hover:shadow-primary/25 transition-all">
-                                        <IconPlus className="w-5 h-5" />
-                                        Connect to MongoDB
-                                    </Button>
-                                    <p className="text-xs text-muted-foreground mt-4">
-                                        Currently supports <span className="font-medium text-foreground">MongoDB</span>. More databases coming soon.
-                                    </p>
+                                    <div className="pt-4">
+                                        <Button size="lg" onClick={() => setIsConnectionDialogOpen(true)} className="gap-2 shadow-lg hover:shadow-primary/25 transition-all">
+                                            <IconPlus className="w-5 h-5" />
+                                            Connect to MongoDB
+                                        </Button>
+                                        <p className="text-xs text-muted-foreground mt-4">
+                                            Currently supports <span className="font-medium text-foreground">MongoDB</span>. More databases coming soon.
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="text-center space-y-4">
+                                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
+                                        <IconArrowLeft className="w-8 h-8 text-muted-foreground" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-foreground">Select a Collection</h3>
+                                        <p className="text-sm text-muted-foreground max-w-xs mx-auto mt-2">
+                                            Choose a collection from the sidebar to view documents and start exploring your data.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -498,6 +534,7 @@ export default function NoSQLExplorerPage() {
                             // Wait, previous implementation of ConnectionForm handled saving.
                             // Let's verify ConnectionForm.
                             setIsConnectionDialogOpen(false);
+                            setHasConnections(true);
                             // We might need to trigger sidebar refresh. 
                             // We can pass a refresh trigger to sidebar or use a context.
                             // For now, user can manually refresh sidebar.
