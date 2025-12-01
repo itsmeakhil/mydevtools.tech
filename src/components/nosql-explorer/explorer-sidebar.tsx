@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Database, Collection, SavedConnection } from "./types";
-import { IconDatabase, IconFolder, IconChevronRight, IconChevronDown, IconRefresh, IconSearch, IconPlus, IconServer, IconPencil, IconCheck, IconX, IconDotsVertical, IconTrash, IconEdit } from "@tabler/icons-react";
+import { IconDatabase, IconFolder, IconChevronRight, IconChevronDown, IconRefresh, IconSearch, IconPlus, IconServer, IconPencil, IconCheck, IconX, IconDotsVertical, IconTrash, IconEdit, IconCopy } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import useAuth from "@/utils/useAuth";
@@ -483,6 +483,12 @@ export function ExplorerSidebar({
                                                                 <DropdownMenuContent align="end">
                                                                     <DropdownMenuItem onClick={() => refreshCollections(index, db.name)}>
                                                                         <IconRefresh className="h-3 w-3 mr-2" /> Refresh
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem onClick={() => {
+                                                                        navigator.clipboard.writeText(db.name);
+                                                                        toast.success("Database name copied to clipboard");
+                                                                    }}>
+                                                                        <IconCopy className="h-3 w-3 mr-2" /> Copy DB Name
                                                                     </DropdownMenuItem>
                                                                     <DropdownMenuItem onClick={() => setRenameDatabaseDialog({
                                                                         open: true,
