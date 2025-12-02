@@ -25,6 +25,7 @@ interface CollectionsSidebarProps {
     onDelete: (id: string) => void
     onToggle: (id: string) => void
     onLoadRequest: (request: CollectionRequest) => void
+    onCreateCollection: (name: string) => void
 }
 
 export function CollectionsSidebar({
@@ -33,10 +34,13 @@ export function CollectionsSidebar({
     onDelete,
     onToggle,
     onLoadRequest,
+    onCreateCollection,
 }: CollectionsSidebarProps) {
     const [collapsed, setCollapsed] = React.useState(false)
     const [newFolderDialogOpen, setNewFolderDialogOpen] = React.useState(false)
+    const [newCollectionDialogOpen, setNewCollectionDialogOpen] = React.useState(false)
     const [newFolderName, setNewFolderName] = React.useState("")
+    const [newCollectionName, setNewCollectionName] = React.useState("")
     const [targetParentId, setTargetParentId] = React.useState<string | null>(null)
 
     const handleAddFolder = () => {
@@ -45,6 +49,14 @@ export function CollectionsSidebar({
             setNewFolderDialogOpen(false)
             setNewFolderName("")
             setTargetParentId(null)
+        }
+    }
+
+    const handleCreateCollection = () => {
+        if (newCollectionName) {
+            onCreateCollection(newCollectionName)
+            setNewCollectionDialogOpen(false)
+            setNewCollectionName("")
         }
     }
 
@@ -72,7 +84,9 @@ export function CollectionsSidebar({
             <div className={cn("flex-1 flex flex-col min-w-[300px]", collapsed && "invisible")}>
                 <div className="p-4 border-b flex items-center justify-between">
                     <h3 className="font-semibold">Collections</h3>
-                    {/* We could add a button to create a new root collection here if needed */}
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setNewCollectionDialogOpen(true)}>
+                        <FolderPlus className="h-4 w-4" />
+                    </Button>
                 </div>
                 <ScrollArea className="flex-1">
                     <div className="p-2">
@@ -134,6 +148,30 @@ export function CollectionsSidebar({
                     </div>
                     <DialogFooter>
                         <Button onClick={handleAddFolder}>Create Folder</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={newCollectionDialogOpen} onOpenChange={setNewCollectionDialogOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>New Collection</DialogTitle>
+                        <DialogDescription>
+                            Create a new top-level collection.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="collection-name">Collection Name</Label>
+                            <Input
+                                id="collection-name"
+                                value={newCollectionName}
+                                onChange={(e) => setNewCollectionName(e.target.value)}
+                                placeholder="My Collection"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handleCreateCollection}>Create Collection</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

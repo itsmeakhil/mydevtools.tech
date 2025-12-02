@@ -10,6 +10,9 @@ import { IconSearch, IconHistory, IconX, IconPlus, IconTrash, IconCheck, IconFil
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { db, auth } from "@/database/firebase";
+import { collection, query as firestoreQuery, where, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, getDocs, setDoc, QuerySnapshot, DocumentData } from "firebase/firestore";
+import { useAuthState } from "react-firebase-hooks/auth";
 
 interface QueryBuilderProps {
     query: string;
@@ -42,39 +45,140 @@ export function QueryBuilder({
     const [historyOpen, setHistoryOpen] = useState(false);
     const [queryHistory, setQueryHistory] = useState<string[]>([]);
     const [builderOpen, setBuilderOpen] = useState(false);
+    const [user] = useAuthState(auth);
+    const [historyDocId, setHistoryDocId] = useState<string | null>(null);
 
     // Sync internal state with props
     useEffect(() => {
         setTextQuery(query);
     }, [query]);
 
-    // Load history
+    // Load history from Firestore
     useEffect(() => {
-        const key = `nosql_query_history_${connectionName}_${dbName}_${collectionName}`;
-        const saved = localStorage.getItem(key);
-        if (saved) {
-            try {
-                setQueryHistory(JSON.parse(saved));
-            } catch (e) {
-                console.error("Failed to parse query history", e);
-            }
+        if (!user) {
+            setQueryHistory([]);
+            return;
         }
-    }, [connectionName, dbName, collectionName]);
 
-    const saveQueryToHistory = (q: string) => {
-        if (!q || q === "{}") return;
-        const key = `nosql_query_history_${connectionName}_${dbName}_${collectionName}`;
+        const q = firestoreQuery(
+            collection(db, "nosql_query_history"),
+            where("userId", "==", user.uid),
+            where("connectionName", "==", connectionName),
+            where("dbName", "==", dbName),
+            where("collectionName", "==", collectionName)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
+            if (!snapshot.empty) {
+                const docData = snapshot.docs[0].data();
+                setQueryHistory((docData.queries as string[]) || []);
+                setHistoryDocId(snapshot.docs[0].id);
+            } else {
+                setQueryHistory([]);
+                setHistoryDocId(null);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [user, connectionName, dbName, collectionName]);
+
+    // Migration logic
+    useEffect(() => {
+        const migrate = async () => {
+            if (!user) return;
+
+            const key = `nosql_query_history_${connectionName}_${dbName}_${collectionName}`;
+            const saved = localStorage.getItem(key);
+
+            if (saved) {
+                try {
+                    const localHistory = JSON.parse(saved);
+                    if (localHistory.length > 0) {
+                        // Check if doc exists
+                        const q = firestoreQuery(
+                            collection(db, "nosql_query_history"),
+                            where("userId", "==", user.uid),
+                            where("connectionName", "==", connectionName),
+                            where("dbName", "==", dbName),
+                            where("collectionName", "==", collectionName)
+                        );
+                        const snapshot = await getDocs(q);
+
+                        if (snapshot.empty) {
+                            await addDoc(collection(db, "nosql_query_history"), {
+                                userId: user.uid,
+                                connectionName,
+                                dbName,
+                                collectionName,
+                                queries: localHistory,
+                                updatedAt: serverTimestamp()
+                            });
+                        } else {
+                            // Merge? Or just ignore if cloud has data?
+                            // Let's merge unique queries
+                            const docRef = snapshot.docs[0].ref;
+                            const currentQueries = (snapshot.docs[0].data().queries as string[]) || [];
+                            const merged = [...new Set([...localHistory, ...currentQueries])].slice(0, 10);
+                            await updateDoc(docRef, {
+                                queries: merged,
+                                updatedAt: serverTimestamp()
+                            });
+                        }
+                        // Clear local storage
+                        localStorage.removeItem(key);
+                        toast.success("Migrated query history to cloud");
+                    }
+                } catch (e) {
+                    console.error("Migration failed", e);
+                }
+            }
+        };
+        migrate();
+    }, [user, connectionName, dbName, collectionName]);
+
+    const saveQueryToHistory = async (q: string) => {
+        if (!q || q === "{}" || !user) return;
+
         const newHistory = [q, ...queryHistory.filter(h => h !== q)].slice(0, 10);
-        setQueryHistory(newHistory);
-        localStorage.setItem(key, JSON.stringify(newHistory));
+
+        try {
+            if (historyDocId) {
+                await updateDoc(doc(db, "nosql_query_history", historyDocId), {
+                    queries: newHistory,
+                    updatedAt: serverTimestamp()
+                });
+            } else {
+                const docRef = await addDoc(collection(db, "nosql_query_history"), {
+                    userId: user.uid,
+                    connectionName,
+                    dbName,
+                    collectionName,
+                    queries: newHistory,
+                    updatedAt: serverTimestamp()
+                });
+                setHistoryDocId(docRef.id);
+            }
+        } catch (e) {
+            console.error("Failed to save history", e);
+            toast.error("Failed to save query history");
+        }
     };
 
-    const deleteFromHistory = (e: React.MouseEvent, q: string) => {
+    const deleteFromHistory = async (e: React.MouseEvent, q: string) => {
         e.stopPropagation();
-        const key = `nosql_query_history_${connectionName}_${dbName}_${collectionName}`;
+        if (!user || !historyDocId) return;
+
         const newHistory = queryHistory.filter(h => h !== q);
-        setQueryHistory(newHistory);
-        localStorage.setItem(key, JSON.stringify(newHistory));
+
+        try {
+            await updateDoc(doc(db, "nosql_query_history", historyDocId), {
+                queries: newHistory,
+                updatedAt: serverTimestamp()
+            });
+        } catch (err) {
+            console.error("Failed to delete from history", err);
+            toast.error("Failed to delete query");
+        }
     };
 
     const handleTextSearch = () => {

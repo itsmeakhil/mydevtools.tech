@@ -38,10 +38,14 @@ const createNewTab = (): ApiRequestState => ({
     isLoading: false,
 })
 
+const TABS_STORAGE_KEY = "api-client-tabs"
+const ACTIVE_TAB_STORAGE_KEY = "api-client-active-tab"
+
 export function ApiClient() {
     const [tabs, setTabs] = React.useState<ApiRequestState[]>([createNewTab()])
     const [activeTabId, setActiveTabId] = React.useState<string>(tabs[0].id)
-    const { collections, addFolder, deleteItem, saveRequest, toggleFolder } = useCollections()
+    const [isInitialized, setIsInitialized] = React.useState(false)
+    const { collections, addFolder, deleteItem, saveRequest, toggleFolder, createCollection } = useCollections()
     const {
         environments,
         activeEnvId,
@@ -53,6 +57,40 @@ export function ApiClient() {
     } = useEnvironments()
 
     const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0]
+
+    // Load state from localStorage
+    React.useEffect(() => {
+        const storedTabs = localStorage.getItem(TABS_STORAGE_KEY)
+        const storedActiveTabId = localStorage.getItem(ACTIVE_TAB_STORAGE_KEY)
+
+        if (storedTabs) {
+            try {
+                const parsedTabs = JSON.parse(storedTabs)
+                if (Array.isArray(parsedTabs) && parsedTabs.length > 0) {
+                    setTabs(parsedTabs)
+                    if (storedActiveTabId) {
+                        setActiveTabId(storedActiveTabId)
+                    } else {
+                        setActiveTabId(parsedTabs[0].id)
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to parse stored tabs", e)
+            }
+        }
+        setIsInitialized(true)
+    }, [])
+
+    // Save state to localStorage
+    React.useEffect(() => {
+        if (!isInitialized) return
+        localStorage.setItem(TABS_STORAGE_KEY, JSON.stringify(tabs))
+    }, [tabs, isInitialized])
+
+    React.useEffect(() => {
+        if (!isInitialized) return
+        localStorage.setItem(ACTIVE_TAB_STORAGE_KEY, activeTabId)
+    }, [activeTabId, isInitialized])
 
     const updateActiveTab = (updates: Partial<ApiRequestState>) => {
         setTabs((prev) =>
@@ -294,6 +332,7 @@ export function ApiClient() {
                 onDelete={deleteItem}
                 onToggle={toggleFolder}
                 onLoadRequest={handleLoadRequest}
+                onCreateCollection={createCollection}
             />
         </div>
     )

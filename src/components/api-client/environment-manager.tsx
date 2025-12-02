@@ -25,7 +25,7 @@ interface EnvironmentManagerProps {
     environments: Environment[]
     activeEnvId: string | null
     setActiveEnvId: (id: string | null) => void
-    addEnvironment: (name: string) => string
+    addEnvironment: (name: string) => Promise<string>
     updateEnvironment: (id: string, updates: Partial<Environment>) => void
     deleteEnvironment: (id: string) => void
 }
@@ -119,8 +119,8 @@ export function EnvironmentManager({
                                     size="icon"
                                     className="h-8 w-8 shrink-0"
                                     disabled={!newEnvName}
-                                    onClick={() => {
-                                        const id = addEnvironment(newEnvName)
+                                    onClick={async () => {
+                                        const id = await addEnvironment(newEnvName)
                                         setNewEnvName("")
                                         setSelectedEnvId(id)
                                     }}
