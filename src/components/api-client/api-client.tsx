@@ -11,6 +11,9 @@ import { parseCurlCommand } from "@/utils/curl-parser"
 import { CollectionsSidebar } from "./collections/collections-sidebar"
 import { useCollections } from "./collections/use-collections"
 import { SaveRequestDialog } from "./collections/save-request-dialog"
+import { useEnvironments } from "./use-environments"
+import { EnvironmentManager } from "./environment-manager"
+import { CodeGenerator } from "./code-generator"
 import {
     RequestMethod,
     KeyValueItem,
@@ -39,6 +42,15 @@ export function ApiClient() {
     const [tabs, setTabs] = React.useState<ApiRequestState[]>([createNewTab()])
     const [activeTabId, setActiveTabId] = React.useState<string>(tabs[0].id)
     const { collections, addFolder, deleteItem, saveRequest, toggleFolder } = useCollections()
+    const {
+        environments,
+        activeEnvId,
+        setActiveEnvId,
+        addEnvironment,
+        updateEnvironment,
+        deleteEnvironment,
+        substituteVariables
+    } = useEnvironments()
 
     const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0]
 
@@ -123,11 +135,14 @@ export function ApiClient() {
         const startTime = performance.now()
 
         try {
+            // Substitute variables in URL
+            const finalUrl = substituteVariables(activeTab.url)
+
             // Construct URL with params
-            const urlObj = new URL(activeTab.url)
+            const urlObj = new URL(finalUrl)
             activeTab.params.forEach((p) => {
                 if (p.active && p.key) {
-                    urlObj.searchParams.append(p.key, p.value)
+                    urlObj.searchParams.append(substituteVariables(p.key), substituteVariables(p.value))
                 }
             })
 
@@ -135,15 +150,15 @@ export function ApiClient() {
             const headersObj: Record<string, string> = {}
             activeTab.headers.forEach((h) => {
                 if (h.active && h.key) {
-                    headersObj[h.key] = h.value
+                    headersObj[substituteVariables(h.key)] = substituteVariables(h.value)
                 }
             })
 
             // Add Auth
             if (activeTab.auth.type === "bearer" && activeTab.auth.token) {
-                headersObj["Authorization"] = `Bearer ${activeTab.auth.token}`
+                headersObj["Authorization"] = `Bearer ${substituteVariables(activeTab.auth.token)}`
             } else if (activeTab.auth.type === "basic" && activeTab.auth.username && activeTab.auth.password) {
-                const credentials = btoa(`${activeTab.auth.username}:${activeTab.auth.password}`)
+                const credentials = btoa(`${substituteVariables(activeTab.auth.username)}:${substituteVariables(activeTab.auth.password)}`)
                 headersObj["Authorization"] = `Basic ${credentials}`
             }
 
@@ -152,9 +167,10 @@ export function ApiClient() {
             if (activeTab.method !== "GET" && activeTab.method !== "HEAD" && activeTab.body.type !== "none") {
                 if (activeTab.body.type === "json") {
                     try {
+                        const substitutedBody = substituteVariables(activeTab.body.content)
                         // Validate JSON
-                        JSON.parse(activeTab.body.content)
-                        bodyContent = activeTab.body.content
+                        JSON.parse(substitutedBody)
+                        bodyContent = substitutedBody
                         headersObj["Content-Type"] = "application/json"
                     } catch (e) {
                         toast.error("Invalid JSON body")
@@ -162,7 +178,7 @@ export function ApiClient() {
                         return
                     }
                 } else {
-                    bodyContent = activeTab.body.content
+                    bodyContent = substituteVariables(activeTab.body.content)
                     if (!headersObj["Content-Type"]) {
                         headersObj["Content-Type"] = "text/plain"
                     }
@@ -225,6 +241,15 @@ export function ApiClient() {
         <div className="flex h-[calc(100vh-4rem)] gap-4">
             <div className="flex-1 flex flex-col gap-6 min-w-0">
                 <div className="flex justify-end gap-2">
+                    <EnvironmentManager
+                        environments={environments}
+                        activeEnvId={activeEnvId}
+                        setActiveEnvId={setActiveEnvId}
+                        addEnvironment={addEnvironment}
+                        updateEnvironment={updateEnvironment}
+                        deleteEnvironment={deleteEnvironment}
+                    />
+                    <CodeGenerator request={activeTab} />
                     <SaveRequestDialog
                         collections={collections}
                         onSave={handleSaveRequest}
