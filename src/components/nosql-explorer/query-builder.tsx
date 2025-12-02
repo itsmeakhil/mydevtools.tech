@@ -20,7 +20,7 @@ interface QueryBuilderProps {
     collectionName: string;
 }
 
-type FilterOperator = "$eq" | "$gt" | "$lt" | "$gte" | "$lte" | "$ne" | "$in" | "$regex";
+type FilterOperator = "$eq" | "$gt" | "$lt" | "$gte" | "$lte" | "$ne" | "$in" | "$regex" | "$exists";
 
 interface FilterRule {
     id: string;
@@ -106,6 +106,8 @@ export function QueryBuilder({
                 builtQuery[rule.field] = value;
             } else if (rule.operator === "$regex") {
                 builtQuery[rule.field] = { $regex: rule.value, $options: "i" };
+            } else if (rule.operator === "$exists") {
+                builtQuery[rule.field] = { $exists: value === true || value === "true" };
             } else {
                 builtQuery[rule.field] = { [rule.operator]: value };
             }
@@ -140,7 +142,7 @@ export function QueryBuilder({
                 if (typeof value === "object" && value !== null && !Array.isArray(value)) {
                     // Handle operators like {$gt: 10}
                     Object.entries(value).forEach(([op, val]: [string, any]) => {
-                        if (["$gt", "$lt", "$gte", "$lte", "$ne", "$in", "$regex"].includes(op)) {
+                        if (["$gt", "$lt", "$gte", "$lte", "$ne", "$in", "$regex", "$exists"].includes(op)) {
                             newRules.push({
                                 id: Math.random().toString(36).substr(2, 9),
                                 field: key,
@@ -249,15 +251,31 @@ export function QueryBuilder({
                                                         <SelectItem value="$lte">&lt;=</SelectItem>
                                                         <SelectItem value="$regex">Regex</SelectItem>
                                                         <SelectItem value="$in">In</SelectItem>
+                                                        <SelectItem value="$exists">Exists</SelectItem>
                                                     </SelectContent>
                                                 </Select>
 
-                                                <Input
-                                                    value={rule.value}
-                                                    onChange={(e) => updateRule(rule.id, { value: e.target.value })}
-                                                    placeholder="Value"
-                                                    className="h-8 text-xs flex-1"
-                                                />
+                                                {rule.operator === "$exists" ? (
+                                                    <Select
+                                                        value={rule.value === "true" || rule.value === "false" ? rule.value : "true"}
+                                                        onValueChange={(val) => updateRule(rule.id, { value: val })}
+                                                    >
+                                                        <SelectTrigger className="h-8 text-xs flex-1">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="true">True</SelectItem>
+                                                            <SelectItem value="false">False</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                ) : (
+                                                    <Input
+                                                        value={rule.value}
+                                                        onChange={(e) => updateRule(rule.id, { value: e.target.value })}
+                                                        placeholder="Value"
+                                                        className="h-8 text-xs flex-1"
+                                                    />
+                                                )}
 
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => removeRule(rule.id)}>
                                                     <IconTrash className="h-3 w-3" />
