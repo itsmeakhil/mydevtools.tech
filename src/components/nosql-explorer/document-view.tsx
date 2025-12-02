@@ -15,6 +15,7 @@ import { JsonTree } from "./json-tree";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { QueryBuilder } from "./query-builder";
+import { cn } from "@/lib/utils";
 
 interface DocumentViewProps {
     connectionName: string;
@@ -134,8 +135,8 @@ export function DocumentView({
 
     return (
         <div className="flex flex-col h-full">
-            <div className="p-4 border-b flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div className="w-full md:w-auto flex-1">
+            <div className="h-14 border-b flex items-center justify-between px-4 gap-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <div className="flex-1 max-w-2xl">
                     <QueryBuilder
                         query={searchQuery}
                         onSearch={(q: string) => {
@@ -148,18 +149,20 @@ export function DocumentView({
                         collectionName={collectionName}
                     />
                 </div>
-                <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end overflow-x-auto">
-                    <div className="flex items-center border rounded-md overflow-hidden">
+
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center bg-muted/50 p-1 rounded-lg border">
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button
                                         variant={viewMode === "table" ? "secondary" : "ghost"}
-                                        size="icon"
-                                        className="h-8 w-8 rounded-none"
+                                        size="sm"
+                                        className={cn("h-7 px-3 text-xs", viewMode === "table" && "bg-background shadow-sm")}
                                         onClick={() => setViewMode("table")}
                                     >
-                                        <IconTable className="h-4 w-4" />
+                                        <IconTable className="h-3.5 w-3.5 mr-1.5" />
+                                        Table
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>Table View</TooltipContent>
@@ -168,11 +171,12 @@ export function DocumentView({
                                 <TooltipTrigger asChild>
                                     <Button
                                         variant={viewMode === "json" ? "secondary" : "ghost"}
-                                        size="icon"
-                                        className="h-8 w-8 rounded-none"
+                                        size="sm"
+                                        className={cn("h-7 px-3 text-xs", viewMode === "json" && "bg-background shadow-sm")}
                                         onClick={() => setViewMode("json")}
                                     >
-                                        <IconJson className="h-4 w-4" />
+                                        <IconJson className="h-3.5 w-3.5 mr-1.5" />
+                                        JSON
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>JSON View</TooltipContent>
@@ -181,25 +185,77 @@ export function DocumentView({
                                 <TooltipTrigger asChild>
                                     <Button
                                         variant={viewMode === "tree" ? "secondary" : "ghost"}
-                                        size="icon"
-                                        className="h-8 w-8 rounded-none"
+                                        size="sm"
+                                        className={cn("h-7 px-3 text-xs", viewMode === "tree" && "bg-background shadow-sm")}
                                         onClick={() => setViewMode("tree")}
                                     >
-                                        <IconBinaryTree className="h-4 w-4" />
+                                        <IconBinaryTree className="h-3.5 w-3.5 mr-1.5" />
+                                        Tree
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>Tree View</TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
                     </div>
-                    <Button variant="outline" size="sm" onClick={onRefresh} disabled={loading}>
-                        <IconRefresh className="h-4 w-4 mr-2" />
-                        Refresh
-                    </Button>
-                    <Button size="sm" onClick={openInsertDialog}>
-                        <IconPlus className="h-4 w-4 mr-2" />
-                        Insert Document
-                    </Button>
+
+                    <div className="flex items-center gap-1 border rounded-md bg-background shadow-sm h-7 px-1">
+                        <select
+                            className="h-full bg-transparent text-[10px] font-mono text-muted-foreground border-none outline-none cursor-pointer"
+                            value={limit}
+                            onChange={(e) => onLimitChange(Number(e.target.value))}
+                            title="Items per page"
+                        >
+                            {[50, 100, 200, 500, 1000, 2000].map((val) => (
+                                <option key={val} value={val}>
+                                    {val} / page
+                                </option>
+                            ))}
+                        </select>
+                        <div className="w-[1px] h-3 bg-border mx-1" />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5 rounded-sm"
+                            onClick={() => onPageChange(page - 1)}
+                            disabled={page <= 1}
+                            title="Previous Page"
+                        >
+                            <span className="text-xs">&lt;</span>
+                        </Button>
+                        <span className="text-[10px] font-mono text-muted-foreground px-1 min-w-[60px] text-center">
+                            {page} / {Math.ceil(total / limit) || 1}
+                        </span>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5 rounded-sm"
+                            onClick={() => onPageChange(page + 1)}
+                            disabled={page >= Math.ceil(total / limit)}
+                            title="Next Page"
+                        >
+                            <span className="text-xs">&gt;</span>
+                        </Button>
+                    </div>
+
+                    <div className="h-4 w-[1px] bg-border" />
+
+                    <div className="flex items-center gap-2">
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" onClick={onRefresh} disabled={loading} className="h-9 w-9">
+                                        <IconRefresh className={cn("h-4 w-4", loading && "animate-spin")} />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Refresh Data</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
+                        <Button size="sm" onClick={openInsertDialog} className="h-9">
+                            <IconPlus className="h-4 w-4 mr-1.5" />
+                            Insert
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -336,54 +392,7 @@ export function DocumentView({
                 )}
             </div>
 
-            <div className="p-2 border-t flex items-center justify-between bg-muted/20">
-                <div className="text-xs text-muted-foreground">
-                    Total: {total} documents
-                </div>
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">Rows per page:</span>
-                        <select
-                            className="h-7 bg-transparent border rounded px-2 text-xs"
-                            value={limit}
-                            onChange={(e) => onLimitChange(Number(e.target.value))}
-                            title="Items per page"
-                        >
-                            {[50, 100, 200, 500, 1000, 2000].map((val) => (
-                                <option key={val} value={val}>
-                                    {val}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
 
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            Page {page} of {Math.ceil(total / limit) || 1}
-                        </span>
-                        <div className="flex items-center border rounded-md overflow-hidden bg-background">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 rounded-none"
-                                onClick={() => onPageChange(page - 1)}
-                                disabled={page <= 1}
-                            >
-                                &lt;
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 rounded-none"
-                                onClick={() => onPageChange(page + 1)}
-                                disabled={page >= Math.ceil(total / limit)}
-                            >
-                                &gt;
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogContent className="max-w-3xl h-[80vh] flex flex-col">

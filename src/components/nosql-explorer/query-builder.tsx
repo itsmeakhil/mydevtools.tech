@@ -37,7 +37,6 @@ export function QueryBuilder({
     dbName,
     collectionName,
 }: QueryBuilderProps) {
-    const [mode, setMode] = useState<"text" | "builder">("text");
     const [textQuery, setTextQuery] = useState(query);
     const [rules, setRules] = useState<FilterRule[]>([]);
     const [historyOpen, setHistoryOpen] = useState(false);
@@ -132,7 +131,7 @@ export function QueryBuilder({
     };
 
     // Attempt to parse text query into builder rules when switching to builder mode
-    const switchToBuilder = () => {
+    const openBuilder = () => {
         try {
             const parsed = JSON.parse(textQuery);
             const newRules: FilterRule[] = [];
@@ -166,46 +165,45 @@ export function QueryBuilder({
             } else if (rules.length === 0) {
                 addRule();
             }
-            setMode("builder");
+            setBuilderOpen(true);
         } catch (e) {
-            toast.error("Cannot parse current query into builder rules. Resetting builder.");
-            setRules([]);
-            addRule();
-            setMode("builder");
+            // If parse fails, just open builder with existing or empty rules
+            if (rules.length === 0) {
+                addRule();
+            }
+            setBuilderOpen(true);
         }
     };
 
     return (
-        <div className="flex items-center gap-2 flex-1">
-            <Tabs value={mode} onValueChange={(val) => val === "builder" ? switchToBuilder() : setMode("text")} className="w-auto">
-                <TabsList className="grid w-full grid-cols-2 h-9">
-                    <TabsTrigger value="text" className="text-xs">Text</TabsTrigger>
-                    <TabsTrigger value="builder" className="text-xs">Builder</TabsTrigger>
-                </TabsList>
-            </Tabs>
-
-            <div className="flex-1 flex items-center gap-2">
-                {mode === "text" ? (
-                    <div className="relative flex-1">
-                        <Input
-                            value={textQuery}
-                            onChange={(e) => setTextQuery(e.target.value)}
-                            placeholder='{ "field": "value" }'
-                            className="font-mono text-xs"
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") handleTextSearch();
-                            }}
-                        />
-                    </div>
-                ) : (
+        <div className="flex items-center w-full">
+            <div className="relative flex-1 group">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    <IconSearch className="h-4 w-4" />
+                </div>
+                <Input
+                    value={textQuery}
+                    onChange={(e) => setTextQuery(e.target.value)}
+                    placeholder='Query (e.g. { "status": "active" })'
+                    className="pl-9 pr-[120px] font-mono text-xs h-9 bg-background"
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") handleTextSearch();
+                    }}
+                />
+                <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
                     <Popover open={builderOpen} onOpenChange={setBuilderOpen}>
                         <PopoverTrigger asChild>
-                            <div className="flex-1 border rounded-md px-3 py-2 text-xs text-muted-foreground bg-background flex items-center justify-between cursor-pointer hover:bg-accent/50 transition-colors h-9">
-                                <span>{rules.length} active filter{rules.length !== 1 ? 's' : ''}</span>
-                                <IconFilter className="h-3 w-3" />
-                            </div>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className={cn("h-7 w-7 text-muted-foreground hover:text-foreground", rules.length > 0 && "text-primary")}
+                                onClick={openBuilder}
+                                title="Visual Query Builder"
+                            >
+                                <IconFilter className="h-4 w-4" />
+                            </Button>
                         </PopoverTrigger>
-                        <PopoverContent align="start" className="w-[600px] p-4">
+                        <PopoverContent align="end" className="w-[600px] p-4">
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between border-b pb-2">
                                     <h4 className="font-medium text-sm">Filter Rules</h4>
@@ -277,60 +275,54 @@ export function QueryBuilder({
                             </div>
                         </PopoverContent>
                     </Popover>
-                )}
-            </div>
 
-            <Button onClick={mode === "text" ? handleTextSearch : handleBuilderSearch} size="sm" variant="secondary">
-                <IconSearch className="h-4 w-4 mr-2" />
-                Filter
-            </Button>
-
-            <Popover open={historyOpen} onOpenChange={setHistoryOpen}>
-                <PopoverTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-9 w-9" title="Query History">
-                        <IconHistory className="h-4 w-4" />
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-[400px] p-0">
-                    <div className="p-2 border-b bg-muted/50 text-xs font-medium text-muted-foreground">
-                        Query History
-                    </div>
-                    <ScrollArea className="h-[300px]">
-                        {queryHistory.length === 0 ? (
-                            <div className="p-4 text-center text-xs text-muted-foreground">
-                                No saved queries yet
+                    <Popover open={historyOpen} onOpenChange={setHistoryOpen}>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" title="Query History">
+                                <IconHistory className="h-4 w-4" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-[400px] p-0">
+                            <div className="p-2 border-b bg-muted/50 text-xs font-medium text-muted-foreground">
+                                Query History
                             </div>
-                        ) : (
-                            <div className="p-1">
-                                {queryHistory.map((q, i) => (
-                                    <div
-                                        key={i}
-                                        className="flex items-center justify-between p-2 hover:bg-muted rounded-sm cursor-pointer group text-xs font-mono"
-                                        onClick={() => {
-                                            setTextQuery(q);
-                                            setMode("text");
-                                            setHistoryOpen(false);
-                                            onSearch(q);
-                                        }}
-                                    >
-                                        <div className="truncate flex-1 mr-2" title={q}>
-                                            {q}
-                                        </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                                            onClick={(e) => deleteFromHistory(e, q)}
-                                        >
-                                            <IconX className="h-3 w-3" />
-                                        </Button>
+                            <ScrollArea className="h-[300px]">
+                                {queryHistory.length === 0 ? (
+                                    <div className="p-4 text-center text-xs text-muted-foreground">
+                                        No saved queries yet
                                     </div>
-                                ))}
-                            </div>
-                        )}
-                    </ScrollArea>
-                </PopoverContent>
-            </Popover>
+                                ) : (
+                                    <div className="p-1">
+                                        {queryHistory.map((q, i) => (
+                                            <div
+                                                key={i}
+                                                className="flex items-center justify-between p-2 hover:bg-muted rounded-sm cursor-pointer group text-xs font-mono"
+                                                onClick={() => {
+                                                    setTextQuery(q);
+                                                    setHistoryOpen(false);
+                                                    onSearch(q);
+                                                }}
+                                            >
+                                                <div className="truncate flex-1 mr-2" title={q}>
+                                                    {q}
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                                                    onClick={(e) => deleteFromHistory(e, q)}
+                                                >
+                                                    <IconX className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </ScrollArea>
+                        </PopoverContent>
+                    </Popover>
+                </div>
+            </div>
         </div>
     );
 }
