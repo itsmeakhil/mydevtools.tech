@@ -327,7 +327,7 @@ export function DocumentView({
                                                 {key}
                                             </th>
                                         ))}
-                                    <th className="px-4 py-3 w-[100px] bg-muted/50 sticky right-0 z-20">Actions</th>
+                                    <th className="px-4 py-3 w-[100px] bg-muted/50 whitespace-nowrap font-medium">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -355,7 +355,7 @@ export function DocumentView({
                                                     )}
                                                 </td>
                                             ))}
-                                        <td className="px-4 py-3 align-top sticky right-0 bg-background group-hover:bg-muted/50 border-l z-10">
+                                        <td className="px-4 py-3 align-top">
                                             <div className="flex gap-1">
                                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEdit(doc)}>
                                                     <IconPencil className="h-3 w-3" />
