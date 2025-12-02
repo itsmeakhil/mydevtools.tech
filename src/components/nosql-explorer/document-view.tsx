@@ -240,7 +240,7 @@ export function DocumentView({
                 </div>
             </div>
 
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden min-h-0">
                 {loading ? (
                     <div className="flex items-center justify-center h-full text-muted-foreground">
                         Loading documents...
@@ -314,7 +314,7 @@ export function DocumentView({
                         </div>
                     </ScrollArea>
                 ) : (
-                    <ScrollArea className="h-full w-full max-w-full" horizontal>
+                    <div className="h-full w-full overflow-auto">
                         <table className="min-w-full w-max text-sm text-left relative">
                             <thead className="text-xs text-muted-foreground uppercase bg-muted/50 sticky top-0 z-10">
                                 <tr>
@@ -369,7 +369,7 @@ export function DocumentView({
                                 ))}
                             </tbody>
                         </table>
-                    </ScrollArea>
+                    </div>
                 )}
             </div>
 
