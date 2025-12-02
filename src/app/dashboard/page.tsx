@@ -24,6 +24,10 @@ interface ToolItem {
   hiddenOnMobile?: boolean;
 }
 
+interface FavoriteItem extends ToolItem {
+  id: string;
+}
+
 // Helper function to create a unique ID for each item
 const createItemId = (groupIndex: number, itemIndex: number, subIndex: number | null = null): string => {
   return subIndex !== null
