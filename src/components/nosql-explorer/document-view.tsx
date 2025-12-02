@@ -316,18 +316,18 @@ export function DocumentView({
                 ) : (
                     <div className="h-full w-full overflow-auto">
                         <table className="min-w-full w-max text-sm text-left relative">
-                            <thead className="text-xs text-muted-foreground uppercase bg-muted sticky top-0 z-10">
+                            <thead className="text-xs text-muted-foreground uppercase bg-muted">
                                 <tr>
-                                    <th className="px-4 py-3 w-[50px] whitespace-nowrap font-medium text-center sticky left-0 z-20 bg-muted">#</th>
+                                    <th className="px-4 py-3 w-[50px] whitespace-nowrap font-medium text-center sticky left-0 top-0 z-30 bg-muted">#</th>
                                     {Array.from(new Set(documents.flatMap(Object.keys)))
                                         .filter(key => key !== "_id")
                                         .reduce((acc, key) => [...acc, key], ["_id"])
                                         .map((key) => (
-                                            <th key={key} className="px-4 py-3 whitespace-nowrap font-medium">
+                                            <th key={key} className="px-4 py-3 whitespace-nowrap font-medium sticky top-0 z-20 bg-muted">
                                                 {key}
                                             </th>
                                         ))}
-                                    <th className="px-4 py-3 w-[100px] bg-muted whitespace-nowrap font-medium">Actions</th>
+                                    <th className="px-4 py-3 w-[100px] bg-muted whitespace-nowrap font-medium sticky top-0 z-20">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
