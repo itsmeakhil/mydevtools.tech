@@ -454,7 +454,7 @@ export default function NoSQLExplorerPage() {
                     </Sheet>
                 </div>
             )}
-            <div className="flex-1 flex flex-col overflow-hidden bg-background min-w-0 w-full max-w-full">
+            <div className="flex-1 flex flex-col overflow-hidden bg-background min-w-0">
                 <TabBar
                     tabs={tabs}
                     activeTabId={activeTabId}
@@ -462,7 +462,7 @@ export default function NoSQLExplorerPage() {
                     onTabClose={handleTabClose}
                     onCloseAll={handleCloseAllTabs}
                 />
-                <div className="flex-1 overflow-hidden relative">
+                <div className="flex-1 overflow-hidden relative min-h-0">
                     {activeTab ? (
                         <DocumentView
                             key={activeTab.id}

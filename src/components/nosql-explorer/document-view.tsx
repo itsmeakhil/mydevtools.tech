@@ -240,7 +240,7 @@ export function DocumentView({
                 </div>
             </div>
 
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden min-h-0">
                 {loading ? (
                     <div className="flex items-center justify-center h-full text-muted-foreground">
                         Loading documents...
@@ -314,7 +314,7 @@ export function DocumentView({
                         </div>
                     </ScrollArea>
                 ) : (
-                    <ScrollArea className="h-full w-full max-w-full" horizontal>
+                    <div className="h-full w-full overflow-auto">
                         <table className="min-w-full w-max text-sm text-left relative">
                             <thead className="text-xs text-muted-foreground uppercase bg-muted/50 sticky top-0 z-10">
                                 <tr>
@@ -327,7 +327,7 @@ export function DocumentView({
                                                 {key}
                                             </th>
                                         ))}
-                                    <th className="px-4 py-3 w-[100px] bg-muted/50 sticky right-0 z-20">Actions</th>
+                                    <th className="px-4 py-3 w-[100px] bg-muted/50 whitespace-nowrap font-medium">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -355,7 +355,7 @@ export function DocumentView({
                                                     )}
                                                 </td>
                                             ))}
-                                        <td className="px-4 py-3 align-top sticky right-0 bg-background group-hover:bg-muted/50 border-l z-10">
+                                        <td className="px-4 py-3 align-top">
                                             <div className="flex gap-1">
                                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEdit(doc)}>
                                                     <IconPencil className="h-3 w-3" />
@@ -369,7 +369,7 @@ export function DocumentView({
                                 ))}
                             </tbody>
                         </table>
-                    </ScrollArea>
+                    </div>
                 )}
             </div>
 

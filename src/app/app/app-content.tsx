@@ -25,14 +25,14 @@ export function AppContent({ children }: { children: React.ReactNode }) {
         </aside>
 
         <main
-          className={`flex-1 font-mono flex flex-col transition-all duration-300 ease-in-out pb-16 md:pb-0 ${state === 'collapsed' ? 'pl-0' : ''
+          className={`flex-1 font-mono flex flex-col transition-all duration-300 ease-in-out pb-16 md:pb-0 min-w-0 overflow-x-hidden ${state === 'collapsed' ? 'pl-0' : ''
             }`}
         >
           <div className="sticky top-0 z-20 bg-background">
             <NavBar />
           </div>
-          <div className="w-full h-full flex flex-col z-10">
-            <div className="w-full">
+          <div className="w-full h-full flex flex-col z-10 min-w-0 overflow-hidden">
+            <div className="w-full h-full min-w-0">
               {children}
             </div>
           </div>
