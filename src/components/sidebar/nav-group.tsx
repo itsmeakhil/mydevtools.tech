@@ -41,13 +41,24 @@ interface NavGroupProps {
   items: (NavLink | NavCollapsible)[];
   collapsible?: boolean;
   icon?: React.ElementType;
+  hiddenOnMobile?: boolean;
 }
 
 // Main NavGroup Component
-export function NavGroup({ title, items, collapsible, icon: Icon }: NavGroupProps) {
-  const { state } = useSidebar();
+export function NavGroup({ title, items, collapsible, icon: Icon, hiddenOnMobile }: NavGroupProps) {
+  const { state, isMobile } = useSidebar();
   const pathname = usePathname();
   const { user, loading } = useAuth(false); // Check auth state with loading
+
+  // Filter items based on mobile state
+  const visibleItems = isMobile
+    ? items.filter((item) => !item.hiddenOnMobile)
+    : items;
+
+  // If group is hidden on mobile or has no visible items, don't render
+  if (isMobile && (hiddenOnMobile || visibleItems.length === 0)) {
+    return null;
+  }
 
   // Use centralized requiresAuth function from tool-config
 
@@ -64,7 +75,7 @@ export function NavGroup({ title, items, collapsible, icon: Icon }: NavGroupProp
 
   const content = (
     <SidebarMenu>
-      {items.map((item) => {
+      {visibleItems.map((item) => {
         const key = `${item.title}-${item.url}`;
 
         if (!("items" in item)) {

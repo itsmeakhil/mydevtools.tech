@@ -81,20 +81,23 @@ export const sidebarData: SidebarData = {
           title: 'JSON Editor',
           url: '/app/json-formatter',
           description: 'Advanced JSON editor and formatter.',
-          icon: IconJson
+          icon: IconJson,
+          hiddenOnMobile: true
         },
 
         {
           title: 'API Client',
           url: '/app/api-client',
           icon: IconNetwork,
-          description: 'Test and debug HTTP requests.'
+          description: 'Test and debug HTTP requests.',
+          hiddenOnMobile: true
         },
         {
           title: 'NoSQL Explorer',
           url: '/app/nosql-explorer',
           icon: IconDatabase,
-          description: 'Explore MongoDB databases.'
+          description: 'Explore MongoDB databases.',
+          hiddenOnMobile: true
         },
 
       ],
@@ -102,6 +105,7 @@ export const sidebarData: SidebarData = {
     {
       title: 'Generators',
       collapsible: true,
+      hiddenOnMobile: true,
       icon: IconTool,
       items: [
         {
@@ -163,6 +167,7 @@ export const sidebarData: SidebarData = {
     {
       title: 'Converters',
       collapsible: true,
+      hiddenOnMobile: true,
       icon: IconArrowsExchange,
       items: [
         {
@@ -225,6 +230,7 @@ export const sidebarData: SidebarData = {
     {
       title: 'Developer',
       collapsible: true,
+      hiddenOnMobile: true,
       icon: IconCode,
       items: [
         {
@@ -268,6 +274,7 @@ export const sidebarData: SidebarData = {
     {
       title: 'Security',
       collapsible: true,
+      hiddenOnMobile: true,
       icon: IconShieldCode,
       items: [
         {
@@ -299,6 +306,7 @@ export const sidebarData: SidebarData = {
     {
       title: 'Text & Diff',
       collapsible: true,
+      hiddenOnMobile: true,
       icon: IconFileDescription,
       items: [
         {
@@ -330,6 +338,7 @@ export const sidebarData: SidebarData = {
     {
       title: 'Network',
       collapsible: true,
+      hiddenOnMobile: true,
       icon: IconNetwork,
       items: [
         {

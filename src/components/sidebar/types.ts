@@ -12,6 +12,7 @@ interface BaseNavItem {
   icon?: React.ElementType
   description?: string // ✅ Added description here
   customUI?: boolean;
+  hiddenOnMobile?: boolean;
 }
 
 type NavLink = BaseNavItem & {
@@ -31,6 +32,7 @@ interface NavGroup {
   items: NavItem[]
   collapsible?: boolean // ✅ Added collapsible property
   icon?: React.ElementType // ✅ Added icon property for group labels
+  hiddenOnMobile?: boolean;
 }
 
 interface SidebarData {
