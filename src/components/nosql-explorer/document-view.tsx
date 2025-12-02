@@ -316,9 +316,9 @@ export function DocumentView({
                 ) : (
                     <div className="h-full w-full overflow-auto">
                         <table className="min-w-full w-max text-sm text-left relative">
-                            <thead className="text-xs text-muted-foreground uppercase bg-muted/50 sticky top-0 z-10">
+                            <thead className="text-xs text-muted-foreground uppercase bg-muted sticky top-0 z-10">
                                 <tr>
-                                    <th className="px-4 py-3 w-[50px] whitespace-nowrap font-medium text-center sticky left-0 z-20 bg-muted/50">#</th>
+                                    <th className="px-4 py-3 w-[50px] whitespace-nowrap font-medium text-center sticky left-0 z-20 bg-muted">#</th>
                                     {Array.from(new Set(documents.flatMap(Object.keys)))
                                         .filter(key => key !== "_id")
                                         .reduce((acc, key) => [...acc, key], ["_id"])
@@ -327,7 +327,7 @@ export function DocumentView({
                                                 {key}
                                             </th>
                                         ))}
-                                    <th className="px-4 py-3 w-[100px] bg-muted/50 whitespace-nowrap font-medium">Actions</th>
+                                    <th className="px-4 py-3 w-[100px] bg-muted whitespace-nowrap font-medium">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
