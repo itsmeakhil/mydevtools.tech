@@ -196,43 +196,6 @@ export function DocumentView({
                         <IconRefresh className="h-4 w-4 mr-2" />
                         Refresh
                     </Button>
-                    <div className="flex items-center gap-2 border-l pl-2">
-                        <select
-                            className="h-8 bg-transparent border rounded px-2 text-xs"
-                            value={limit}
-                            onChange={(e) => onLimitChange(Number(e.target.value))}
-                            title="Items per page"
-                        >
-                            {[50, 100, 200, 500, 1000, 2000].map((val) => (
-                                <option key={val} value={val}>
-                                    {val}
-                                </option>
-                            ))}
-                        </select>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {page} / {Math.ceil(total / limit) || 1}
-                        </span>
-                        <div className="flex items-center border rounded-md overflow-hidden">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 rounded-none"
-                                onClick={() => onPageChange(page - 1)}
-                                disabled={page <= 1}
-                            >
-                                &lt;
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 rounded-none"
-                                onClick={() => onPageChange(page + 1)}
-                                disabled={page >= Math.ceil(total / limit)}
-                            >
-                                &gt;
-                            </Button>
-                        </div>
-                    </div>
                     <Button size="sm" onClick={openInsertDialog}>
                         <IconPlus className="h-4 w-4 mr-2" />
                         Insert Document
@@ -371,6 +334,55 @@ export function DocumentView({
                         </table>
                     </div>
                 )}
+            </div>
+
+            <div className="p-2 border-t flex items-center justify-between bg-muted/20">
+                <div className="text-xs text-muted-foreground">
+                    Total: {total} documents
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Rows per page:</span>
+                        <select
+                            className="h-7 bg-transparent border rounded px-2 text-xs"
+                            value={limit}
+                            onChange={(e) => onLimitChange(Number(e.target.value))}
+                            title="Items per page"
+                        >
+                            {[50, 100, 200, 500, 1000, 2000].map((val) => (
+                                <option key={val} value={val}>
+                                    {val}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            Page {page} of {Math.ceil(total / limit) || 1}
+                        </span>
+                        <div className="flex items-center border rounded-md overflow-hidden bg-background">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 rounded-none"
+                                onClick={() => onPageChange(page - 1)}
+                                disabled={page <= 1}
+                            >
+                                &lt;
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 rounded-none"
+                                onClick={() => onPageChange(page + 1)}
+                                disabled={page >= Math.ceil(total / limit)}
+                            >
+                                &gt;
+                            </Button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
