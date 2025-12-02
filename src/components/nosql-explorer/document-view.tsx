@@ -5,7 +5,7 @@ import { Document } from "./types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { IconPlus, IconRefresh, IconSearch, IconTrash, IconPencil, IconCode, IconTable, IconCopy, IconAlignLeft, IconMinimize, IconJson, IconBinaryTree, IconHistory, IconX } from "@tabler/icons-react";
+import { IconPlus, IconRefresh, IconSearch, IconTrash, IconPencil, IconCode, IconTable, IconCopy, IconAlignLeft, IconMinimize, IconJson, IconBinaryTree, IconHistory, IconX, IconDownload } from "@tabler/icons-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -14,8 +14,12 @@ import CodeEditor from "@/components/ui/code-editor";
 import { JsonTree } from "./json-tree";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ExportDialog } from "./export-dialog";
 import { QueryBuilder } from "./query-builder";
 import { cn } from "@/lib/utils";
+
+
+
 
 interface DocumentViewProps {
     connectionName: string;
@@ -57,6 +61,7 @@ export function DocumentView({
     const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isInsertDialogOpen, setIsInsertDialogOpen] = useState(false);
+    const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
     const [editorContent, setEditorContent] = useState("");
     const [viewValue, setViewValue] = useState<string>("");
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -254,6 +259,10 @@ export function DocumentView({
                         <Button size="sm" onClick={openInsertDialog} className="h-9">
                             <IconPlus className="h-4 w-4 mr-1.5" />
                             Insert
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setIsExportDialogOpen(true)} className="h-9">
+                            <IconDownload className="h-4 w-4 mr-1.5" />
+                            Export
                         </Button>
                     </div>
                 </div>
@@ -470,6 +479,12 @@ export function DocumentView({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            <ExportDialog
+                open={isExportDialogOpen}
+                onOpenChange={setIsExportDialogOpen}
+                documents={documents}
+                fields={fields}
+            />
         </div >
     );
 }

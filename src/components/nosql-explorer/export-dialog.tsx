@@ -1,0 +1,152 @@
+"use client";
+
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { IconDownload } from "@tabler/icons-react";
+import * as XLSX from "xlsx";
+import { toast } from "sonner";
+
+interface ExportDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    documents: any[];
+    fields: string[];
+}
+
+export function ExportDialog({ open, onOpenChange, documents, fields }: ExportDialogProps) {
+    const [selectedFields, setSelectedFields] = useState<string[]>(fields);
+    const [format, setFormat] = useState<"xlsx" | "csv">("xlsx");
+
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedFields(fields);
+        } else {
+            setSelectedFields([]);
+        }
+    };
+
+    const handleFieldToggle = (field: string, checked: boolean) => {
+        if (checked) {
+            setSelectedFields([...selectedFields, field]);
+        } else {
+            setSelectedFields(selectedFields.filter(f => f !== field));
+        }
+    };
+
+    const handleExport = () => {
+        if (selectedFields.length === 0) {
+            toast.error("Please select at least one field to export");
+            return;
+        }
+
+        try {
+            // Filter data to include only selected fields
+            const dataToExport = documents.map(doc => {
+                const newDoc: any = {};
+                selectedFields.forEach(field => {
+                    // Handle nested objects/arrays by stringifying them for better CSV/Excel compatibility
+                    const value = doc[field];
+                    if (typeof value === 'object' && value !== null) {
+                        newDoc[field] = JSON.stringify(value);
+                    } else {
+                        newDoc[field] = value;
+                    }
+                });
+                return newDoc;
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+            const filename = `export_${timestamp}.${format}`;
+
+            if (format === "csv") {
+                XLSX.writeFile(workbook, filename, { bookType: "csv" });
+            } else {
+                XLSX.writeFile(workbook, filename);
+            }
+
+            toast.success(`Successfully exported to ${filename}`);
+            onOpenChange(false);
+        } catch (error) {
+            console.error("Export failed", error);
+            toast.error("Failed to export data");
+        }
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Export Data</DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-4 py-2">
+                    <div className="space-y-2">
+                        <Label className="text-sm font-medium">Export Format</Label>
+                        <RadioGroup value={format} onValueChange={(v) => setFormat(v as "xlsx" | "csv")} className="flex gap-4">
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="xlsx" id="xlsx" />
+                                <Label htmlFor="xlsx">Excel (XLSX)</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="csv" id="csv" />
+                                <Label htmlFor="csv">CSV</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <Label className="text-sm font-medium">Select Fields</Label>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="select-all"
+                                    checked={selectedFields.length === fields.length}
+                                    onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+                                />
+                                <Label htmlFor="select-all" className="text-xs text-muted-foreground font-normal">Select All</Label>
+                            </div>
+                        </div>
+                        <div className="border rounded-md p-2">
+                            <ScrollArea className="h-[200px]">
+                                <div className="space-y-2">
+                                    {fields.map(field => (
+                                        <div key={field} className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id={`field-${field}`}
+                                                checked={selectedFields.includes(field)}
+                                                onCheckedChange={(checked) => handleFieldToggle(field, checked as boolean)}
+                                            />
+                                            <Label htmlFor={`field-${field}`} className="text-sm font-normal cursor-pointer">
+                                                {field}
+                                            </Label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </ScrollArea>
+                        </div>
+                        <div className="text-xs text-muted-foreground text-right">
+                            {selectedFields.length} fields selected
+                        </div>
+                    </div>
+                </div>
+
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button onClick={handleExport}>
+                        <IconDownload className="h-4 w-4 mr-2" />
+                        Export
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
