@@ -51,7 +51,7 @@ export function DocumentView({
     onPageChange,
     onLimitChange,
 }: DocumentViewProps) {
-    const [viewMode, setViewMode] = useState<"table" | "json" | "tree">("json");
+    const [viewMode, setViewMode] = useState<"table" | "json" | "tree">("table");
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
