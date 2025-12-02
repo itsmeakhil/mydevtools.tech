@@ -9,6 +9,7 @@ import { requiresAuth } from '@/lib/tool-config';
 import { useFavoriteTool } from '@/hooks/use-favorite-tool';
 import { useToolUsage } from '@/hooks/use-tool-usage';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { Input } from "@/components/ui/input";
 
 // Define types for our items
@@ -20,10 +21,7 @@ interface ToolItem {
   description?: string;
   items?: ToolItem[];
   customUI?: boolean;
-}
-
-interface FavoriteItem extends ToolItem {
-  id: string;
+  hiddenOnMobile?: boolean;
 }
 
 // Helper function to create a unique ID for each item
@@ -68,16 +66,21 @@ const DashboardPage: React.FC = () => {
   const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
   const [recentlyUsedItems, setRecentlyUsedItems] = useState<FavoriteItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   // Update favoriteItems whenever favorites change
   useEffect(() => {
     const items = favorites.map(id => {
       const item = findItemById(id);
       return item ? { id, ...item } : null;
-    }).filter((item): item is FavoriteItem => item !== null);
+    }).filter((item): item is FavoriteItem => {
+      if (!item) return false;
+      if (isMobile && item.hiddenOnMobile) return false;
+      return true;
+    });
 
     setFavoriteItems(items);
-  }, [favorites]);
+  }, [favorites, isMobile]);
 
   // Get recently used tools
   useEffect(() => {
@@ -85,18 +88,35 @@ const DashboardPage: React.FC = () => {
     const items = recent.map(usage => {
       const item = findItemById(usage.toolId);
       return item ? { id: usage.toolId, ...item } : null;
-    }).filter((item): item is FavoriteItem => item !== null);
+    }).filter((item): item is FavoriteItem => {
+      if (!item) return false;
+      if (isMobile && item.hiddenOnMobile) return false;
+      return true;
+    });
 
     setRecentlyUsedItems(items);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isMobile]);
 
   // Filter tools based on search query
   const filteredGroups = useMemo(() => {
-    if (!searchQuery.trim()) return sidebarData.navGroups;
+    // First filter by mobile visibility if needed
+    const mobileFilteredGroups = sidebarData.navGroups.map(group => {
+      if (isMobile && group.hiddenOnMobile) return null;
+
+      const visibleItems = group.items.filter(item => !(isMobile && item.hiddenOnMobile));
+      if (visibleItems.length === 0) return null;
+
+      return {
+        ...group,
+        items: visibleItems
+      };
+    }).filter((group): group is typeof sidebarData.navGroups[0] => group !== null);
+
+    if (!searchQuery.trim()) return mobileFilteredGroups;
 
     const query = searchQuery.toLowerCase();
-    return sidebarData.navGroups.map(group => {
+    return mobileFilteredGroups.map(group => {
       const filteredItems = group.items.reduce<any[]>((acc, item, itemIndex) => {
         // Check top-level item
         const matchesItem =
@@ -130,7 +150,7 @@ const DashboardPage: React.FC = () => {
         items: filteredItems
       };
     }).filter(group => group.items.length > 0);
-  }, [searchQuery]);
+  }, [searchQuery, isMobile]);
 
   if (loading) {
     return (
