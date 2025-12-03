@@ -10,7 +10,6 @@ import { ImportCurlDialog } from "./import-curl-dialog"
 import { parseCurlCommand } from "@/utils/curl-parser"
 import { CollectionsSidebar } from "./collections/collections-sidebar"
 import { useCollections } from "./collections/use-collections"
-import { SaveRequestDialog } from "./collections/save-request-dialog"
 import { useEnvironments } from "./use-environments"
 import { EnvironmentManager } from "./environment-manager"
 import { CodeGenerator } from "./code-generator"
@@ -288,11 +287,6 @@ export function ApiClient() {
                         deleteEnvironment={deleteEnvironment}
                     />
                     <CodeGenerator request={activeTab} />
-                    <SaveRequestDialog
-                        collections={collections}
-                        onSave={handleSaveRequest}
-                        defaultName={activeTab.name !== "New Request" ? activeTab.name : ""}
-                    />
                     <ImportCurlDialog onImport={handleImportCurl} />
                 </div>
                 <Card className="overflow-hidden flex-1 flex flex-col">
@@ -311,6 +305,9 @@ export function ApiClient() {
                             setUrl={(url) => updateActiveTab({ url, name: url || "New Request" })}
                             onSend={handleSend}
                             isLoading={activeTab.isLoading}
+                            collections={collections}
+                            onSave={handleSaveRequest}
+                            saveDefaultName={activeTab.name !== "New Request" ? activeTab.name : ""}
                         />
                         <RequestTabs
                             params={activeTab.params}
@@ -335,6 +332,6 @@ export function ApiClient() {
                 onCreateCollection={createCollection}
                 onRenameCollection={renameCollection}
             />
-        </div>
+        </div >
     )
 }

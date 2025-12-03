@@ -11,7 +11,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { RequestMethod } from "./types"
+import { RequestMethod, Collection } from "./types"
+import { SaveRequestDialog } from "./collections/save-request-dialog"
 
 interface RequestPanelProps {
     method: RequestMethod
@@ -20,6 +21,9 @@ interface RequestPanelProps {
     setUrl: (url: string) => void
     onSend: () => void
     isLoading: boolean
+    collections: Collection[]
+    onSave: (parentId: string, name: string) => void
+    saveDefaultName?: string
 }
 
 const METHODS: RequestMethod[] = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
@@ -31,6 +35,9 @@ export function RequestPanel({
     setUrl,
     onSend,
     isLoading,
+    collections,
+    onSave,
+    saveDefaultName,
 }: RequestPanelProps) {
     return (
         <div className="flex gap-2">
@@ -67,6 +74,11 @@ export function RequestPanel({
                     </>
                 )}
             </Button>
+            <SaveRequestDialog
+                collections={collections}
+                onSave={onSave}
+                defaultName={saveDefaultName}
+            />
         </div>
     )
 }
