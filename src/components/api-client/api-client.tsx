@@ -45,7 +45,7 @@ export function ApiClient() {
     const [tabs, setTabs] = React.useState<ApiRequestState[]>([createNewTab()])
     const [activeTabId, setActiveTabId] = React.useState<string>(tabs[0].id)
     const [isInitialized, setIsInitialized] = React.useState(false)
-    const { collections, addFolder, deleteItem, saveRequest, toggleFolder, createCollection } = useCollections()
+    const { collections, addFolder, deleteItem, saveRequest, toggleFolder, createCollection, renameCollection } = useCollections()
     const {
         environments,
         activeEnvId,
@@ -333,6 +333,7 @@ export function ApiClient() {
                 onToggle={toggleFolder}
                 onLoadRequest={handleLoadRequest}
                 onCreateCollection={createCollection}
+                onRenameCollection={renameCollection}
             />
         </div>
     )

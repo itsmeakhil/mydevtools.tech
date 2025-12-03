@@ -42,8 +42,8 @@ export function useCollections() {
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const cols = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
+                ...doc.data(),
+                id: doc.id
             })) as Collection[]
 
             // Sort by name or createdAt if available? 
@@ -138,7 +138,12 @@ export function useCollections() {
 
         if (!targetCollection) return
 
-        const updatedItems = addItemToParent(targetCollection.items, parentId, newFolder)
+        let updatedItems: (CollectionFolder | CollectionRequest)[]
+        if (targetCollection.id === parentId) {
+            updatedItems = [...targetCollection.items, newFolder]
+        } else {
+            updatedItems = addItemToParent(targetCollection.items, parentId, newFolder)
+        }
 
         try {
             const colRef = doc(db, "api_collections", targetCollection.id)
@@ -318,6 +323,21 @@ export function useCollections() {
         }
     }
 
+    const renameCollection = async (collectionId: string, name: string) => {
+        if (!user) return
+        try {
+            const colRef = doc(db, "api_collections", collectionId)
+            await updateDoc(colRef, {
+                name,
+                updatedAt: serverTimestamp()
+            })
+            toast.success("Collection renamed")
+        } catch (e) {
+            console.error("Error renaming collection", e)
+            toast.error("Failed to rename collection")
+        }
+    }
+
     return {
         collections,
         addFolder,
@@ -325,6 +345,7 @@ export function useCollections() {
         saveRequest,
         toggleFolder,
         createCollection,
+        renameCollection,
         isLoading
     }
 }

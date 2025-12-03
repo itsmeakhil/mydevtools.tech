@@ -57,8 +57,8 @@ export function useEnvironments() {
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const envs = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
+                ...doc.data(),
+                id: doc.id
             })) as Environment[]
 
             // Sort by name

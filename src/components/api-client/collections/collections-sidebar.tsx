@@ -19,6 +19,14 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+import { MoreHorizontal, Trash2, Pencil } from "lucide-react"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
 interface CollectionsSidebarProps {
     collections: Collection[]
     onAddFolder: (parentId: string, name: string) => void
@@ -26,6 +34,7 @@ interface CollectionsSidebarProps {
     onToggle: (id: string) => void
     onLoadRequest: (request: CollectionRequest) => void
     onCreateCollection: (name: string) => void
+    onRenameCollection: (id: string, name: string) => void
 }
 
 export function CollectionsSidebar({
@@ -35,13 +44,17 @@ export function CollectionsSidebar({
     onToggle,
     onLoadRequest,
     onCreateCollection,
+    onRenameCollection,
 }: CollectionsSidebarProps) {
     const [collapsed, setCollapsed] = React.useState(false)
     const [newFolderDialogOpen, setNewFolderDialogOpen] = React.useState(false)
     const [newCollectionDialogOpen, setNewCollectionDialogOpen] = React.useState(false)
+    const [renameCollectionDialogOpen, setRenameCollectionDialogOpen] = React.useState(false)
     const [newFolderName, setNewFolderName] = React.useState("")
     const [newCollectionName, setNewCollectionName] = React.useState("")
+    const [renameCollectionName, setRenameCollectionName] = React.useState("")
     const [targetParentId, setTargetParentId] = React.useState<string | null>(null)
+    const [targetCollectionId, setTargetCollectionId] = React.useState<string | null>(null)
 
     const handleAddFolder = () => {
         if (newFolderName && targetParentId) {
@@ -60,9 +73,24 @@ export function CollectionsSidebar({
         }
     }
 
+    const handleRenameCollection = () => {
+        if (renameCollectionName && targetCollectionId) {
+            onRenameCollection(targetCollectionId, renameCollectionName)
+            setRenameCollectionDialogOpen(false)
+            setRenameCollectionName("")
+            setTargetCollectionId(null)
+        }
+    }
+
     const openAddFolderDialog = (parentId: string) => {
         setTargetParentId(parentId)
         setNewFolderDialogOpen(true)
+    }
+
+    const openRenameCollectionDialog = (collection: Collection) => {
+        setTargetCollectionId(collection.id)
+        setRenameCollectionName(collection.name)
+        setRenameCollectionDialogOpen(true)
     }
 
     return (
@@ -93,17 +121,43 @@ export function CollectionsSidebar({
                         {collections.map((collection) => (
                             <div key={collection.id} className="mb-4">
                                 <div className="flex items-center justify-between px-2 py-1 mb-1 group">
-                                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider truncate flex-1 mr-2">
                                         {collection.name}
                                     </span>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-5 w-5 opacity-0 group-hover:opacity-100"
-                                        onClick={() => openAddFolderDialog(collection.id)}
-                                    >
-                                        <FolderPlus className="h-3 w-3" />
-                                    </Button>
+                                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-5 w-5"
+                                            onClick={() => openAddFolderDialog(collection.id)}
+                                        >
+                                            <FolderPlus className="h-3 w-3" />
+                                        </Button>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-5 w-5"
+                                                >
+                                                    <MoreHorizontal className="h-3 w-3" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => openRenameCollectionDialog(collection)}>
+                                                    <Pencil className="h-4 w-4 mr-2" />
+                                                    Rename
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="text-destructive focus:text-destructive"
+                                                    onClick={() => onDelete(collection.id)}
+                                                >
+                                                    <Trash2 className="h-4 w-4 mr-2" />
+                                                    Delete
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
                                 </div>
                                 {collection.items.map((item) => (
                                     <CollectionItem
@@ -172,6 +226,30 @@ export function CollectionsSidebar({
                     </div>
                     <DialogFooter>
                         <Button onClick={handleCreateCollection}>Create Collection</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={renameCollectionDialogOpen} onOpenChange={setRenameCollectionDialogOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Rename Collection</DialogTitle>
+                        <DialogDescription>
+                            Enter a new name for the collection.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="rename-collection-name">Collection Name</Label>
+                            <Input
+                                id="rename-collection-name"
+                                value={renameCollectionName}
+                                onChange={(e) => setRenameCollectionName(e.target.value)}
+                                placeholder="Collection Name"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handleRenameCollection}>Rename</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
