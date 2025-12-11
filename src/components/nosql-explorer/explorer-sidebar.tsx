@@ -357,8 +357,9 @@ export function ExplorerSidebar({
                 <div className="flex items-center justify-between">
                     <span className="font-semibold text-sm">Explorer</span>
                     <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onAddConnection} title="Add Connection">
-                            <IconPlus className="h-4 w-4" />
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1" onClick={onAddConnection} title="Manage Connections">
+                            <IconPlus className="h-3 w-3" />
+                            <span>Manage</span>
                         </Button>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={loadConnections} title="Refresh">
                             <IconRefresh className="h-4 w-4" />
