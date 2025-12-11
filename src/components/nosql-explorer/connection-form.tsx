@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { IconDatabase, IconTrash, IconHistory, IconPencil, IconPlugConnected, IconCheck, IconX, IconBrandMongodb, IconServer } from "@tabler/icons-react";
+import { IconDatabase, IconTrash, IconHistory, IconPencil, IconPlugConnected, IconCheck, IconX, IconBrandMongodb, IconServer, IconCopy } from "@tabler/icons-react";
 import { SavedConnection } from "./types";
 import { getConnections, deleteConnection, saveConnection, updateConnectionDetails } from "./connection-service";
 import useAuth from "@/utils/useAuth";
@@ -123,8 +123,8 @@ export function ConnectionForm({ onConnect, loading, error }: ConnectionFormProp
     };
 
     return (
-        <div className="flex flex-col md:flex-row items-start justify-center h-full gap-6 p-1">
-            <div className="w-full md:w-1/2 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-1 max-h-[70vh] overflow-hidden">
+            <div className="space-y-6 overflow-y-auto">
                 <div className="space-y-2">
                     <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
                         <IconBrandMongodb className="w-8 h-8 text-green-500" />
@@ -200,8 +200,8 @@ export function ConnectionForm({ onConnect, loading, error }: ConnectionFormProp
                 </Card>
             </div>
 
-            <div className="w-full md:w-1/2 h-full min-h-[400px] flex flex-col space-y-4">
-                <div className="flex items-center justify-between">
+            <div className="flex flex-col space-y-4 min-h-0">
+                <div className="flex items-center justify-between flex-shrink-0">
                     <div className="flex items-center gap-2 font-semibold">
                         <IconHistory className="w-5 h-5 text-primary" />
                         Saved Connections
@@ -211,9 +211,9 @@ export function ConnectionForm({ onConnect, loading, error }: ConnectionFormProp
                     </span>
                 </div>
 
-                <Card className="flex-1 flex flex-col border-muted/50 shadow-inner bg-muted/10">
+                <Card className="flex-1 flex flex-col border-muted/50 shadow-inner bg-muted/10 min-h-0 overflow-hidden">
                     <CardContent className="flex-1 overflow-hidden p-0">
-                        <ScrollArea className="h-[450px] pr-4 p-4">
+                        <ScrollArea className="h-full max-h-[350px] pr-4 p-4">
                             {savedConnections.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-12 gap-2">
                                     <IconServer className="w-10 h-10 opacity-20" />
@@ -237,8 +237,23 @@ export function ConnectionForm({ onConnect, loading, error }: ConnectionFormProp
                                                     <div className={cn("w-2 h-2 rounded-full", editingId === conn.id ? "bg-primary" : "bg-green-500/50")} />
                                                     {conn.name}
                                                 </div>
-                                                <div className="text-xs text-muted-foreground truncate font-mono bg-muted/50 p-1.5 rounded-md w-fit max-w-full border border-border/50">
-                                                    {conn.connectionString.replace(/:([^@]+)@/, ":****@")}
+                                                <div className="flex items-center gap-1.5 max-w-full">
+                                                    <div className="text-xs text-muted-foreground font-mono bg-muted/50 p-1.5 rounded-md border border-border/50 truncate max-w-[200px]" title={conn.connectionString.replace(/:([^@]+)@/, ":****@")}>
+                                                        {conn.connectionString.replace(/:([^@]+)@/, ":****@")}
+                                                    </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6 flex-shrink-0 hover:text-primary"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigator.clipboard.writeText(conn.connectionString);
+                                                            toast.success("Connection string copied!");
+                                                        }}
+                                                        title="Copy connection string"
+                                                    >
+                                                        <IconCopy className="h-3 w-3" />
+                                                    </Button>
                                                 </div>
                                                 <div className="text-[10px] text-muted-foreground pt-1 flex items-center gap-1">
                                                     <IconHistory className="w-3 h-3" />
