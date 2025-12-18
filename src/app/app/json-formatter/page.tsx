@@ -22,8 +22,8 @@ import {
   Wrench,
   Trash2,
   Maximize2,
-  Zap,
-  ZapOff
+  AlertTriangle,
+  Eye
 } from 'lucide-react';
 import { EditorMode, EditorState } from '@/components/json-editor/types';
 import TextEditor from '@/components/json-editor/TextEditor';
@@ -324,7 +324,6 @@ function EditorPanel({
 }: EditorPanelProps) {
   const [copied, setCopied] = useState(false);
   const [repairDialogOpen, setRepairDialogOpen] = useState(false);
-  const [autoRepair, setAutoRepair] = useState(false);
 
   const handleCopy = async () => {
     try {
@@ -444,28 +443,6 @@ function EditorPanel({
                 <TooltipTrigger asChild>
                   <Button
                     size="sm"
-                    variant={state.error ? 'default' : 'ghost'}
-                    onClick={() => {
-                      if (state.error && autoRepair) {
-                        handleAutoRepair();
-                      } else {
-                        setRepairDialogOpen(true);
-                      }
-                    }}
-                    className={`h-8 w-9 p-0 ${state.error ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}
-                    disabled={!state.error && !state.content}
-                    aria-label="Repair JSON"
-                  >
-                    <Wrench className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{state.error ? 'Click to Auto-Repair' : 'Repair'}</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
                     variant="ghost"
                     onClick={onClear}
                     className="h-8 w-9 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
@@ -478,21 +455,6 @@ function EditorPanel({
               </Tooltip>
 
               <div className="w-px h-5 bg-border mx-1" />
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant={autoRepair ? 'default' : 'ghost'}
-                    onClick={() => setAutoRepair(!autoRepair)}
-                    className={`h-8 w-9 p-0 ${autoRepair ? 'bg-green-500 hover:bg-green-600 text-white' : ''}`}
-                    aria-label={autoRepair ? "Disable Auto-Repair" : "Enable Auto-Repair"}
-                  >
-                    {autoRepair ? <Zap className="h-4 w-4" /> : <ZapOff className="h-4 w-4" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{autoRepair ? 'Auto-Repair: ON' : 'Auto-Repair: OFF'}</TooltipContent>
-              </Tooltip>
 
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -526,11 +488,6 @@ function EditorPanel({
                 <span className="font-medium">Valid JSON</span>
               </div>
             )}
-            {state.error && (
-              <div className="flex items-center gap-1.5 text-destructive bg-destructive/10 px-2.5 py-1 rounded-full max-w-[200px] truncate" title={state.error}>
-                <span className="font-medium">Error: {state.error.split(' ').slice(0, 4).join(' ')}...</span>
-              </div>
-            )}
           </div>
         </div>
 
@@ -558,6 +515,42 @@ function EditorPanel({
             />
           )}
         </div>
+
+        {/* Error Footer Bar */}
+        {state.error && (
+          <div className="bg-amber-500 dark:bg-amber-600 text-white px-4 py-2.5 flex items-center justify-between rounded-b-lg -mx-3 -mb-3 mt-2">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+              <span className="text-sm font-medium truncate">{state.error}</span>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={handleAutoRepair}
+                className="h-7 px-3 text-xs bg-white/20 hover:bg-white/30 text-white border-0"
+              >
+                <Wrench className="h-3.5 w-3.5 mr-1.5" />
+                Auto repair
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  // Extract line and column from error for scrolling
+                  const match = state.error?.match(/line (\d+)/i);
+                  if (match) {
+                    // Could implement scroll to error line here
+                  }
+                }}
+                className="h-7 px-3 text-xs bg-white/20 hover:bg-white/30 text-white border-0"
+              >
+                <Eye className="h-3.5 w-3.5 mr-1.5" />
+                Show me
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
 
       <RepairDialog
