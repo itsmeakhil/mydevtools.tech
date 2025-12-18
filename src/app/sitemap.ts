@@ -26,7 +26,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ]
 
     // Tool pages - automatically include all tools
-    const toolPages = [].map((tool) => ({
+    const toolPages = [
+        'to-do',
+        'notes',
+        'password-manager',
+        'json-formatter',
+        'api-client',
+        'nosql-explorer',
+    ].map((tool) => ({
         url: `${baseUrl}/app/${tool}`,
         lastModified: new Date(),
         changeFrequency: 'monthly' as const,
