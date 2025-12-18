@@ -1,51 +1,30 @@
 import {
   IconChecklist,
-  IconUnlink,
-  IconAppWindow,
   IconArrowsExchange,
   IconTool,
-  IconPhotoVideo,
-  IconBlocks,
   IconNetwork,
-  // IconBook2,
   IconAlignJustified,
   IconShieldCode,
   IconHash,
   IconQrcode,
-  IconGitFork,
   IconPasswordMobilePhone,
-  IconCodeAsterisk,
-  IconRegex,
   IconRouter,
   IconBlockquote,
-  IconAlignBoxBottomCenter,
-  IconMoodSmile,
   IconStrikethrough,
   IconNumber123,
   IconFileDescription,
-  IconLayersDifference,
   IconFileCode,
   IconFileTypeHtml,
-  IconForms,
-  IconDevices,
   IconTimeDuration30,
   IconKey,
-  IconBraces,
-  IconWorldWww,
-  IconPasswordFingerprint,
-  IconElevator,
-  IconElevatorFilled,
-  IconFileTypeXml,
-  IconFileTypeCsv,
   IconJson,
-  IconToml,
-  IconSquareRoundedLetterY,
   IconCode,
   IconClock,
   IconPalette,
   IconLock,
   IconNotes,
   IconDatabase,
+  IconElevator,
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
@@ -227,113 +206,8 @@ export const sidebarData: SidebarData = {
         },
       ],
     },
-    {
-      title: 'Developer',
-      collapsible: true,
-      hiddenOnMobile: true,
-      icon: IconCode,
-      items: [
-        {
-          title: 'Git Commands',
-          url: '/app/git-commands',
-          description: 'Git command reference.',
-          icon: IconGitFork
-        },
-        {
-          title: 'Chmod Calc',
-          url: '/app/chmod-calculator',
-          description: 'Calculate chmod permissions.',
-          icon: IconCodeAsterisk
-        },
-        {
-          title: 'Regex',
-          url: '/app/regex-cheatsheet',
-          description: 'Regular expression cheatsheet.',
-          icon: IconRegex
-        },
-        {
-          title: 'HTTP Status',
-          url: '/app/http-status-codes',
-          description: 'HTTP status code reference.',
-          icon: IconWorldWww
-        },
-        {
-          title: 'Device Info',
-          url: '/app/device-info',
-          description: 'View your device information.',
-          icon: IconDevices
-        },
-        {
-          title: 'Markdown',
-          url: '/app/markdown-preview',
-          description: 'Markdown editor and preview.',
-          icon: IconFileDescription
-        },
-      ],
-    },
-    {
-      title: 'Security',
-      collapsible: true,
-      hiddenOnMobile: true,
-      icon: IconShieldCode,
-      items: [
-        {
-          title: 'Encryption',
-          url: '/app/encryption',
-          description: 'Encrypt text and generate hashes.',
-          icon: IconShieldCode
-        },
-        {
-          title: 'Hash Gen',
-          url: '/app/hash-generator',
-          description: 'Generate hashes.',
-          icon: IconHash
-        },
-        {
-          title: 'JWT Parser',
-          url: '/app/jwt-parser',
-          description: 'Parse JSON Web Tokens.',
-          icon: IconKey
-        },
-        {
-          title: 'Obfuscator',
-          url: '/app/string-obfuscator',
-          description: 'Obfuscate strings.',
-          icon: IconStrikethrough
-        },
-      ],
-    },
-    {
-      title: 'Text & Diff',
-      collapsible: true,
-      hiddenOnMobile: true,
-      icon: IconFileDescription,
-      items: [
-        {
-          title: 'Text Stats',
-          url: '/app/text-statistics',
-          description: 'Word count and text analysis.',
-          icon: IconAlignBoxBottomCenter
-        },
-        {
-          title: 'Emoji Picker',
-          url: '/app/emoji-picker',
-          description: 'Pick and copy emojis.',
-          icon: IconMoodSmile
-        },
-        {
-          title: 'Text Diff',
-          url: '/app/text-diff',
-          description: 'Compare text differences.',
-          icon: IconLayersDifference
-        },
-        {
-          title: 'JSON Diff',
-          url: '/app/json-diff',
-          description: 'Compare JSON objects.',
-          icon: IconBraces
-        },
-      ],
-    },
+
+
+
   ],
 }

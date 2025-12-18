@@ -18,11 +18,7 @@ export const toolsMetadata: Record<string, {
         description: 'Generate UUIDs (v1, v4, v5) instantly. Create unique identifiers for databases, APIs, and applications. Free UUID generator tool online.',
         keywords: ['uuid generator', 'guid generator', 'unique identifier', 'uuid v4', 'random uuid']
     },
-    'hash-generator': {
-        title: 'Hash Generator - MD5, SHA-256, SHA-512',
-        description: 'Generate cryptographic hashes online. Supports MD5, SHA-1, SHA-256, SHA-512, and more. Free hash generator for developers.',
-        keywords: ['hash generator', 'md5', 'sha256', 'sha512', 'checksum', 'cryptographic hash']
-    },
+
     'base64-encoder': {
         title: 'Base64 Encoder/Decoder - Encode and Decode Text',
         description: 'Encode and decode Base64 strings online. Convert text, images, or files to Base64 format. Free Base64 encoder/decoder tool.',
@@ -53,31 +49,10 @@ export const toolsMetadata: Record<string, {
         description: 'Convert Unix timestamps to human-readable dates. Free timestamp converter with timezone support.',
         keywords: ['timestamp converter', 'unix timestamp', 'epoch time', 'date converter', 'time converter']
     },
-    'jwt-parser': {
-        title: 'JWT Parser - Decode and Verify JWT Tokens',
-        description: 'Parse, decode, and verify JWT tokens online. Debug JSON Web Tokens with our free JWT parser tool.',
-        keywords: ['jwt parser', 'jwt decoder', 'json web token', 'jwt validator', 'decode jwt']
-    },
-    'markdown-preview': {
-        title: 'Markdown Preview - Live Markdown Editor',
-        description: 'Edit and preview Markdown in real-time. Free online Markdown editor with live preview and syntax highlighting.',
-        keywords: ['markdown editor', 'markdown preview', 'md editor', 'markdown viewer', 'live markdown']
-    },
-    'regex-cheatsheet': {
-        title: 'Regex Cheatsheet - Regular Expression Reference',
-        description: 'Comprehensive regular expression cheatsheet with examples. Quick reference for regex patterns and syntax.',
-        keywords: ['regex cheatsheet', 'regular expression', 'regex reference', 'regex guide', 'regex patterns']
-    },
-    'text-diff': {
-        title: 'Text Diff - Compare Text Online',
-        description: 'Compare and find differences between two texts. Free text diff tool with side-by-side comparison.',
-        keywords: ['text diff', 'compare text', 'text comparison', 'diff checker', 'text difference']
-    },
-    'json-diff': {
-        title: 'JSON Diff - Compare JSON Objects',
-        description: 'Compare JSON objects and find differences. Free JSON diff tool with visual comparison.',
-        keywords: ['json diff', 'compare json', 'json comparison', 'json difference', 'diff json']
-    },
+
+
+
+
     'lorem-ipsum-generator': {
         title: 'Lorem Ipsum Generator - Placeholder Text Generator',
         description: 'Generate Lorem Ipsum placeholder text. Free Lorem Ipsum generator for designers and developers.',
@@ -98,11 +73,7 @@ export const toolsMetadata: Record<string, {
         description: 'Generate cron expressions with visual editor. Free crontab generator for scheduling tasks.',
         keywords: ['crontab generator', 'cron expression', 'cron schedule', 'cron generator', 'crontab syntax']
     },
-    'encryption': {
-        title: 'Text Encryption - Encrypt and Decrypt Text',
-        description: 'Encrypt and decrypt text using AES encryption. Secure text encryption tool for developers.',
-        keywords: ['text encryption', 'aes encryption', 'encrypt text', 'decrypt text', 'data encryption']
-    },
+
     'otp-generator': {
         title: 'OTP Generator - One-Time Password Generator',
         description: 'Generate One-Time Passwords (OTP) for testing authentication. Free OTP generator tool.',
@@ -124,51 +95,23 @@ export const toolsMetadata: Record<string, {
         description: 'Manage tasks and to-do lists efficiently. Free to-do list app for developers.',
         keywords: ['to do list', 'task manager', 'todo app', 'task list', 'productivity']
     },
-    'device-info': {
-        title: 'Device Info - Browser and Device Information',
-        description: 'View detailed information about your browser and device. Free device info tool.',
-        keywords: ['device info', 'browser info', 'user agent', 'screen resolution', 'device detection']
-    },
-    'chmod-calculator': {
-        title: 'Chmod Calculator - Unix File Permissions',
-        description: 'Calculate Unix file permissions (chmod). Convert between numeric and symbolic notation.',
-        keywords: ['chmod calculator', 'file permissions', 'unix permissions', 'chmod converter', 'linux permissions']
-    },
-    'git-commands': {
-        title: 'Git Commands Cheatsheet - Git Reference Guide',
-        description: 'Comprehensive Git commands reference with examples. Quick guide for Git version control.',
-        keywords: ['git commands', 'git cheatsheet', 'git reference', 'git guide', 'version control']
-    },
-    'http-status-codes': {
-        title: 'HTTP Status Codes - Complete Reference Guide',
-        description: 'Complete reference of HTTP status codes with descriptions and usage examples.',
-        keywords: ['http status codes', 'http codes', 'status code reference', 'http errors', 'response codes']
-    },
-    'string-obfuscator': {
-        title: 'String Obfuscator - Obfuscate Text Online',
-        description: 'Obfuscate strings and text for code protection. Free string obfuscation tool.',
-        keywords: ['string obfuscator', 'text obfuscation', 'obfuscate code', 'encode text', 'hide text']
-    },
+
+
+
+
+
     'numeronym-generator': {
         title: 'Numeronym Generator - Create Numeronyms',
         description: 'Generate numeronyms from words (e.g., i18n, k8s). Free numeronym generator tool.',
         keywords: ['numeronym generator', 'i18n', 'k8s', 'abbreviation', 'word shortener']
     },
-    'emoji-picker': {
-        title: 'Emoji Picker - Copy Emojis Easily',
-        description: 'Browse and copy emojis with one click. Complete emoji picker with categories.',
-        keywords: ['emoji picker', 'emoji list', 'copy emoji', 'emoji search', 'emoticons']
-    },
+
     'wifi-qr-generator': {
         title: 'WiFi QR Generator - Share WiFi with QR Code',
         description: 'Generate QR codes for WiFi networks. Share WiFi credentials easily with QR codes.',
         keywords: ['wifi qr', 'wifi qr code', 'share wifi', 'wifi password qr', 'qr wifi']
     },
-    'text-statistics': {
-        title: 'Text Statistics - Count Words, Characters, Lines',
-        description: 'Analyze text with detailed statistics. Count words, characters, lines, and more.',
-        keywords: ['text statistics', 'word counter', 'character counter', 'text analysis', 'line counter']
-    },
+
     'ASCII-art-text-generator': {
         title: 'ASCII Art Generator - Convert Text to ASCII Art',
         description: 'Generate ASCII art from text. Create cool ASCII text art with different fonts.',
