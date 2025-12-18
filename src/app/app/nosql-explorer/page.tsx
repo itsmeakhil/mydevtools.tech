@@ -52,6 +52,7 @@ export default function NoSQLExplorerPage() {
         isOpen: false,
         documentId: null,
     });
+    const [isCloseAllDialogOpen, setIsCloseAllDialogOpen] = useState(false);
 
     // Check for connections
     useEffect(() => {
@@ -200,10 +201,13 @@ export default function NoSQLExplorerPage() {
 
     const handleCloseAllTabs = () => {
         if (tabs.length === 0) return;
-        if (confirm("Are you sure you want to close all tabs?")) {
-            setTabs([]);
-            setActiveTabId(null);
-        }
+        setIsCloseAllDialogOpen(true);
+    };
+
+    const confirmCloseAll = () => {
+        setTabs([]);
+        setActiveTabId(null);
+        setIsCloseAllDialogOpen(false);
     };
 
     const activeTab = tabs.find((t) => t.id === activeTabId);
@@ -589,6 +593,23 @@ export default function NoSQLExplorerPage() {
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                             Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={isCloseAllDialogOpen} onOpenChange={setIsCloseAllDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Close all tabs?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to close all tabs? Any unsaved changes in query filters will be lost.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmCloseAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Close All
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

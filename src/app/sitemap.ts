@@ -26,30 +26,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ]
 
     // Tool pages - automatically include all tools
-    const toolPages = [
-        'ASCII-art-text-generator',
-        'base64-encoder',
-        'color-converter',
-        'converters',
-        'crontab-generator',
-        'html-entity-converter',
-        'ipv4-address-converter',
-        'json-formatter',
-        'lorem-ipsum-generator',
-        'notes',
-        'numeronym-generator',
-        'otp-generator',
-        'password-generator',
-        'password-manager',
-        'qr-code-generator',
-        'string-case-converter',
-        'timestamp-converter',
-        'to-do',
-        'url-encoder',
-
-        'uuid-generator',
-        'wifi-qr-generator',
-    ].map((tool) => ({
+    const toolPages = [].map((tool) => ({
         url: `${baseUrl}/app/${tool}`,
         lastModified: new Date(),
         changeFrequency: 'monthly' as const,
