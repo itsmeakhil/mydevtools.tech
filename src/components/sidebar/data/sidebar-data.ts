@@ -335,31 +335,5 @@ export const sidebarData: SidebarData = {
         },
       ],
     },
-    {
-      title: 'Network',
-      collapsible: true,
-      hiddenOnMobile: true,
-      icon: IconNetwork,
-      items: [
-        {
-          title: 'Subnet Calc',
-          url: '/app/ipv4-subnet-calculator',
-          description: 'IPv4 subnet calculator.',
-          icon: IconRouter
-        },
-        {
-          title: 'Range Expander',
-          url: '/app/ipv4-range-expander',
-          description: 'Expand IPv4 ranges.',
-          icon: IconRouter
-        },
-        {
-          title: 'URL Parser',
-          url: '/app/url-parser',
-          description: 'Parse URL components.',
-          icon: IconForms
-        },
-      ],
-    },
   ],
 }

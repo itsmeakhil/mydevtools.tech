@@ -129,21 +129,6 @@ export const toolsMetadata: Record<string, {
         description: 'View detailed information about your browser and device. Free device info tool.',
         keywords: ['device info', 'browser info', 'user agent', 'screen resolution', 'device detection']
     },
-    'ipv4-subnet-calculator': {
-        title: 'IPv4 Subnet Calculator - Calculate Network Subnets',
-        description: 'Calculate IPv4 subnets, network ranges, and CIDR notation. Free subnet calculator tool.',
-        keywords: ['subnet calculator', 'ipv4 calculator', 'cidr calculator', 'network calculator', 'ip subnet']
-    },
-    'ipv4-address-converter': {
-        title: 'IPv4 Address Converter - Convert IP Addresses',
-        description: 'Convert IPv4 addresses between decimal, binary, and hexadecimal formats.',
-        keywords: ['ip converter', 'ipv4 converter', 'ip address converter', 'decimal to binary', 'ip format']
-    },
-    'ipv4-range-expander': {
-        title: 'IPv4 Range Expander - Expand IP Ranges',
-        description: 'Expand IPv4 CIDR ranges into individual IP addresses. Free IP range expander tool.',
-        keywords: ['ip range expander', 'cidr expander', 'ip list', 'subnet expander', 'ip addresses']
-    },
     'chmod-calculator': {
         title: 'Chmod Calculator - Unix File Permissions',
         description: 'Calculate Unix file permissions (chmod). Convert between numeric and symbolic notation.',
@@ -188,11 +173,6 @@ export const toolsMetadata: Record<string, {
         title: 'ASCII Art Generator - Convert Text to ASCII Art',
         description: 'Generate ASCII art from text. Create cool ASCII text art with different fonts.',
         keywords: ['ascii art', 'ascii generator', 'text art', 'ascii text', 'ascii converter']
-    },
-    'url-parser': {
-        title: 'URL Parser - Parse and Analyze URLs',
-        description: 'Parse URLs and extract components (protocol, host, path, params). Free URL parser tool.',
-        keywords: ['url parser', 'parse url', 'url analyzer', 'url decoder', 'url components']
     },
     'converters': {
         title: 'Converters - Unit and Format Converters',
