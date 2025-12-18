@@ -351,12 +351,12 @@ function EditorPanel({
 
   return (
     <Card className={`border shadow-lg flex flex-col ${fullHeight ? 'h-full' : ''} overflow-hidden`}>
-      <CardContent className="p-3 flex flex-col flex-1 overflow-hidden">
+      <CardContent className="pt-5 px-4 pb-3 flex flex-col flex-1 overflow-hidden">
         {/* Toolbar */}
         <div className="flex items-center justify-between gap-3 mb-3">
           {/* Mode Tabs */}
           <Tabs value={state.mode} onValueChange={(v) => onModeChange(v as EditorMode)}>
-            <TabsList className="h-10 p-1 bg-muted/60">
+            <TabsList className="h-12 px-1.5 py-2 bg-muted/60">
               <TabsTrigger value="text" className="h-8 px-3.5 text-sm gap-1.5 data-[state=active]:shadow-md transition-all">
                 <Code className="h-4 w-4" />
                 <span className="hidden sm:inline">Text</span>
