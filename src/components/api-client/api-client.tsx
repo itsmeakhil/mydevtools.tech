@@ -200,7 +200,7 @@ export function ApiClient() {
             }
 
             // Prepare body
-            let bodyContent: BodyInit | null = null
+            let bodyContent: string | null = null
             if (activeTab.method !== "GET" && activeTab.method !== "HEAD" && activeTab.body.type !== "none") {
                 if (activeTab.body.type === "json") {
                     try {
@@ -222,37 +222,40 @@ export function ApiClient() {
                 }
             }
 
-            const res = await fetch(urlObj.toString(), {
-                method: activeTab.method,
-                headers: headersObj,
-                body: bodyContent,
+            // Send via Proxy
+            const res = await fetch("/api/proxy", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    url: urlObj.toString(),
+                    method: activeTab.method,
+                    headers: headersObj,
+                    body: bodyContent,
+                }),
             })
 
-            const endTime = performance.now()
-            const time = Math.round(endTime - startTime)
-            const size = Number(res.headers.get("content-length")) || 0
+            const proxyData = await res.json()
 
-            const responseHeaders: Record<string, string> = {}
-            res.headers.forEach((value, key) => {
-                responseHeaders[key] = value
-            })
-
-            const text = await res.text()
-            let formattedBody = text
+            let formattedBody = proxyData.body
             try {
-                formattedBody = JSON.stringify(JSON.parse(text), null, 2)
+                if (formattedBody) {
+                    formattedBody = JSON.stringify(JSON.parse(formattedBody), null, 2)
+                }
             } catch {
                 // Not JSON, keep as text
             }
 
             updateActiveTab({
                 response: {
-                    status: res.status,
-                    statusText: res.statusText,
-                    headers: responseHeaders,
+                    status: proxyData.status,
+                    statusText: proxyData.statusText,
+                    headers: proxyData.headers,
                     body: formattedBody,
-                    time,
-                    size: size || text.length,
+                    time: proxyData.time,
+                    size: proxyData.size,
+                    error: proxyData.error,
                 },
                 isLoading: false,
             })
