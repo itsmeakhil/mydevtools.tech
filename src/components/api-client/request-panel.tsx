@@ -24,6 +24,7 @@ interface RequestPanelProps {
     collections: Collection[]
     onSave: (parentId: string, name: string) => void
     saveDefaultName?: string
+    onPaste: (text: string) => void
 }
 
 const METHODS: RequestMethod[] = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
@@ -38,6 +39,7 @@ export function RequestPanel({
     collections,
     onSave,
     saveDefaultName,
+    onPaste,
 }: RequestPanelProps) {
     return (
         <div className="flex gap-2">
@@ -61,6 +63,13 @@ export function RequestPanel({
                 onKeyDown={(e) => {
                     if (e.key === "Enter") {
                         onSend()
+                    }
+                }}
+                onPaste={(e) => {
+                    const text = e.clipboardData.getData("text")
+                    if (text.trim().startsWith("curl ")) {
+                        e.preventDefault()
+                        onPaste(text)
                     }
                 }}
             />

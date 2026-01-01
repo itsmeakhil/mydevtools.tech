@@ -6,13 +6,34 @@ export function generateCode(request: ApiRequestState, language: CodeLanguage): 
     const { method, url, headers, params, body, auth } = request
 
     // Construct full URL with params
-    const urlObj = new URL(url || "http://localhost")
-    params.forEach(p => {
-        if (p.active && p.key) {
-            urlObj.searchParams.append(p.key, p.value)
+    let fullUrl = url
+    try {
+        let urlObj: URL
+        try {
+            urlObj = new URL(url || "http://localhost")
+        } catch {
+            // Try prepending scheme if missing
+            urlObj = new URL("http://" + url)
         }
-    })
-    const fullUrl = urlObj.toString()
+
+        params.forEach(p => {
+            if (p.active && p.key) {
+                urlObj.searchParams.append(p.key, p.value)
+            }
+        })
+        fullUrl = urlObj.toString()
+    } catch {
+        // Fallback for when URL cannot be parsed (e.g. contains variables in protocol)
+        // Manual construction
+        const queryString = params
+            .filter(p => p.active && p.key)
+            .map(p => `${p.key}=${p.value}`)
+            .join("&")
+
+        if (queryString) {
+            fullUrl += (fullUrl.includes("?") ? "&" : "?") + queryString
+        }
+    }
 
     // Construct headers
     const headerObj: Record<string, string> = {}

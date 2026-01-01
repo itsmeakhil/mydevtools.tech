@@ -277,6 +277,20 @@ export function ApiClient() {
         }
     }
 
+    const handleCurlPaste = (curl: string) => {
+        try {
+            const parsed = parseCurlCommand(curl)
+            updateActiveTab({
+                ...parsed,
+                name: parsed.url || activeTab.name,
+            })
+            toast.success("cURL pasted and parsed successfully")
+        } catch (error) {
+            console.error(error)
+            toast.error("Failed to parse cURL command")
+        }
+    }
+
     return (
         <div className="flex h-[calc(100vh-4rem)] gap-4">
             <div className="flex-1 flex flex-col gap-6 min-w-0">
@@ -311,6 +325,7 @@ export function ApiClient() {
                             collections={collections}
                             onSave={handleSaveRequest}
                             saveDefaultName={activeTab.name !== "New Request" ? activeTab.name : ""}
+                            onPaste={handleCurlPaste}
                         />
                         <RequestTabs
                             params={activeTab.params}
