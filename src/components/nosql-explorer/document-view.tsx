@@ -205,14 +205,14 @@ export function DocumentView({
 
                     <div className="flex items-center gap-1 border rounded-md bg-background shadow-sm h-7 px-1 flex-shrink-0">
                         <select
-                            className="h-full bg-transparent text-[10px] font-mono text-muted-foreground border-none outline-none cursor-pointer max-w-[60px] md:max-w-none"
+                            className="h-full bg-transparent text-[10px] font-mono text-muted-foreground border-none outline-none cursor-pointer"
                             value={limit}
                             onChange={(e) => onLimitChange(Number(e.target.value))}
                             title="Items per page"
                         >
                             {[50, 100, 200, 500, 1000, 2000].map((val) => (
                                 <option key={val} value={val}>
-                                    {val} <span className="hidden md:inline">/ page</span>
+                                    {val} / page
                                 </option>
                             ))}
                         </select>

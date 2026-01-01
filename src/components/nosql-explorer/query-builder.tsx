@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { IconSearch, IconHistory, IconX, IconPlus, IconTrash, IconCheck, IconFilter } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { db, auth } from "@/database/firebase";
-import { collection, query as firestoreQuery, where, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, getDocs, setDoc, QuerySnapshot, DocumentData } from "firebase/firestore";
+import { collection, query as firestoreQuery, where, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, getDocs, QuerySnapshot, DocumentData } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
+import Editor from "@monaco-editor/react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { IconSearch, IconHistory, IconX, IconPlus, IconTrash, IconCheck, IconFilter, IconMaximize, IconBraces, IconPlayerPlay } from "@tabler/icons-react";
 
 interface QueryBuilderProps {
     query: string;
@@ -47,6 +48,7 @@ export function QueryBuilder({
     const [builderOpen, setBuilderOpen] = useState(false);
     const [user] = useAuthState(auth);
     const [historyDocId, setHistoryDocId] = useState<string | null>(null);
+    const [advancedOpen, setAdvancedOpen] = useState(false);
 
     // Sync internal state with props
     useEffect(() => {
@@ -291,12 +293,22 @@ export function QueryBuilder({
                     value={textQuery}
                     onChange={(e) => setTextQuery(e.target.value)}
                     placeholder='Query (e.g. { "status": "active" })'
-                    className="pl-9 pr-[120px] font-mono text-xs h-9 bg-background"
+                    className="pl-9 pr-[150px] font-mono text-xs h-9 bg-background"
                     onKeyDown={(e) => {
                         if (e.key === "Enter") handleTextSearch();
                     }}
                 />
                 <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        onClick={() => setAdvancedOpen(true)}
+                        title="Open Advanced Editor"
+                    >
+                        <IconMaximize className="h-4 w-4" />
+                    </Button>
+                    <div className="w-[1px] h-4 bg-border mx-1" />
                     <Popover open={builderOpen} onOpenChange={setBuilderOpen}>
                         <PopoverTrigger asChild>
                             <Button
@@ -445,6 +457,61 @@ export function QueryBuilder({
                     </Popover>
                 </div>
             </div>
+
+            <Dialog open={advancedOpen} onOpenChange={setAdvancedOpen}>
+                <DialogContent className="max-w-4xl w-[90vw] h-[80vh] flex flex-col p-0 gap-0">
+                    <div className="flex items-center justify-between px-4 py-2 border-b">
+                        <DialogTitle className="text-sm font-medium">Advanced Query Editor</DialogTitle>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => {
+                                    try {
+                                        const formatted = JSON.stringify(JSON.parse(textQuery), null, 2);
+                                        setTextQuery(formatted);
+                                        toast.success("Formatted JSON");
+                                    } catch (e) {
+                                        toast.error("Invalid JSON");
+                                    }
+                                }}
+                            >
+                                <IconBraces className="h-3 w-3 mr-1" />
+                                Format
+                            </Button>
+                            <Button
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => {
+                                    handleTextSearch();
+                                    setAdvancedOpen(false);
+                                }}
+                            >
+                                <IconPlayerPlay className="h-3 w-3 mr-1" />
+                                Run Query
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="flex-1 min-h-0 bg-[#1e1e1e]">
+                        <Editor
+                            height="100%"
+                            defaultLanguage="json"
+                            theme="vs-dark"
+                            value={textQuery}
+                            onChange={(value) => setTextQuery(value || "")}
+                            options={{
+                                minimap: { enabled: false },
+                                fontSize: 13,
+                                lineNumbers: "on",
+                                scrollBeyondLastLine: false,
+                                automaticLayout: true,
+                                tabSize: 2,
+                            }}
+                        />
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
