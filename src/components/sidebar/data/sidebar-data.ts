@@ -36,13 +36,7 @@ export const sidebarData: SidebarData = {
           icon: IconLock,
           description: 'Securely store and manage your passwords.'
         },
-        {
-          title: 'JSON Editor',
-          url: '/app/json-formatter',
-          description: 'Advanced JSON editor and formatter.',
-          icon: IconJson,
-          hiddenOnMobile: true
-        },
+
 
         {
           title: 'API Client',
