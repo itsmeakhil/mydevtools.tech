@@ -459,10 +459,55 @@ export function QueryBuilder({
             </div>
 
             <Dialog open={advancedOpen} onOpenChange={setAdvancedOpen}>
-                <DialogContent className="max-w-4xl w-[90vw] h-[80vh] flex flex-col p-0 gap-0">
+                <DialogContent className="max-w-4xl w-[90vw] h-[80vh] flex flex-col p-0 gap-0 [&>button]:hidden">
                     <div className="flex items-center justify-between px-4 py-2 border-b">
                         <DialogTitle className="text-sm font-medium">Advanced Query Editor</DialogTitle>
                         <div className="flex items-center gap-2">
+                            <Select
+                                onValueChange={(val) => {
+                                    if (val === "lookup") {
+                                        setTextQuery(`[
+  {
+    "$lookup": {
+      "from": "other_collection",
+      "localField": "local_field",
+      "foreignField": "foreign_field",
+      "as": "joined_data"
+    }
+  }
+]`);
+                                    } else if (val === "group") {
+                                        setTextQuery(`[
+  {
+    "$group": {
+      "_id": "$field_to_group_by",
+      "count": { "$sum": 1 }
+    }
+  }
+]`);
+                                    } else if (val === "match") {
+                                        setTextQuery(`[
+  {
+    "$match": {
+      "status": "active"
+    }
+  }
+]`);
+                                    } else if (val === "empty_agg") {
+                                        setTextQuery(`[]`);
+                                    }
+                                }}
+                            >
+                                <SelectTrigger className="h-7 text-xs w-[130px]">
+                                    <SelectValue placeholder="Templates" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="empty_agg">Empty Aggregation</SelectItem>
+                                    <SelectItem value="match">$match (Filter)</SelectItem>
+                                    <SelectItem value="lookup">$lookup (Join)</SelectItem>
+                                    <SelectItem value="group">$group (Count/Sum)</SelectItem>
+                                </SelectContent>
+                            </Select>
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -490,6 +535,14 @@ export function QueryBuilder({
                             >
                                 <IconPlayerPlay className="h-3 w-3 mr-1" />
                                 Run Query
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0"
+                                onClick={() => setAdvancedOpen(false)}
+                            >
+                                <IconX className="h-4 w-4" />
                             </Button>
                         </div>
                     </div>

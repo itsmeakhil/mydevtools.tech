@@ -25,6 +25,8 @@ export async function GET(request: Request) {
         const collection = db.collection(collectionName);
 
         let query: any = {};
+        let isAggregation = false;
+
         try {
             query = JSON.parse(queryStr);
 
@@ -45,13 +47,32 @@ export async function GET(request: Request) {
             };
 
             query = convertObjectIds(query);
+            isAggregation = Array.isArray(query);
         } catch (e) {
             // Invalid JSON query, ignore or handle
             console.error("Invalid JSON query", e);
         }
 
-        const documents = await collection.find(query).skip(skip).limit(limit).toArray();
-        const total = await collection.countDocuments(query);
+        let documents;
+        let total = 0;
+
+        if (isAggregation) {
+            // Aggregation Pipeline
+            const countPipeline = [...query, { $count: "total" }];
+            const countResult = await collection.aggregate(countPipeline).toArray();
+            total = countResult.length > 0 ? countResult[0].total : 0;
+
+            const paginationPipeline = [
+                ...query,
+                { $skip: skip },
+                { $limit: limit }
+            ];
+            documents = await collection.aggregate(paginationPipeline).toArray();
+        } else {
+            // Standard Find
+            documents = await collection.find(query).skip(skip).limit(limit).toArray();
+            total = await collection.countDocuments(query);
+        }
 
         await client.close();
 
