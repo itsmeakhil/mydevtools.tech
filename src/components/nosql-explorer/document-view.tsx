@@ -140,8 +140,8 @@ export function DocumentView({
 
     return (
         <div className="flex flex-col h-full">
-            <div className="h-14 border-b flex items-center justify-between px-4 gap-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="flex-1 max-w-2xl">
+            <div className="min-h-14 border-b flex flex-col md:flex-row items-center justify-between px-4 py-2 md:py-0 gap-2 md:gap-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <div className="w-full md:flex-1 md:max-w-2xl">
                     <QueryBuilder
                         query={searchQuery}
                         onSearch={(q: string) => {
@@ -155,19 +155,19 @@ export function DocumentView({
                     />
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center bg-muted/50 p-1 rounded-lg border">
+                <div className="flex w-full md:w-auto items-center justify-between md:justify-end gap-2 md:gap-4 overflow-x-auto no-scrollbar">
+                    <div className="flex items-center bg-muted/50 p-1 rounded-lg border flex-shrink-0">
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button
                                         variant={viewMode === "table" ? "secondary" : "ghost"}
                                         size="sm"
-                                        className={cn("h-7 px-3 text-xs", viewMode === "table" && "bg-background shadow-sm")}
+                                        className={cn("h-7 px-2 md:px-3 text-xs", viewMode === "table" && "bg-background shadow-sm")}
                                         onClick={() => setViewMode("table")}
                                     >
-                                        <IconTable className="h-3.5 w-3.5 mr-1.5" />
-                                        Table
+                                        <IconTable className="h-3.5 w-3.5 md:mr-1.5" />
+                                        <span className="hidden md:inline">Table</span>
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>Table View</TooltipContent>
@@ -177,11 +177,11 @@ export function DocumentView({
                                     <Button
                                         variant={viewMode === "json" ? "secondary" : "ghost"}
                                         size="sm"
-                                        className={cn("h-7 px-3 text-xs", viewMode === "json" && "bg-background shadow-sm")}
+                                        className={cn("h-7 px-2 md:px-3 text-xs", viewMode === "json" && "bg-background shadow-sm")}
                                         onClick={() => setViewMode("json")}
                                     >
-                                        <IconJson className="h-3.5 w-3.5 mr-1.5" />
-                                        JSON
+                                        <IconJson className="h-3.5 w-3.5 md:mr-1.5" />
+                                        <span className="hidden md:inline">JSON</span>
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>JSON View</TooltipContent>
@@ -191,11 +191,11 @@ export function DocumentView({
                                     <Button
                                         variant={viewMode === "tree" ? "secondary" : "ghost"}
                                         size="sm"
-                                        className={cn("h-7 px-3 text-xs", viewMode === "tree" && "bg-background shadow-sm")}
+                                        className={cn("h-7 px-2 md:px-3 text-xs", viewMode === "tree" && "bg-background shadow-sm")}
                                         onClick={() => setViewMode("tree")}
                                     >
-                                        <IconBinaryTree className="h-3.5 w-3.5 mr-1.5" />
-                                        Tree
+                                        <IconBinaryTree className="h-3.5 w-3.5 md:mr-1.5" />
+                                        <span className="hidden md:inline">Tree</span>
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>Tree View</TooltipContent>
@@ -203,16 +203,16 @@ export function DocumentView({
                         </TooltipProvider>
                     </div>
 
-                    <div className="flex items-center gap-1 border rounded-md bg-background shadow-sm h-7 px-1">
+                    <div className="flex items-center gap-1 border rounded-md bg-background shadow-sm h-7 px-1 flex-shrink-0">
                         <select
-                            className="h-full bg-transparent text-[10px] font-mono text-muted-foreground border-none outline-none cursor-pointer"
+                            className="h-full bg-transparent text-[10px] font-mono text-muted-foreground border-none outline-none cursor-pointer max-w-[60px] md:max-w-none"
                             value={limit}
                             onChange={(e) => onLimitChange(Number(e.target.value))}
                             title="Items per page"
                         >
                             {[50, 100, 200, 500, 1000, 2000].map((val) => (
                                 <option key={val} value={val}>
-                                    {val} / page
+                                    {val} <span className="hidden md:inline">/ page</span>
                                 </option>
                             ))}
                         </select>
@@ -227,7 +227,7 @@ export function DocumentView({
                         >
                             <span className="text-xs">&lt;</span>
                         </Button>
-                        <span className="text-[10px] font-mono text-muted-foreground px-1 min-w-[60px] text-center">
+                        <span className="text-[10px] font-mono text-muted-foreground px-1 min-w-[30px] md:min-w-[60px] text-center">
                             {page} / {Math.ceil(total / limit) || 1}
                         </span>
                         <Button
@@ -242,9 +242,9 @@ export function DocumentView({
                         </Button>
                     </div>
 
-                    <div className="h-4 w-[1px] bg-border" />
+                    <div className="h-4 w-[1px] bg-border hidden md:block" />
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0 ml-auto md:ml-0">
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -256,13 +256,13 @@ export function DocumentView({
                             </Tooltip>
                         </TooltipProvider>
 
-                        <Button size="sm" onClick={openInsertDialog} className="h-9">
-                            <IconPlus className="h-4 w-4 mr-1.5" />
-                            Insert
+                        <Button size="sm" onClick={openInsertDialog} className="h-9 px-2 md:px-4">
+                            <IconPlus className="h-4 w-4 md:mr-1.5" />
+                            <span className="hidden md:inline">Insert</span>
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => setIsExportDialogOpen(true)} className="h-9">
-                            <IconDownload className="h-4 w-4 mr-1.5" />
-                            Export
+                        <Button size="sm" variant="outline" onClick={() => setIsExportDialogOpen(true)} className="h-9 px-2 md:px-4">
+                            <IconDownload className="h-4 w-4 md:mr-1.5" />
+                            <span className="hidden md:inline">Export</span>
                         </Button>
                     </div>
                 </div>

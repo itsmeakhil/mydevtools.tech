@@ -357,11 +357,17 @@ export function ExplorerSidebar({
                 <div className="flex items-center justify-between">
                     <span className="font-semibold text-sm">Explorer</span>
                     <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1" onClick={onAddConnection} title="Manage Connections">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 md:h-6 px-2 text-xs gap-1"
+                            onClick={onAddConnection}
+                            title="Manage Connections"
+                        >
                             <IconPlus className="h-3 w-3" />
                             <span>Manage</span>
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={loadConnections} title="Refresh">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 md:h-6 md:w-6" onClick={loadConnections} title="Refresh">
                             <IconRefresh className="h-4 w-4" />
                         </Button>
                     </div>
@@ -372,7 +378,7 @@ export function ExplorerSidebar({
                         placeholder="Search..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="h-8 pl-7 text-xs"
+                        className="h-9 pl-7 text-xs"
                     />
                 </div>
             </div>
@@ -385,13 +391,13 @@ export function ExplorerSidebar({
                     ) : (
                         filteredConnections.map((node, index) => (
                             <div key={node.connection.id}>
-                                <div className="flex items-center group">
+                                <div className="flex items-center group touch-none">
                                     {editingConnectionId === node.connection.id ? (
                                         <div className="flex items-center gap-1 px-2 py-1 w-full">
                                             <Input
                                                 value={editName}
                                                 onChange={(e) => setEditName(e.target.value)}
-                                                className="h-7 text-xs"
+                                                className="h-8 text-xs"
                                                 autoFocus
                                                 onClick={(e) => e.stopPropagation()}
                                                 onKeyDown={(e) => {
@@ -399,11 +405,11 @@ export function ExplorerSidebar({
                                                     if (e.key === "Escape") cancelEditing();
                                                 }}
                                             />
-                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-green-500" onClick={(e) => saveEditing(e, node.connection)}>
-                                                <IconCheck className="h-3 w-3" />
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-green-500" onClick={(e) => saveEditing(e, node.connection)}>
+                                                <IconCheck className="h-4 w-4" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500" onClick={cancelEditing}>
-                                                <IconX className="h-3 w-3" />
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={cancelEditing}>
+                                                <IconX className="h-4 w-4" />
                                             </Button>
                                         </div>
                                     ) : (
@@ -413,7 +419,7 @@ export function ExplorerSidebar({
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        className="w-full justify-start gap-2 px-2 font-normal hover:bg-muted/50 relative"
+                                                        className="w-full justify-start gap-2 px-2 font-normal hover:bg-muted/50 relative h-9 md:h-8"
                                                         onClick={() => toggleConnection(index)}
                                                     >
                                                         {node.isExpanded ? (
@@ -422,13 +428,13 @@ export function ExplorerSidebar({
                                                             <IconChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                                                         )}
                                                         <IconServer className="h-4 w-4 text-purple-500 shrink-0" />
-                                                        <span className="truncate flex-1 text-left">{node.connection.name}</span>
+                                                        <span className="truncate flex-1 text-left text-sm">{node.connection.name}</span>
 
                                                         <div
-                                                            className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-1 bg-background/80 rounded-sm p-0.5"
+                                                            className="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity absolute right-1 bg-background/80 rounded-sm p-1"
                                                             onClick={(e) => startEditing(e, node.connection)}
                                                         >
-                                                            <IconPencil className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                                                            <IconPencil className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
                                                         </div>
                                                     </Button>
                                                 </TooltipTrigger>
@@ -443,11 +449,11 @@ export function ExplorerSidebar({
                                 {node.isExpanded && (
                                     <div className="ml-4 border-l pl-2 mt-1 space-y-1">
                                         {node.isLoading ? (
-                                            <div className="text-xs text-muted-foreground px-2">Connecting...</div>
+                                            <div className="text-xs text-muted-foreground px-2 py-1">Connecting...</div>
                                         ) : node.error ? (
-                                            <div className="text-xs text-destructive px-2">{node.error}</div>
+                                            <div className="text-xs text-destructive px-2 py-1">{node.error}</div>
                                         ) : node.databases.length === 0 ? (
-                                            <div className="text-xs text-muted-foreground px-2">No databases</div>
+                                            <div className="text-xs text-muted-foreground px-2 py-1">No databases</div>
                                         ) : (
                                             node.databases
                                                 .filter(db => {
@@ -463,7 +469,7 @@ export function ExplorerSidebar({
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                className="flex-1 justify-start gap-2 px-2 font-normal h-7 text-xs"
+                                                                className="flex-1 justify-start gap-2 px-2 font-normal h-9 md:h-8 text-xs"
                                                                 onClick={() => toggleDatabase(index, db.name)}
                                                             >
                                                                 {node.expandedDbs.has(db.name) ? (
@@ -477,8 +483,8 @@ export function ExplorerSidebar({
 
                                                             <DropdownMenu>
                                                                 <DropdownMenuTrigger asChild>
-                                                                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/db:opacity-100 transition-opacity">
-                                                                        <IconDotsVertical className="h-3 w-3" />
+                                                                    <Button variant="ghost" size="icon" className="h-8 w-8 md:h-6 md:w-6 opacity-100 md:opacity-0 group-hover/db:opacity-100 transition-opacity">
+                                                                        <IconDotsVertical className="h-3.5 w-3.5" />
                                                                     </Button>
                                                                 </DropdownMenuTrigger>
                                                                 <DropdownMenuContent align="end">
@@ -510,9 +516,9 @@ export function ExplorerSidebar({
                                                         {node.expandedDbs.has(db.name) && (
                                                             <div className="ml-4 border-l pl-2 mt-1 space-y-1">
                                                                 {!node.dbCollections[db.name] ? (
-                                                                    <div className="text-xs text-muted-foreground px-2">Loading...</div>
+                                                                    <div className="text-xs text-muted-foreground px-2 py-1">Loading...</div>
                                                                 ) : node.dbCollections[db.name].length === 0 ? (
-                                                                    <div className="text-xs text-muted-foreground px-2">No collections</div>
+                                                                    <div className="text-xs text-muted-foreground px-2 py-1">No collections</div>
                                                                 ) : (
                                                                     node.dbCollections[db.name]
                                                                         .filter(col => {
@@ -527,7 +533,7 @@ export function ExplorerSidebar({
                                                                                 <Button
                                                                                     variant="ghost"
                                                                                     size="sm"
-                                                                                    className="flex-1 justify-start gap-2 px-2 font-normal h-7 text-xs"
+                                                                                    className="flex-1 justify-start gap-2 px-2 font-normal h-9 md:h-8 text-xs"
                                                                                     onClick={() => onSelectCollection(node.connection, db.name, col.name)}
                                                                                 >
                                                                                     <IconFolder className="h-3 w-3 text-yellow-500 shrink-0" />
@@ -535,8 +541,8 @@ export function ExplorerSidebar({
                                                                                 </Button>
                                                                                 <DropdownMenu>
                                                                                     <DropdownMenuTrigger asChild>
-                                                                                        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/col:opacity-100 transition-opacity">
-                                                                                            <IconDotsVertical className="h-3 w-3" />
+                                                                                        <Button variant="ghost" size="icon" className="h-8 w-8 md:h-6 md:w-6 opacity-100 md:opacity-0 group-hover/col:opacity-100 transition-opacity">
+                                                                                            <IconDotsVertical className="h-3.5 w-3.5" />
                                                                                         </Button>
                                                                                     </DropdownMenuTrigger>
                                                                                     <DropdownMenuContent align="end">

@@ -443,7 +443,7 @@ export default function NoSQLExplorerPage() {
                                 <Menu className="h-4 w-4" />
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="left" className="p-0 w-[300px] sm:w-[350px]">
+                        <SheetContent side="left" className="p-0 w-[85vw] sm:w-[350px]">
                             <ExplorerSidebar
                                 width={300} // Fixed width for mobile sheet
                                 onSelectCollection={(conn, db, col) => {
@@ -553,7 +553,7 @@ export default function NoSQLExplorerPage() {
             </div>
 
             <Dialog open={isConnectionDialogOpen} onOpenChange={setIsConnectionDialogOpen}>
-                <DialogContent className="max-w-5xl">
+                <DialogContent className="max-w-5xl w-[95vw] md:w-full max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Add Connection</DialogTitle>
                     </DialogHeader>
