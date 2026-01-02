@@ -8,6 +8,20 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "URL is required" }, { status: 400 })
         }
 
+        try {
+            new URL(url)
+        } catch {
+            return NextResponse.json({
+                status: 400,
+                statusText: "Bad Request",
+                headers: {},
+                body: "Invalid URL format",
+                time: 0,
+                size: 0,
+                error: "Invalid URL format",
+            })
+        }
+
         const startTime = performance.now()
 
         const response = await fetch(url, {
