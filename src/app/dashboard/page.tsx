@@ -3,12 +3,21 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { sidebarData } from "../../components/sidebar/data/sidebar-data";
 import Link, { LinkProps } from "next/link";
-import { Heart, Clock, ArrowRight, Sparkles } from 'lucide-react';
+import { Heart, Clock, ArrowRight, Sparkles, Layers, Zap } from 'lucide-react';
 import { requiresAuth } from '@/lib/tool-config';
 import { useFavoriteTool } from '@/hooks/use-favorite-tool';
 import { useToolUsage } from '@/hooks/use-tool-usage';
 import { motion } from 'framer-motion';
 import { useMediaQuery } from "@/hooks/use-media-query";
+import useAuth from "@/utils/useAuth";
+
+// Helper function to get time-based greeting
+const getGreeting = (): string => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+};
 
 // Define types for our items
 interface ToolItem {
@@ -60,9 +69,7 @@ const findItemById = (id: string): ToolItem | undefined => {
 };
 
 const DashboardPage: React.FC = () => {
-  // const { user, loading } = useAuth(true); // Dashboard is private
-  const loading = false;
-  const user = { displayName: "Test User", email: "test@example.com", uid: "test-uid" };
+  const { user, loading } = useAuth(false); // Dashboard shows for all users
   const { favorites, isFavorite, toggleFavorite } = useFavoriteTool();
   const { getRecentlyUsedTools } = useToolUsage();
   const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
@@ -117,6 +124,15 @@ const DashboardPage: React.FC = () => {
     return mobileFilteredGroups;
   }, [isMobile]);
 
+  // Calculate total tools count
+  const totalTools = useMemo(() => {
+    return sidebarData.navGroups.reduce((acc, group) => {
+      return acc + group.items.reduce((itemAcc, item) => {
+        return itemAcc + (item.items ? item.items.length : 1);
+      }, 0);
+    }, 0);
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -144,18 +160,19 @@ const DashboardPage: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: index * 0.05 }}
+        className="card-gradient-border rounded-xl"
       >
         <Link href={item.url || "#"} className="block group h-full" onClick={handleClick}>
-          <Card className="bg-card/50 dark:bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/50 hover:bg-card hover:shadow-lg transition-all duration-300 h-full min-h-[200px] relative overflow-hidden group-hover:-translate-y-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <Card className="glass-card border-border/30 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 h-full min-h-[180px] relative overflow-hidden group-hover:-translate-y-1.5">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-            <CardContent className="p-6 h-full flex flex-col justify-between relative z-10">
-              <div className="flex justify-between items-start mb-3">
-                <div className="p-2.5 rounded-xl bg-primary/10 text-primary group-hover:scale-110 transition-transform duration-300">
-                  {item.icon ? <item.icon size={24} /> : <Sparkles size={24} />}
+            <CardContent className="p-5 h-full flex flex-col justify-between relative z-10">
+              <div className="flex justify-between items-start mb-4">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary group-hover:scale-110 transition-all duration-300 icon-container-pulse">
+                  {item.icon ? <item.icon size={22} strokeWidth={1.5} /> : <Sparkles size={22} strokeWidth={1.5} />}
                 </div>
                 <div
-                  className="p-1.5 rounded-full hover:bg-muted/80 transition-colors z-20"
+                  className="p-2 rounded-full hover:bg-muted/80 transition-colors z-20 cursor-pointer"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -165,30 +182,30 @@ const DashboardPage: React.FC = () => {
                   <Heart
                     className={`transition-all duration-300 ${isFavorite(id)
                       ? "text-red-500 fill-red-500 scale-110"
-                      : "text-muted-foreground hover:text-red-500"}`}
-                    size={18}
+                      : "text-muted-foreground/60 hover:text-red-500"}`}
+                    size={16}
                   />
                 </div>
               </div>
 
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors">
                     {item.title}
                   </h3>
                   {item.badge && (
-                    <span className="bg-primary/10 text-primary text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wider">
+                    <span className="bg-gradient-to-r from-primary/20 to-primary/10 text-primary text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider border border-primary/20">
                       {item.badge}
                     </span>
                   )}
                 </div>
-                <p className="text-muted-foreground text-sm line-clamp-2 mb-4 group-hover:text-muted-foreground/80 transition-colors">
+                <p className="text-muted-foreground/80 text-sm line-clamp-2 group-hover:text-muted-foreground transition-colors">
                   {item.description || "Explore this tool for better functionality."}
                 </p>
               </div>
 
-              <div className="mt-auto flex items-center text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-[-10px] group-hover:translate-x-0">
-                Launch Tool <ArrowRight size={12} className="ml-1" />
+              <div className="mt-3 flex items-center text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-[-10px] group-hover:translate-x-0">
+                Launch Tool <ArrowRight size={12} className="ml-1.5 group-hover:translate-x-1 transition-transform" />
               </div>
             </CardContent>
           </Card>
@@ -198,28 +215,60 @@ const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen px-6 pb-8 md:px-8 md:pb-12 bg-background/50">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen px-6 pb-8 md:px-8 md:pb-12 bg-background/50 dashboard-grid-bg">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-1">
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Welcome back{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : ''}
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              What would you like to build today?
-            </p>
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                {getGreeting()}
+              </p>
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight gradient-text-animated">
+                Welcome back{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : ''}
+              </h1>
+              <p className="text-muted-foreground">
+                What would you like to build today?
+              </p>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="flex gap-3">
+              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass-card stats-glow">
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <Layers size={16} className="text-primary" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Tools</p>
+                  <p className="text-sm font-semibold">{totalTools}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass-card stats-glow">
+                <div className="p-1.5 rounded-lg bg-red-500/10">
+                  <Heart size={16} className="text-red-500" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Favorites</p>
+                  <p className="text-sm font-semibold">{favorites.length}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Recently Used Tools - Only show when no search query */}
         {user && recentlyUsedItems.length > 0 && (
-          <section className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500">
-                <Clock size={18} />
+          <section className="space-y-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 section-header-line pb-2">
+                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
+                  <Clock size={18} strokeWidth={1.5} />
+                </div>
+                <h2 className="text-xl font-semibold">Recently Used</h2>
+                <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
+                  {recentlyUsedItems.length}
+                </span>
               </div>
-              <h2 className="text-xl font-semibold">Recently Used</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {recentlyUsedItems.map((item, index) => (
@@ -231,12 +280,17 @@ const DashboardPage: React.FC = () => {
 
         {/* Favorites Section - Only show when no search query */}
         {user && favorites.length > 0 && (
-          <section className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-red-500/10 text-red-500">
-                <Heart size={18} />
+          <section className="space-y-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 section-header-line pb-2">
+                <div className="p-2 rounded-xl bg-red-500/10 text-red-500">
+                  <Heart size={18} strokeWidth={1.5} />
+                </div>
+                <h2 className="text-xl font-semibold">Favorites</h2>
+                <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
+                  {favoriteItems.length}
+                </span>
               </div>
-              <h2 className="text-xl font-semibold">Favorites</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {favoriteItems.map((item, index) => (
@@ -247,14 +301,19 @@ const DashboardPage: React.FC = () => {
         )}
 
         {/* All Tools / Search Results */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           {filteredGroups.map((group, groupIndex) => (
-            <section key={groupIndex} className="space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-                  {group.icon ? <group.icon size={18} /> : <Sparkles size={18} />}
+            <section key={groupIndex} className="space-y-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 section-header-line pb-2">
+                  <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                    {group.icon ? <group.icon size={18} strokeWidth={1.5} /> : <Sparkles size={18} strokeWidth={1.5} />}
+                  </div>
+                  <h2 className="text-xl font-semibold">{group.title}</h2>
+                  <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
+                    {group.items.reduce((acc, item) => acc + (item.items ? item.items.length : 1), 0)}
+                  </span>
                 </div>
-                <h2 className="text-xl font-semibold">{group.title}</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {group.items.map((item: any, itemIndex) => (
