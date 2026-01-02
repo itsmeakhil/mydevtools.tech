@@ -76,10 +76,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible='icon' variant='floating' {...props}>
       <SidebarHeader className="border-b border-border/40 pb-3">
         <div
-          className="flex items-center space-x-3 px-3 py-3 transition-all duration-200 hover:cursor-pointer hover:bg-accent/50 rounded-lg bg-accent/10 border border-transparent hover:border-border/50"
+          className="flex items-center space-x-3 px-3 py-3 transition-all duration-200 hover:cursor-pointer hover:bg-accent/50 rounded-lg bg-accent/10 border border-transparent hover:border-border/50 group-data-[state=collapsed]:bg-transparent group-data-[state=collapsed]:border-none group-data-[state=collapsed]:p-0 group-data-[state=collapsed]:justify-center"
           onClick={() => router.push('/dashboard')}
         >
-          <div className="group-data-[state=collapsed]:hidden">
+          <div className="flex items-center justify-center">
             <Logo size={36} showText={false} />
           </div>
           <div className="group-data-[state=collapsed]:hidden flex flex-col justify-center">
