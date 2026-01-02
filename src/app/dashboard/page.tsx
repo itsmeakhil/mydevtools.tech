@@ -2,15 +2,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { sidebarData } from "../../components/sidebar/data/sidebar-data";
-import useAuth from "@/utils/useAuth";
 import Link, { LinkProps } from "next/link";
-import { Heart, Clock, Search, ArrowRight, Sparkles } from 'lucide-react';
+import { Heart, Clock, ArrowRight, Sparkles } from 'lucide-react';
 import { requiresAuth } from '@/lib/tool-config';
 import { useFavoriteTool } from '@/hooks/use-favorite-tool';
 import { useToolUsage } from '@/hooks/use-tool-usage';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { Input } from "@/components/ui/input";
 
 // Define types for our items
 interface ToolItem {
@@ -69,7 +67,6 @@ const DashboardPage: React.FC = () => {
   const { getRecentlyUsedTools } = useToolUsage();
   const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
   const [recentlyUsedItems, setRecentlyUsedItems] = useState<FavoriteItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   // Update favoriteItems whenever favorites change
@@ -117,44 +114,8 @@ const DashboardPage: React.FC = () => {
       };
     }).filter((group): group is typeof sidebarData.navGroups[0] => group !== null);
 
-    if (!searchQuery.trim()) return mobileFilteredGroups;
-
-    const query = searchQuery.toLowerCase();
-    return mobileFilteredGroups.map(group => {
-      const filteredItems = group.items.reduce<any[]>((acc, item, itemIndex) => {
-        // Check top-level item
-        const matchesItem =
-          item.title.toLowerCase().includes(query) ||
-          item.description?.toLowerCase().includes(query);
-
-        // Check nested items
-        const matchingSubItems = item.items?.filter((subItem, subIndex) =>
-          subItem.title.toLowerCase().includes(query) ||
-          subItem.description?.toLowerCase().includes(query)
-        ).map((subItem, subIndex) => ({
-          ...subItem,
-          originalId: createItemId(sidebarData.navGroups.indexOf(group), itemIndex, subIndex),
-          icon: item.icon // Inherit icon if missing
-        })) || [];
-
-        if (matchesItem && !item.items) {
-          acc.push({
-            ...item,
-            originalId: createItemId(sidebarData.navGroups.indexOf(group), itemIndex)
-          });
-        } else if (matchingSubItems.length > 0) {
-          acc.push(...matchingSubItems);
-        }
-
-        return acc;
-      }, []);
-
-      return {
-        ...group,
-        items: filteredItems
-      };
-    }).filter(group => group.items.length > 0);
-  }, [searchQuery, isMobile]);
+    return mobileFilteredGroups;
+  }, [isMobile]);
 
   if (loading) {
     return (
@@ -249,23 +210,10 @@ const DashboardPage: React.FC = () => {
               What would you like to build today?
             </p>
           </div>
-
-          <div className="relative w-full md:w-96">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <Input
-              type="text"
-              placeholder="Search tools..."
-              className="pl-10 h-12 bg-card/50 backdrop-blur-sm border-border/50 focus:border-primary/50 transition-all"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
         </div>
 
         {/* Recently Used Tools - Only show when no search query */}
-        {!searchQuery && user && recentlyUsedItems.length > 0 && (
+        {user && recentlyUsedItems.length > 0 && (
           <section className="space-y-4">
             <div className="flex items-center gap-2">
               <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500">
@@ -282,7 +230,7 @@ const DashboardPage: React.FC = () => {
         )}
 
         {/* Favorites Section - Only show when no search query */}
-        {!searchQuery && user && favorites.length > 0 && (
+        {user && favorites.length > 0 && (
           <section className="space-y-4">
             <div className="flex items-center gap-2">
               <div className="p-1.5 rounded-lg bg-red-500/10 text-red-500">
@@ -300,61 +248,49 @@ const DashboardPage: React.FC = () => {
 
         {/* All Tools / Search Results */}
         <div className="space-y-6">
-          {filteredGroups.length > 0 ? (
-            filteredGroups.map((group, groupIndex) => (
-              <section key={groupIndex} className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-                    {group.icon ? <group.icon size={18} /> : <Sparkles size={18} />}
-                  </div>
-                  <h2 className="text-xl font-semibold">{group.title}</h2>
+          {filteredGroups.map((group, groupIndex) => (
+            <section key={groupIndex} className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                  {group.icon ? <group.icon size={18} /> : <Sparkles size={18} />}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {group.items.map((item: any, itemIndex) => (
-                    <React.Fragment key={`${groupIndex}-${itemIndex}`}>
-                      {/* Render top-level items */}
-                      {!item.items && !item.originalId && (
-                        <ToolCard
-                          item={item}
-                          id={createItemId(sidebarData.navGroups.indexOf(group), itemIndex)}
-                          index={itemIndex}
-                        />
-                      )}
-
-                      {/* Render search result items (flattened) */}
-                      {item.originalId && (
-                        <ToolCard
-                          item={item}
-                          id={item.originalId}
-                          index={itemIndex}
-                        />
-                      )}
-
-                      {/* Render nested items directly in the grid (only when not searching) */}
-                      {!searchQuery && item.items && item.items.map((subItem: ToolItem, subIndex: number) => (
-                        <ToolCard
-                          key={`${groupIndex}-${itemIndex}-${subIndex}`}
-                          item={{ ...subItem, icon: item.icon }}
-                          id={createItemId(sidebarData.navGroups.indexOf(group), itemIndex, subIndex)}
-                          index={subIndex}
-                        />
-                      ))}
-                    </React.Fragment>
-                  ))}
-                </div>
-              </section>
-            ))
-          ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="p-4 rounded-full bg-muted mb-4">
-                <Search className="h-8 w-8 text-muted-foreground" />
+                <h2 className="text-xl font-semibold">{group.title}</h2>
               </div>
-              <h3 className="text-xl font-semibold mb-2">No tools found</h3>
-              <p className="text-muted-foreground max-w-sm">
-                We couldn't find any tools matching "{searchQuery}". Try searching for something else.
-              </p>
-            </div>
-          )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {group.items.map((item: any, itemIndex) => (
+                  <React.Fragment key={`${groupIndex}-${itemIndex}`}>
+                    {/* Render top-level items */}
+                    {!item.items && !item.originalId && (
+                      <ToolCard
+                        item={item}
+                        id={createItemId(sidebarData.navGroups.indexOf(group), itemIndex)}
+                        index={itemIndex}
+                      />
+                    )}
+
+                    {/* Render search result items (flattened) */}
+                    {item.originalId && (
+                      <ToolCard
+                        item={item}
+                        id={item.originalId}
+                        index={itemIndex}
+                      />
+                    )}
+
+                    {/* Render nested items directly in the grid (only when not searching) */}
+                    {item.items && item.items.map((subItem: ToolItem, subIndex: number) => (
+                      <ToolCard
+                        key={`${groupIndex}-${itemIndex}-${subIndex}`}
+                        item={{ ...subItem, icon: item.icon }}
+                        id={createItemId(sidebarData.navGroups.indexOf(group), itemIndex, subIndex)}
+                        index={subIndex}
+                      />
+                    ))}
+                  </React.Fragment>
+                ))}
+              </div>
+            </section>
+          ))}
         </div>
       </div>
     </div>
