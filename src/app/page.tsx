@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { BackgroundAnimation } from "@/components/ui/background-animation";
+import useAuth from "@/utils/useAuth";
 import {
   ArrowRight,
   Zap,
@@ -24,6 +26,17 @@ import {
 } from "lucide-react";
 
 export default function Page() {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  const handleNavigation = () => {
+    if (user) {
+      router.push("/dashboard");
+    } else {
+      router.push("/login");
+    }
+  };
+
   const tools = [
     {
       title: "JSON Editor",
@@ -100,7 +113,6 @@ export default function Page() {
       {/* Hero Section */}
       <section className="relative py-16 md:py-24 lg:py-32 overflow-hidden">
         {/* OpenStatus-inspired Background */}
-        {/* OpenStatus-inspired Background */}
         <BackgroundAnimation />
 
         <div className="container px-4 md:px-6 mx-auto text-center">
@@ -121,10 +133,8 @@ export default function Page() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 md:gap-4 pt-6 md:pt-8 animate-in fade-in slide-in-from-bottom-10 duration-1000 px-4 sm:px-0">
-              <Button size="lg" className="h-11 md:h-12 px-6 md:px-8 text-sm md:text-base rounded-full w-full sm:w-auto" asChild>
-                <Link href="/dashboard">
-                  Get Started <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
+              <Button size="lg" className="h-11 md:h-12 px-6 md:px-8 text-sm md:text-base rounded-full w-full sm:w-auto" onClick={handleNavigation}>
+                Get Started <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button size="lg" variant="outline" className="h-11 md:h-12 px-6 md:px-8 text-sm md:text-base rounded-full w-full sm:w-auto" asChild>
                 <Link href="https://github.com/itsmeakhil/mydevtools.tech" target="_blank">
@@ -213,16 +223,12 @@ export default function Page() {
           </div>
 
           <div className="mt-8 md:mt-12 text-center">
-            <Button variant="secondary" size="lg" className="rounded-full h-11 md:h-12 px-6 md:px-8 text-sm md:text-base" asChild>
-              <Link href="/dashboard">
-                Explore All Tools <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
+            <Button variant="secondary" size="lg" className="rounded-full h-11 md:h-12 px-6 md:px-8 text-sm md:text-base" onClick={handleNavigation}>
+              Explore All Tools <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </div>
       </section>
-
-
 
       {/* CTA Section */}
       <section className="py-16 md:py-24 bg-primary/5 relative overflow-hidden">
@@ -232,10 +238,8 @@ export default function Page() {
             Join thousands of developers who use MyDevTools to streamline their daily tasks.
             Open source, free, and privacy-focused.
           </p>
-          <Button size="lg" className="h-12 md:h-14 px-8 md:px-10 text-base md:text-lg rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto max-w-sm sm:max-w-none" asChild>
-            <Link href="/dashboard">
-              Start Using Tools Now
-            </Link>
+          <Button size="lg" className="h-12 md:h-14 px-8 md:px-10 text-base md:text-lg rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto max-w-sm sm:max-w-none" onClick={handleNavigation}>
+            Start Using Tools Now
           </Button>
         </div>
 

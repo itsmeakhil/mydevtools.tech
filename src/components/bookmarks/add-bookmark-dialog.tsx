@@ -1,0 +1,292 @@
+"use client"
+
+import { useState, useEffect, useCallback } from "react"
+import { IconLink, IconTag, IconFolder, IconX, IconLoader2 } from "@tabler/icons-react"
+import { useBookmarkStore, Bookmark, useAllTags } from "@/store/bookmark-store"
+import { getFaviconUrl, normalizeUrl, isValidUrl } from "@/lib/favicon-utils"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { toast } from "sonner"
+
+interface AddBookmarkDialogProps {
+    open: boolean
+    onOpenChange: (open: boolean) => void
+    editingId?: string | null
+}
+
+export default function AddBookmarkDialog({ open, onOpenChange, editingId }: AddBookmarkDialogProps) {
+    const { bookmarks, folders, addBookmark, updateBookmark } = useBookmarkStore()
+    const allTags = useAllTags()
+
+    const [url, setUrl] = useState("")
+    const [title, setTitle] = useState("")
+    const [description, setDescription] = useState("")
+    const [folderId, setFolderId] = useState<string>("none")
+    const [tags, setTags] = useState<string[]>([])
+    const [tagInput, setTagInput] = useState("")
+    const [isLoading, setIsLoading] = useState(false)
+    const [urlError, setUrlError] = useState("")
+
+    // Load bookmark data when editing
+    useEffect(() => {
+        if (editingId && open) {
+            const bookmark = bookmarks.find(b => b.id === editingId)
+            if (bookmark) {
+                setUrl(bookmark.url)
+                setTitle(bookmark.title)
+                setDescription(bookmark.description || "")
+                setFolderId(bookmark.folderId || "none")
+                setTags(bookmark.tags)
+            }
+        } else if (!open) {
+            // Reset form when closing
+            setUrl("")
+            setTitle("")
+            setDescription("")
+            setFolderId("none")
+            setTags([])
+            setTagInput("")
+            setUrlError("")
+        }
+    }, [editingId, open, bookmarks])
+
+    const handleUrlBlur = useCallback(async () => {
+        if (!url) return
+
+        const normalizedUrl = normalizeUrl(url)
+        if (!isValidUrl(normalizedUrl)) {
+            setUrlError("Please enter a valid URL")
+            return
+        }
+
+        setUrlError("")
+        setUrl(normalizedUrl)
+
+        // Auto-fill title if empty
+        if (!title) {
+            try {
+                // Try to extract domain as title
+                const urlObj = new URL(normalizedUrl)
+                const domain = urlObj.hostname.replace(/^www\./, '')
+                setTitle(domain.charAt(0).toUpperCase() + domain.slice(1))
+            } catch {
+                // Ignore errors
+            }
+        }
+    }, [url, title])
+
+    const handleAddTag = useCallback(() => {
+        const tag = tagInput.trim().toLowerCase()
+        if (tag && !tags.includes(tag)) {
+            setTags([...tags, tag])
+        }
+        setTagInput("")
+    }, [tagInput, tags])
+
+    const handleRemoveTag = useCallback((tagToRemove: string) => {
+        setTags(tags.filter(t => t !== tagToRemove))
+    }, [tags])
+
+    const handleTagInputKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault()
+            handleAddTag()
+        }
+    }, [handleAddTag])
+
+    const handleSubmit = useCallback(() => {
+        const normalizedUrl = normalizeUrl(url)
+
+        if (!isValidUrl(normalizedUrl)) {
+            setUrlError("Please enter a valid URL")
+            return
+        }
+
+        if (!title.trim()) {
+            toast.error("Please enter a title")
+            return
+        }
+
+        const bookmarkData: Bookmark = {
+            id: editingId || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            url: normalizedUrl,
+            title: title.trim(),
+            description: description.trim() || undefined,
+            favicon: getFaviconUrl(normalizedUrl),
+            folderId: folderId === "none" ? null : folderId,
+            tags,
+            createdAt: editingId ? bookmarks.find(b => b.id === editingId)?.createdAt || Date.now() : Date.now(),
+            updatedAt: Date.now()
+        }
+
+        if (editingId) {
+            updateBookmark(bookmarkData)
+            toast.success("Bookmark updated")
+        } else {
+            addBookmark(bookmarkData)
+            toast.success("Bookmark added")
+        }
+
+        onOpenChange(false)
+    }, [url, title, description, folderId, tags, editingId, bookmarks, addBookmark, updateBookmark, onOpenChange])
+
+    // Build folder options with hierarchy
+    const buildFolderOptions = useCallback(() => {
+        const options: { id: string; name: string; depth: number }[] = []
+
+        const addFolder = (parentId: string | null, depth: number) => {
+            const children = folders.filter(f => f.parentId === parentId)
+            for (const folder of children) {
+                options.push({ id: folder.id, name: folder.name, depth })
+                addFolder(folder.id, depth + 1)
+            }
+        }
+
+        addFolder(null, 0)
+        return options
+    }, [folders])
+
+    const folderOptions = buildFolderOptions()
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                    <DialogTitle>
+                        {editingId ? "Edit Bookmark" : "Add Bookmark"}
+                    </DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-4 py-4">
+                    {/* URL */}
+                    <div className="space-y-2">
+                        <Label htmlFor="url">URL</Label>
+                        <div className="relative">
+                            <IconLink className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                id="url"
+                                value={url}
+                                onChange={(e) => setUrl(e.target.value)}
+                                onBlur={handleUrlBlur}
+                                placeholder="https://example.com"
+                                className="pl-9"
+                            />
+                        </div>
+                        {urlError && (
+                            <p className="text-xs text-destructive">{urlError}</p>
+                        )}
+                    </div>
+
+                    {/* Title */}
+                    <div className="space-y-2">
+                        <Label htmlFor="title">Title</Label>
+                        <Input
+                            id="title"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder="Bookmark title"
+                        />
+                    </div>
+
+                    {/* Description */}
+                    <div className="space-y-2">
+                        <Label htmlFor="description">Description (optional)</Label>
+                        <Textarea
+                            id="description"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Add a note about this bookmark"
+                            rows={2}
+                        />
+                    </div>
+
+                    {/* Folder */}
+                    <div className="space-y-2">
+                        <Label>Folder</Label>
+                        <Select value={folderId} onValueChange={setFolderId}>
+                            <SelectTrigger>
+                                <IconFolder className="h-4 w-4 mr-2 text-muted-foreground" />
+                                <SelectValue placeholder="Select folder" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">
+                                    No folder
+                                </SelectItem>
+                                {folderOptions.map(option => (
+                                    <SelectItem key={option.id} value={option.id}>
+                                        <span style={{ paddingLeft: `${option.depth * 12}px` }}>
+                                            {option.name}
+                                        </span>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="space-y-2">
+                        <Label>Tags</Label>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {tags.map(tag => (
+                                <Badge key={tag} variant="secondary" className="gap-1">
+                                    {tag}
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveTag(tag)}
+                                        className="hover:text-destructive"
+                                    >
+                                        <IconX className="h-3 w-3" />
+                                    </button>
+                                </Badge>
+                            ))}
+                        </div>
+                        <div className="relative">
+                            <IconTag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                value={tagInput}
+                                onChange={(e) => setTagInput(e.target.value)}
+                                onKeyDown={handleTagInputKeyDown}
+                                onBlur={handleAddTag}
+                                placeholder="Add tags (press Enter)"
+                                className="pl-9"
+                                list="tag-suggestions"
+                            />
+                            <datalist id="tag-suggestions">
+                                {allTags.filter(t => !tags.includes(t)).map(tag => (
+                                    <option key={tag} value={tag} />
+                                ))}
+                            </datalist>
+                        </div>
+                    </div>
+                </div>
+
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleSubmit} disabled={isLoading}>
+                        {isLoading && <IconLoader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        {editingId ? "Update" : "Add"} Bookmark
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}

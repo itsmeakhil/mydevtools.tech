@@ -5,6 +5,7 @@ import {
   IconLock,
   IconNotes,
   IconDatabase,
+  IconBookmark,
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
@@ -35,6 +36,12 @@ export const sidebarData: SidebarData = {
           url: '/app/password-manager',
           icon: IconLock,
           description: 'Securely store and manage your passwords.'
+        },
+        {
+          title: 'Bookmarks',
+          url: '/app/bookmarks',
+          icon: IconBookmark,
+          description: 'Manage and organize your bookmarks.'
         },
 
 
