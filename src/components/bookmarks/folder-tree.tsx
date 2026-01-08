@@ -61,7 +61,7 @@ export default function FolderTree({ onSelectFolder }: FolderTreeProps) {
                 onClick={() => onSelectFolder(null)}
             />
 
-    
+
 
 
             {/* Separator */}
@@ -141,18 +141,17 @@ function FolderNode({ folder, depth, onSelectFolder }: FolderNodeProps) {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.2 }}
                         className={cn(
-                            "group flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-colors",
-                            isSelected
-                                ? "bg-primary/10 text-primary"
-                                : "hover:bg-muted/50"
+                            "group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200",
+                            "hover:bg-muted/60",
+                            isSelected && "bg-primary/10 text-primary font-medium hover:bg-primary/15"
                         )}
-                        style={{ paddingLeft: `${(depth * 12) + 8}px` }}
+                        style={{ paddingLeft: `${(depth * 16) + 12}px` }}
                         onClick={() => onSelectFolder(folder.id)}
                     >
                         {/* Expand/Collapse Arrow */}
                         <button
                             className={cn(
-                                "h-4 w-4 flex items-center justify-center transition-transform",
+                                "h-5 w-5 flex items-center justify-center transition-transform rounded-md hover:bg-black/5 dark:hover:bg-white/5",
                                 !hasChildren && "invisible"
                             )}
                             onClick={(e) => {
@@ -162,26 +161,35 @@ function FolderNode({ folder, depth, onSelectFolder }: FolderNodeProps) {
                         >
                             <IconChevronRight
                                 className={cn(
-                                    "h-3 w-3 transition-transform",
-                                    isExpanded && "rotate-90"
+                                    "h-3.5 w-3.5 transition-transform duration-200 text-muted-foreground/70",
+                                    isExpanded && "rotate-90 text-foreground"
                                 )}
                             />
                         </button>
 
                         {/* Folder Icon */}
-                        {isExpanded ? (
-                            <IconFolderOpen className="h-4 w-4 text-primary/70" />
-                        ) : (
-                            <IconFolder className="h-4 w-4 text-muted-foreground" />
-                        )}
+                        <div className="relative">
+                            {isExpanded ? (
+                                <IconFolderOpen className={cn("h-4.5 w-4.5", isSelected ? "text-primary" : "text-muted-foreground")} />
+                            ) : (
+                                <IconFolder className={cn("h-4.5 w-4.5", isSelected ? "text-primary" : "text-muted-foreground")} />
+                            )}
+                        </div>
 
                         {/* Folder Name */}
-                        <span className="flex-1 truncate text-sm">{folder.name}</span>
+                        <span className="flex-1 truncate text-[14px] leading-none pt-0.5">{folder.name}</span>
 
                         {/* Bookmark Count */}
-                        <span className="text-xs text-muted-foreground">
-                            {bookmarkCount}
-                        </span>
+                        {bookmarkCount > 0 && (
+                            <span className={cn(
+                                "text-[10px] px-1.5 py-0.5 rounded-full",
+                                isSelected
+                                    ? "bg-primary/20 text-primary"
+                                    : "bg-muted text-muted-foreground group-hover:bg-background/80"
+                            )}>
+                                {bookmarkCount}
+                            </span>
+                        )}
                     </motion.div>
                 </ContextMenuTrigger>
                 <ContextMenuContent>
@@ -272,17 +280,23 @@ function FolderItem({ icon: Icon, label, count, isSelected, onClick }: FolderIte
     return (
         <div
             className={cn(
-                "flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-colors",
-                isSelected
-                    ? "bg-primary/10 text-primary"
-                    : "hover:bg-muted/50"
+                "flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200",
+                "hover:bg-muted/60",
+                isSelected && "bg-primary/10 text-primary font-medium hover:bg-primary/15"
             )}
             onClick={onClick}
         >
-            <Icon className="h-4 w-4" />
-            <span className="flex-1 text-sm">{label}</span>
-            {count !== undefined && (
-                <span className="text-xs text-muted-foreground">{count}</span>
+            <Icon className={cn("h-4.5 w-4.5", isSelected ? "text-primary" : "text-muted-foreground")} />
+            <span className="flex-1 text-[14px] leading-none pt-0.5">{label}</span>
+            {count !== undefined && count > 0 && (
+                <span className={cn(
+                    "text-[10px] px-1.5 py-0.5 rounded-full",
+                    isSelected
+                        ? "bg-primary/20 text-primary"
+                        : "bg-muted text-muted-foreground group-hover:bg-background/80"
+                )}>
+                    {count}
+                </span>
             )}
         </div>
     )

@@ -185,37 +185,37 @@ export default function BookmarkCard({ bookmark, viewMode, onEdit, index }: Book
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.2, delay: index * 0.03 }}
                 className={cn(
-                    "group relative flex flex-col p-3 sm:p-4 rounded-xl border border-border/50",
-                    "bg-gradient-to-br from-background to-muted/20",
-                    "hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5",
-                    "transition-all duration-200 cursor-pointer"
+                    "group relative flex flex-col p-4 rounded-xl border border-border/40",
+                    "bg-gradient-to-br from-background via-background to-muted/10",
+                    "hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5",
+                    "transition-all duration-300 cursor-pointer overflow-hidden"
                 )}
                 onClick={handleOpenLink}
             >
                 {/* Header */}
-                <div className="flex items-start gap-3 mb-3">
+                <div className="flex items-start gap-3.5 mb-3">
                     {/* Favicon */}
-                    <div className="h-10 w-10 rounded-xl bg-muted/80 flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-border/50">
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-muted/50 to-muted/80 flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-border/50 shadow-sm group-hover:scale-105 transition-transform duration-300">
                         {!imageError ? (
                             <img
                                 src={faviconUrl}
                                 alt=""
-                                className="h-6 w-6"
+                                className="h-5 w-5 object-contain"
                                 onError={() => setImageError(true)}
                             />
                         ) : (
-                            <span className="text-sm font-bold text-muted-foreground">
+                            <span className="text-sm font-bold text-muted-foreground/70">
                                 {bookmark.title.charAt(0).toUpperCase()}
                             </span>
                         )}
                     </div>
 
                     {/* Title & Domain */}
-                    <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold truncate text-sm leading-tight">
+                    <div className="flex-1 min-w-0 pt-0.5">
+                        <h3 className="font-semibold truncate text-[15px] leading-tight text-foreground/90 group-hover:text-primary transition-colors duration-200">
                             {bookmark.title}
                         </h3>
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        <p className="text-xs text-muted-foreground/80 truncate mt-1 font-medium">
                             {domain}
                         </p>
                     </div>
@@ -226,12 +226,12 @@ export default function BookmarkCard({ bookmark, viewMode, onEdit, index }: Book
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                                className="h-7 w-7 opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 -mr-2 -mt-1"
                             >
                                 <IconDotsVertical className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align="end" className="w-40">
                             <DropdownMenuItem onClick={handleCopyUrl}>
                                 <IconCopy className="h-4 w-4 mr-2" />
                                 Copy URL
@@ -254,33 +254,33 @@ export default function BookmarkCard({ bookmark, viewMode, onEdit, index }: Book
 
                 {/* Description */}
                 {bookmark.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+                    <p className="text-xs text-muted-foreground/80 line-clamp-2 mb-3 leading-relaxed">
                         {bookmark.description}
                     </p>
                 )}
 
                 {/* Tags */}
                 {bookmark.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-auto">
+                    <div className="flex flex-wrap gap-1.5 mt-auto pt-1">
                         {bookmark.tags.slice(0, 3).map(tag => (
                             <Badge
                                 key={tag}
                                 variant="secondary"
-                                className="text-xs px-1.5 py-0"
+                                className="text-[10px] px-1.5 py-0.5 h-5 font-medium bg-secondary/50 hover:bg-secondary/70 transition-colors"
                             >
                                 {tag}
                             </Badge>
                         ))}
                         {bookmark.tags.length > 3 && (
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-[10px] text-muted-foreground font-medium px-1">
                                 +{bookmark.tags.length - 3}
                             </span>
                         )}
                     </div>
                 )}
 
-                {/* Hover Overlay */}
-                <div className="absolute inset-0 rounded-xl bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                {/* Hover Overlay - Subtle Shine */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
             </motion.div>
 
             <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>

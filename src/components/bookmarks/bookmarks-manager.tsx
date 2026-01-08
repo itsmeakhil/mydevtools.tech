@@ -103,22 +103,22 @@ export default function BookmarksManager() {
                         exit={{ x: -300, opacity: 0 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         className={`
-                            ${isMobile ? 'absolute inset-y-0 left-0 z-50' : 'relative'}
-                            w-64 border-r border-border/50 bg-background/80 backdrop-blur-xl
+                            ${isMobile ? 'absolute inset-y-0 left-0 z-50 shadow-2xl' : 'relative'}
+                            w-72 border-r border-border/40 bg-muted/30
                             flex flex-col
                         `}
                     >
                         {/* Sidebar Header */}
-                        <div className="p-4 flex items-center justify-between border-b border-border/50">
-                            <h2 className="font-semibold text-lg">Folders</h2>
+                        <div className="h-16 px-4 flex items-center justify-between border-b border-border/40 bg-background/50 backdrop-blur-sm">
+                            <h2 className="font-semibold text-base tracking-tight">Folders</h2>
                             <div className="flex items-center gap-1">
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8"
+                                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
                                     onClick={() => setIsAddFolderOpen(true)}
                                 >
-                                    <IconFolderPlus className="h-4 w-4" />
+                                    <IconFolderPlus className="h-4.5 w-4.5" />
                                 </Button>
                                 {isMobile && (
                                     <Button
@@ -134,9 +134,9 @@ export default function BookmarksManager() {
                         </div>
 
                         {/* Folder Tree */}
-                        <ScrollArea className="flex-1 p-1 sm:p-2">
+                        <ScrollArea className="flex-1 px-3 py-4">
                             <FolderTree
-                                onSelectFolder={(id) => {
+                                onSelectFolder={(id: string | null) => {
                                     setSelectedFolder(id)
                                     if (isMobile) setShowSidebar(false)
                                 }}
@@ -184,160 +184,163 @@ export default function BookmarksManager() {
             )}
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Toolbar */}
-                <div className="p-3 sm:p-4 border-b border-border/50 flex flex-col gap-3">
-                    {/* Top Row - Search and Actions */}
-                    <div className="flex items-center gap-2">
-                        {/* Mobile Menu Button */}
-                        {isMobile && (
+            <div className="flex-1 flex flex-col overflow-hidden bg-background">
+                {/* Toolbar - Sticky & Glassy */}
+                <div className="h-16 px-4 border-b border-border/40 flex items-center gap-4 bg-background/80 backdrop-blur-md sticky top-0 z-10">
+                    {/* Mobile Menu Button */}
+                    {isMobile && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="-ml-2 shrink-0"
+                            onClick={() => setShowSidebar(true)}
+                        >
+                            <IconList className="h-5 w-5" />
+                        </Button>
+                    )}
+
+                    {/* Search */}
+                    <div className="relative flex-1 max-w-xl">
+                        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search your bookmarks..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9 pr-9 bg-muted/40 border-transparent focus:bg-background focus:border-input transition-all"
+                        />
+                        {searchQuery && (
                             <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="icon"
-                                className="shrink-0"
-                                onClick={() => setShowSidebar(true)}
+                                className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 hover:bg-transparent"
+                                onClick={() => setSearchQuery('')}
+                            >
+                                <IconX className="h-3 w-3 text-muted-foreground hover:text-foreground transition-colors" />
+                            </Button>
+                        )}
+                    </div>
+
+                    {/* Desktop Actions - Visible on larger screens */}
+                    <div className="hidden md:flex items-center gap-2 ml-auto">
+                        {/* View Toggle */}
+                        <div className="flex items-center p-1 bg-muted/40 rounded-lg border border-border/20">
+                            <Button
+                                variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                                size="icon"
+                                className="h-7 w-7 rounded-sm"
+                                onClick={() => setViewMode('grid')}
+                            >
+                                <IconLayoutGrid className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                                size="icon"
+                                className="h-7 w-7 rounded-sm"
+                                onClick={() => setViewMode('list')}
                             >
                                 <IconList className="h-4 w-4" />
                             </Button>
-                        )}
+                        </div>
 
-                        {/* Search */}
-                        <div className="relative flex-1">
-                            <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search bookmarks..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9 pr-9 bg-background/50"
-                            />
-                            {searchQuery && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
-                                    onClick={() => setSearchQuery('')}
-                                >
-                                    <IconX className="h-3 w-3" />
+                        <Separator orientation="vertical" className="h-6 mx-1" />
+
+                        {/* Import */}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-9 hover:bg-muted/60"
+                            onClick={() => setIsImportOpen(true)}
+                        >
+                            <IconUpload className="h-4 w-4 mr-2 text-muted-foreground" />
+                            Import
+                        </Button>
+
+                        {/* Export */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-9 hover:bg-muted/60">
+                                    <IconDownload className="h-4 w-4 mr-2 text-muted-foreground" />
+                                    Export
                                 </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={handleExportHTML}>
+                                    Export as HTML
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleExportJSON}>
+                                    Export as JSON
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        {/* Add Bookmark */}
+                        <Button onClick={() => setIsAddBookmarkOpen(true)} className="ml-2 shadow-sm">
+                            <IconPlus className="h-4 w-4 mr-2" />
+                            Add Bookmark
+                        </Button>
+                    </div>
+
+                    {/* Mobile/Tablet Actions Menu */}
+                    <div className="md:hidden flex items-center gap-1 ml-auto">
+                        {/* View Toggle - Icon Only */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                            className="shrink-0"
+                        >
+                            {viewMode === 'grid' ? (
+                                <IconLayoutGrid className="h-5 w-5" />
+                            ) : (
+                                <IconList className="h-5 w-5" />
                             )}
-                        </div>
+                        </Button>
 
-                        {/* Desktop Actions - Visible on larger screens */}
-                        <div className="hidden md:flex items-center gap-2">
-                            {/* View Toggle */}
-                            <div className="flex items-center border rounded-lg overflow-hidden">
-                                <Button
-                                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                                    size="icon"
-                                    className="h-9 w-9 rounded-none"
-                                    onClick={() => setViewMode('grid')}
-                                >
-                                    <IconLayoutGrid className="h-4 w-4" />
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="shrink-0">
+                                    <IconDotsVertical className="h-5 w-5" />
                                 </Button>
-                                <Button
-                                    variant={viewMode === 'list' ? 'default' : 'ghost'}
-                                    size="icon"
-                                    className="h-9 w-9 rounded-none"
-                                    onClick={() => setViewMode('list')}
-                                >
-                                    <IconList className="h-4 w-4" />
-                                </Button>
-                            </div>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => setIsImportOpen(true)}>
+                                    <IconUpload className="h-4 w-4 mr-2" />
+                                    Import
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleExportHTML}>
+                                    <IconDownload className="h-4 w-4 mr-2" />
+                                    Export as HTML
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleExportJSON}>
+                                    <IconDownload className="h-4 w-4 mr-2" />
+                                    Export as JSON
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
 
-                            {/* Import */}
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setIsImportOpen(true)}
-                            >
-                                <IconUpload className="h-4 w-4 mr-2" />
-                                Import
-                            </Button>
-
-                            {/* Export */}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                        <IconDownload className="h-4 w-4 mr-2" />
-                                        Export
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={handleExportHTML}>
-                                        Export as HTML
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={handleExportJSON}>
-                                        Export as JSON
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-
-                            {/* Add Bookmark */}
-                            <Button onClick={() => setIsAddBookmarkOpen(true)}>
-                                <IconPlus className="h-4 w-4 mr-2" />
-                                Add Bookmark
-                            </Button>
-                        </div>
-
-                        {/* Mobile/Tablet Actions Menu */}
-                        <div className="md:hidden flex items-center gap-1">
-                            {/* View Toggle - Icon Only */}
-                            <Button
-                                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                                size="icon"
-                                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                                className="shrink-0"
-                            >
-                                {viewMode === 'grid' ? (
-                                    <IconLayoutGrid className="h-4 w-4" />
-                                ) : (
-                                    <IconList className="h-4 w-4" />
-                                )}
-                            </Button>
-
-                            {/* Actions Menu */}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="icon" className="shrink-0">
-                                        <IconDotsVertical className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
-                                    <DropdownMenuItem onClick={() => setIsImportOpen(true)}>
-                                        <IconUpload className="h-4 w-4 mr-2" />
-                                        Import
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={handleExportHTML}>
-                                        <IconDownload className="h-4 w-4 mr-2" />
-                                        Export as HTML
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={handleExportJSON}>
-                                        <IconDownload className="h-4 w-4 mr-2" />
-                                        Export as JSON
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-
-                            {/* Add Bookmark - Prominent on mobile */}
-                            <Button
-                                onClick={() => setIsAddBookmarkOpen(true)}
-                                size="icon"
-                                className="shrink-0"
-                            >
-                                <IconPlus className="h-5 w-5" />
-                            </Button>
-                        </div>
+                        {/* Add Bookmark - Prominent on mobile */}
+                        <Button
+                            onClick={() => setIsAddBookmarkOpen(true)}
+                            size="icon"
+                            className="shrink-0 ml-1 rounded-full h-9 w-9 shadow-sm"
+                        >
+                            <IconPlus className="h-5 w-5" />
+                        </Button>
                     </div>
                 </div>
 
-                {/* Content Header */}
-                <div className="px-4 pt-4 pb-2">
-                    <div className="flex items-center justify-between">
+                {/* Content Header - Breadcrumb style */}
+                <div className="px-6 pt-6 pb-2">
+                    <div className="flex items-end justify-between border-b border-border/40 pb-4">
                         <div>
-                            <h1 className="text-xl font-semibold">{selectedFolderName}</h1>
-                            <p className="text-sm text-muted-foreground">
+                            <h1 className="text-2xl font-bold tracking-tight text-foreground/90">{selectedFolderName}</h1>
+                            <p className="text-sm text-muted-foreground mt-1 font-medium">
                                 {filteredBookmarks.length} bookmark{filteredBookmarks.length !== 1 ? 's' : ''}
-                                {searchQuery && ` matching "${searchQuery}"`}
+                                {searchQuery && (
+                                    <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-md bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 text-xs">
+                                        matching "{searchQuery}"
+                                    </span>
+                                )}
                             </p>
                         </div>
                     </div>
