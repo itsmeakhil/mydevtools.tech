@@ -61,23 +61,8 @@ export default function FolderTree({ onSelectFolder }: FolderTreeProps) {
                 onClick={() => onSelectFolder(null)}
             />
 
-            {/* Uncategorized */}
-            <FolderItem
-                icon={IconInbox}
-                label="Uncategorized"
-                count={uncategorizedCount}
-                isSelected={selectedFolderId === 'uncategorized'}
-                onClick={() => onSelectFolder('uncategorized')}
-            />
+    
 
-            {/* Recently Added */}
-            <FolderItem
-                icon={IconClock}
-                label="Recently Added"
-                count={recentCount}
-                isSelected={false}
-                onClick={() => onSelectFolder(null)}
-            />
 
             {/* Separator */}
             <div className="h-px bg-border my-2" />
