@@ -124,7 +124,7 @@ export default function BookmarkCard({ bookmark, viewMode, onEdit, index }: Book
                     )}
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                         <Button
                             variant="ghost"
                             size="icon"
@@ -185,7 +185,7 @@ export default function BookmarkCard({ bookmark, viewMode, onEdit, index }: Book
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.2, delay: index * 0.03 }}
                 className={cn(
-                    "group relative flex flex-col p-4 rounded-xl border border-border/50",
+                    "group relative flex flex-col p-3 sm:p-4 rounded-xl border border-border/50",
                     "bg-gradient-to-br from-background to-muted/20",
                     "hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5",
                     "transition-all duration-200 cursor-pointer"
@@ -226,7 +226,7 @@ export default function BookmarkCard({ bookmark, viewMode, onEdit, index }: Book
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                             >
                                 <IconDotsVertical className="h-4 w-4" />
                             </Button>

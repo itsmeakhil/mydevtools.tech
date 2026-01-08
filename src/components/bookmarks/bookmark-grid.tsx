@@ -35,8 +35,8 @@ export default function BookmarkGrid({ bookmarks, viewMode, onEdit }: BookmarkGr
         <div
             className={cn(
                 viewMode === 'grid'
-                    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-                    : "flex flex-col gap-2"
+                    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4"
+                    : "flex flex-col gap-2 sm:gap-3"
             )}
         >
             {bookmarks.map((bookmark, index) => (

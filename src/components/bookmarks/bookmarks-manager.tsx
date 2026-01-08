@@ -10,7 +10,8 @@ import {
     IconUpload,
     IconDownload,
     IconFolderPlus,
-    IconX
+    IconX,
+    IconDotsVertical
 } from "@tabler/icons-react"
 import { useBookmarkStore, useFilteredBookmarks, useAllTags } from "@/store/bookmark-store"
 import { Button } from "@/components/ui/button"
@@ -133,7 +134,7 @@ export default function BookmarksManager() {
                         </div>
 
                         {/* Folder Tree */}
-                        <ScrollArea className="flex-1 p-2">
+                        <ScrollArea className="flex-1 p-1 sm:p-2">
                             <FolderTree
                                 onSelectFolder={(id) => {
                                     setSelectedFolder(id)
@@ -185,25 +186,29 @@ export default function BookmarksManager() {
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Toolbar */}
-                <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row gap-3">
-                    {/* Left side - Search and mobile menu */}
-                    <div className="flex items-center gap-2 flex-1">
+                <div className="p-3 sm:p-4 border-b border-border/50 flex flex-col gap-3">
+                    {/* Top Row - Search and Actions */}
+                    <div className="flex items-center gap-2">
+                        {/* Mobile Menu Button */}
                         {isMobile && (
                             <Button
                                 variant="outline"
                                 size="icon"
+                                className="shrink-0"
                                 onClick={() => setShowSidebar(true)}
                             >
                                 <IconList className="h-4 w-4" />
                             </Button>
                         )}
-                        <div className="relative flex-1 max-w-md">
+
+                        {/* Search */}
+                        <div className="relative flex-1">
                             <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder="Search bookmarks..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9 bg-background/50"
+                                className="pl-9 pr-9 bg-background/50"
                             />
                             {searchQuery && (
                                 <Button
@@ -216,63 +221,112 @@ export default function BookmarksManager() {
                                 </Button>
                             )}
                         </div>
-                    </div>
 
-                    {/* Right side - Actions */}
-                    <div className="flex items-center gap-2">
-                        {/* View Toggle */}
-                        <div className="flex items-center border rounded-lg overflow-hidden">
+                        {/* Desktop Actions - Visible on larger screens */}
+                        <div className="hidden md:flex items-center gap-2">
+                            {/* View Toggle */}
+                            <div className="flex items-center border rounded-lg overflow-hidden">
+                                <Button
+                                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                                    size="icon"
+                                    className="h-9 w-9 rounded-none"
+                                    onClick={() => setViewMode('grid')}
+                                >
+                                    <IconLayoutGrid className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant={viewMode === 'list' ? 'default' : 'ghost'}
+                                    size="icon"
+                                    className="h-9 w-9 rounded-none"
+                                    onClick={() => setViewMode('list')}
+                                >
+                                    <IconList className="h-4 w-4" />
+                                </Button>
+                            </div>
+
+                            {/* Import */}
                             <Button
-                                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                                size="icon"
-                                className="h-9 w-9 rounded-none"
-                                onClick={() => setViewMode('grid')}
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setIsImportOpen(true)}
                             >
-                                <IconLayoutGrid className="h-4 w-4" />
+                                <IconUpload className="h-4 w-4 mr-2" />
+                                Import
                             </Button>
-                            <Button
-                                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                                size="icon"
-                                className="h-9 w-9 rounded-none"
-                                onClick={() => setViewMode('list')}
-                            >
-                                <IconList className="h-4 w-4" />
+
+                            {/* Export */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                        <IconDownload className="h-4 w-4 mr-2" />
+                                        Export
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={handleExportHTML}>
+                                        Export as HTML
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={handleExportJSON}>
+                                        Export as JSON
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
+                            {/* Add Bookmark */}
+                            <Button onClick={() => setIsAddBookmarkOpen(true)}>
+                                <IconPlus className="h-4 w-4 mr-2" />
+                                Add Bookmark
                             </Button>
                         </div>
 
-                        {/* Import */}
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setIsImportOpen(true)}
-                        >
-                            <IconUpload className="h-4 w-4 mr-2" />
-                            Import
-                        </Button>
+                        {/* Mobile/Tablet Actions Menu */}
+                        <div className="md:hidden flex items-center gap-1">
+                            {/* View Toggle - Icon Only */}
+                            <Button
+                                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                                size="icon"
+                                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                                className="shrink-0"
+                            >
+                                {viewMode === 'grid' ? (
+                                    <IconLayoutGrid className="h-4 w-4" />
+                                ) : (
+                                    <IconList className="h-4 w-4" />
+                                )}
+                            </Button>
 
-                        {/* Export */}
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                    <IconDownload className="h-4 w-4 mr-2" />
-                                    Export
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={handleExportHTML}>
-                                    Export as HTML
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={handleExportJSON}>
-                                    Export as JSON
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                            {/* Actions Menu */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="icon" className="shrink-0">
+                                        <IconDotsVertical className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuItem onClick={() => setIsImportOpen(true)}>
+                                        <IconUpload className="h-4 w-4 mr-2" />
+                                        Import
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={handleExportHTML}>
+                                        <IconDownload className="h-4 w-4 mr-2" />
+                                        Export as HTML
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={handleExportJSON}>
+                                        <IconDownload className="h-4 w-4 mr-2" />
+                                        Export as JSON
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
 
-                        {/* Add Bookmark */}
-                        <Button onClick={() => setIsAddBookmarkOpen(true)}>
-                            <IconPlus className="h-4 w-4 mr-2" />
-                            Add Bookmark
-                        </Button>
+                            {/* Add Bookmark - Prominent on mobile */}
+                            <Button
+                                onClick={() => setIsAddBookmarkOpen(true)}
+                                size="icon"
+                                className="shrink-0"
+                            >
+                                <IconPlus className="h-5 w-5" />
+                            </Button>
+                        </div>
                     </div>
                 </div>
 
