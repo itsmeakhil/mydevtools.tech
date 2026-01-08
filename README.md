@@ -12,35 +12,15 @@
 
 ## ✨ Features
 
-### 🚀 Productivity & Management
-- **📝 Smart Notes**: A Notion-style rich text editor for your thoughts and documentation.
-- **✅ Intelligent To-Do**: Manage tasks with priority tracking and drag-and-drop organization.
-- **🔐 Password Manager**: Secure, local-first password vault protected by a master password.
-- **🔗 URL Shortener**: Create and manage shortened URLs efficiently.
+### 🚀 Productivity Apps
+- **✅ Tasks**: Manage your to-do lists efficiently with priority tracking and organization.
+- **📝 Notes**: Capture ideas and organize your thoughts with a rich text editor.
+- **🔐 Password Manager**: Securely store and manage your passwords with client-side encryption.
+- **🔖 Bookmarks**: Manage and organize your bookmarks in one place.
 
-### 🛠️ Developer Utilities
-- **🔄 Data Converters**: Seamlessly convert between JSON, XML, YAML, TOML, and CSV.
-- **🎨 Formatters**: Prettify and validate JSON and other data formats.
-- **🔍 Diff Tools**: Compare Text and JSON files to spot differences instantly.
-- **🔢 Generators**:
-  - **UUID/ULID**: Generate unique identifiers.
-  - **Passwords**: Create strong, customizable passwords.
-  - **QR Codes**: Generate standard and WiFi access QR codes.
-  - **Mock Data**: Generate Lorem Ipsum text.
-- **🔒 Security & Encryption**:
-  - **Hashing**: Generate MD5, SHA-1, SHA-256, etc.
-  - **Bcrypt**: Hash and verify passwords.
-  - **Encryption**: AES, TripleDES, Rabbit, RC4.
-  - **Token Generator**: Create secure random tokens.
-
-### 🌐 Network & Web
-- **📡 Network Tools**: IPv4 Subnet Calculator, CIDR Range Expander.
-- **🌐 Web Tools**: URL Encoder/Decoder, HTML Entity Converter, HTTP Status Codes.
-- **📱 Device Info**: View detailed browser and system information.
-
-### 💻 System & DevOps
-- **🐧 Linux Tools**: Chmod Calculator, Crontab Generator.
-- **📦 Git**: Common Git commands reference.
+### 🛠️ Developer Tools
+- **📡 API Client**: Test and debug HTTP requests with an intuitive interface.
+- **🗄️ NoSQL Explorer**: Explore and manage your MongoDB databases directly from your browser.
 
 ---
 
