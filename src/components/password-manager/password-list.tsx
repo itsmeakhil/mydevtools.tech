@@ -111,7 +111,7 @@ export function PasswordList() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 mobile-nav-offset">
             <div className={cn(
                 "flex gap-2 items-center z-40 transition-all duration-200",
                 isMobile ? "sticky top-0 bg-background/80 backdrop-blur-md py-2 -mx-4 px-4 border-b" : ""

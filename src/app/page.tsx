@@ -111,7 +111,7 @@ export default function Page() {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative py-16 md:py-24 lg:py-32 overflow-hidden">
+      <section className="relative py-12 sm:py-16 md:py-24 lg:py-32 overflow-hidden">
         {/* OpenStatus-inspired Background */}
         <BackgroundAnimation />
 
@@ -133,10 +133,10 @@ export default function Page() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 md:gap-4 pt-6 md:pt-8 animate-in fade-in slide-in-from-bottom-10 duration-1000 px-4 sm:px-0">
-              <Button size="lg" className="h-11 md:h-12 px-6 md:px-8 text-sm md:text-base rounded-full w-full sm:w-auto" onClick={handleNavigation}>
+              <Button size="lg" className="h-12 md:h-12 px-6 md:px-8 text-sm md:text-base rounded-full w-full sm:w-auto touch-target" onClick={handleNavigation}>
                 Get Started <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" className="h-11 md:h-12 px-6 md:px-8 text-sm md:text-base rounded-full w-full sm:w-auto" asChild>
+              <Button size="lg" variant="outline" className="h-12 md:h-12 px-6 md:px-8 text-sm md:text-base rounded-full w-full sm:w-auto touch-target" asChild>
                 <Link href="https://github.com/itsmeakhil/mydevtools.tech" target="_blank">
                   View on GitHub
                 </Link>
@@ -203,7 +203,7 @@ export default function Page() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {tools.map((tool, index) => (
               <Link key={index} href={tool.href}>
-                <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-border/50 hover:border-primary/50 group cursor-pointer">
+                <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] border-border/50 hover:border-primary/50 group cursor-pointer">
                   <CardHeader className="pb-3 md:pb-6 flex flex-row items-center gap-4">
                     <div className={`w-10 h-10 md:w-12 md:h-12 rounded-lg ${tool.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shrink-0`}>
                       <tool.icon className={`w-5 h-5 md:w-6 md:h-6 ${tool.color}`} />
@@ -238,7 +238,7 @@ export default function Page() {
             Join thousands of developers who use MyDevTools to streamline their daily tasks.
             Open source, free, and privacy-focused.
           </p>
-          <Button size="lg" className="h-12 md:h-14 px-8 md:px-10 text-base md:text-lg rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto max-w-sm sm:max-w-none" onClick={handleNavigation}>
+          <Button size="lg" className="h-12 md:h-14 px-8 md:px-10 text-base md:text-lg rounded-full shadow-xl hover:shadow-2xl hover:scale-105 active:scale-[0.98] transition-all duration-300 w-full sm:w-auto max-w-sm sm:max-w-none touch-target" onClick={handleNavigation}>
             Start Using Tools Now
           </Button>
         </div>

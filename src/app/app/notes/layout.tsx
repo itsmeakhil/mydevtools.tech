@@ -12,7 +12,7 @@ export default function NotesLayout({ children }: { children: React.ReactNode })
 
     return (
         <NotesProvider>
-            <div className="flex h-screen overflow-hidden bg-background">
+            <div className="flex h-screen overflow-hidden bg-background mobile-nav-offset">
                 {isDesktop && <NotesSidebar />}
 
                 <main className="flex-1 overflow-hidden relative flex flex-col pt-12 md:pt-0">

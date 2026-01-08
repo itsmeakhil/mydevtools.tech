@@ -14,6 +14,7 @@ import {
     IconDotsVertical
 } from "@tabler/icons-react"
 import { useBookmarkStore, useFilteredBookmarks, useAllTags } from "@/store/bookmark-store"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -93,95 +94,98 @@ export default function BookmarksManager() {
             : folders.find(f => f.id === selectedFolderId)?.name || 'Unknown'
 
     return (
-        <div className="flex h-full w-full overflow-hidden bg-background">
+        <div className="flex h-full w-full overflow-hidden bg-background mobile-nav-offset">
             {/* Sidebar */}
             <AnimatePresence mode="wait">
                 {(showSidebar || !isMobile) && (
-                    <motion.div
-                        initial={{ x: -300, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        exit={{ x: -300, opacity: 0 }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className={`
-                            ${isMobile ? 'absolute inset-y-0 left-0 z-50 shadow-2xl' : 'relative'}
-                            w-72 border-r border-border/40 bg-muted/30
-                            flex flex-col
-                        `}
-                    >
-                        {/* Sidebar Header */}
-                        <div className="h-16 px-4 flex items-center justify-between border-b border-border/40 bg-background/50 backdrop-blur-sm">
-                            <h2 className="font-semibold text-base tracking-tight">Folders</h2>
-                            <div className="flex items-center gap-1">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                    onClick={() => setIsAddFolderOpen(true)}
-                                >
-                                    <IconFolderPlus className="h-4.5 w-4.5" />
-                                </Button>
-                                {isMobile && (
+                    <>
+                        {/* Mobile backdrop overlay */}
+                        {isMobile && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="fixed inset-0 bg-black/60 z-40 md:hidden"
+                                onClick={() => setShowSidebar(false)}
+                            />
+                        )}
+                        <motion.div
+                            initial={{ x: -300, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: -300, opacity: 0 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            className={cn(
+                                "w-72 border-r border-border/40 flex flex-col",
+                                isMobile
+                                    ? "fixed inset-y-0 left-0 z-50 shadow-2xl bg-background"
+                                    : "relative bg-muted/30"
+                            )}
+                        >
+                            {/* Sidebar Header */}
+                            <div className="h-16 px-4 flex items-center justify-between border-b border-border/40 bg-background/50 backdrop-blur-sm">
+                                <h2 className="font-semibold text-base tracking-tight">Folders</h2>
+                                <div className="flex items-center gap-1">
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="h-8 w-8"
-                                        onClick={() => setShowSidebar(false)}
+                                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                        onClick={() => setIsAddFolderOpen(true)}
                                     >
-                                        <IconX className="h-4 w-4" />
+                                        <IconFolderPlus className="h-4.5 w-4.5" />
                                     </Button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Folder Tree */}
-                        <ScrollArea className="flex-1 px-3 py-4">
-                            <FolderTree
-                                onSelectFolder={(id: string | null) => {
-                                    setSelectedFolder(id)
-                                    if (isMobile) setShowSidebar(false)
-                                }}
-                            />
-                        </ScrollArea>
-
-                        {/* Tags Section */}
-                        {allTags.length > 0 && (
-                            <>
-                                <Separator />
-                                <div className="p-4">
-                                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Tags</h3>
-                                    <div className="flex flex-wrap gap-1">
-                                        {allTags.slice(0, 10).map(tag => (
-                                            <button
-                                                key={tag}
-                                                onClick={() => setSearchQuery(`#${tag}`)}
-                                                className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                                            >
-                                                #{tag}
-                                            </button>
-                                        ))}
-                                        {allTags.length > 10 && (
-                                            <span className="text-xs text-muted-foreground">
-                                                +{allTags.length - 10} more
-                                            </span>
-                                        )}
-                                    </div>
+                                    {isMobile && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            onClick={() => setShowSidebar(false)}
+                                        >
+                                            <IconX className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </div>
-                            </>
-                        )}
-                    </motion.div>
+                            </div>
+
+                            {/* Folder Tree */}
+                            <ScrollArea className="flex-1 px-3 py-4">
+                                <FolderTree
+                                    onSelectFolder={(id: string | null) => {
+                                        setSelectedFolder(id)
+                                        if (isMobile) setShowSidebar(false)
+                                    }}
+                                />
+                            </ScrollArea>
+
+                            {/* Tags Section */}
+                            {allTags.length > 0 && (
+                                <>
+                                    <Separator />
+                                    <div className="p-4">
+                                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Tags</h3>
+                                        <div className="flex flex-wrap gap-1">
+                                            {allTags.slice(0, 10).map(tag => (
+                                                <button
+                                                    key={tag}
+                                                    onClick={() => setSearchQuery(`#${tag}`)}
+                                                    className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                                                >
+                                                    #{tag}
+                                                </button>
+                                            ))}
+                                            {allTags.length > 10 && (
+                                                <span className="text-xs text-muted-foreground">
+                                                    +{allTags.length - 10} more
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </motion.div>
+                    </>
                 )}
             </AnimatePresence>
-
-            {/* Mobile sidebar overlay */}
-            {isMobile && showSidebar && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute inset-0 bg-black/50 z-40"
-                    onClick={() => setShowSidebar(false)}
-                />
-            )}
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden bg-background">

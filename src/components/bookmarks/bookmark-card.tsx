@@ -35,6 +35,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 
+import { useIsMobile } from "@/components/hooks/use-mobile"
+
 interface BookmarkCardProps {
     bookmark: Bookmark
     viewMode: 'grid' | 'list'
@@ -50,6 +52,7 @@ export default function BookmarkCard({ bookmark, viewMode, onEdit, index }: Book
     const folder = folders.find(f => f.id === bookmark.folderId)
     const faviconUrl = bookmark.favicon || getFaviconUrl(bookmark.url)
     const domain = getDomainFromUrl(bookmark.url)
+    const isMobile = useIsMobile()
 
     const handleOpenLink = useCallback(() => {
         window.open(bookmark.url, '_blank', 'noopener,noreferrer')
@@ -195,12 +198,15 @@ export default function BookmarkCard({ bookmark, viewMode, onEdit, index }: Book
                 {/* Header */}
                 <div className="flex items-start gap-3.5 mb-3">
                     {/* Favicon */}
-                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-muted/50 to-muted/80 flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-border/50 shadow-sm group-hover:scale-105 transition-transform duration-300">
+                    <div className={cn(
+                        "rounded-xl bg-gradient-to-br from-muted/50 to-muted/80 flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-border/50 shadow-sm group-hover:scale-105 transition-transform duration-300",
+                        isMobile ? "h-11 w-11" : "h-10 w-10"
+                    )}>
                         {!imageError ? (
                             <img
                                 src={faviconUrl}
                                 alt=""
-                                className="h-5 w-5 object-contain"
+                                className={cn("object-contain", isMobile ? "h-6 w-6" : "h-5 w-5")}
                                 onError={() => setImageError(true)}
                             />
                         ) : (
@@ -226,7 +232,12 @@ export default function BookmarkCard({ bookmark, viewMode, onEdit, index }: Book
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 -mr-2 -mt-1"
+                                className={cn(
+                                    "h-8 w-8 -mr-2 -mt-1",
+                                    isMobile
+                                        ? "opacity-100 touch-target-sm"
+                                        : "opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
+                                )}
                             >
                                 <IconDotsVertical className="h-4 w-4" />
                             </Button>

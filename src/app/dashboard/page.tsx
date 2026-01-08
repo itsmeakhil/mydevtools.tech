@@ -159,17 +159,17 @@ const DashboardPage: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: index * 0.05 }}
+        transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
         className="card-gradient-border rounded-xl"
       >
         <Link href={item.url || "#"} className="block group h-full" onClick={handleClick}>
-          <Card className="glass-card border-border/30 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 h-full min-h-[180px] relative overflow-hidden group-hover:-translate-y-1.5">
+          <Card className="glass-card border-border/30 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 h-full min-h-[160px] md:min-h-[180px] relative overflow-hidden group-hover:-translate-y-1 md:group-hover:-translate-y-1.5">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-            <CardContent className="p-5 h-full flex flex-col justify-between relative z-10">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary group-hover:scale-110 transition-all duration-300 icon-container-pulse">
-                  {item.icon ? <item.icon size={22} strokeWidth={1.5} /> : <Sparkles size={22} strokeWidth={1.5} />}
+            <CardContent className="p-4 md:p-5 h-full flex flex-col justify-between relative z-10">
+              <div className="flex justify-between items-start mb-3 md:mb-4">
+                <div className="p-2.5 md:p-3 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary group-hover:scale-110 transition-all duration-300 icon-container-pulse">
+                  {item.icon ? <item.icon size={20} strokeWidth={1.5} className="md:w-[22px] md:h-[22px]" /> : <Sparkles size={20} strokeWidth={1.5} className="md:w-[22px] md:h-[22px]" />}
                 </div>
                 <div
                   className="p-2 rounded-full hover:bg-muted/80 transition-colors z-20 cursor-pointer"
@@ -215,7 +215,7 @@ const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen px-6 pb-8 md:px-8 md:pb-12 bg-background/50 dashboard-grid-bg">
+    <div className="min-h-screen px-4 pb-24 md:px-8 md:pb-12 bg-background/50 dashboard-grid-bg mobile-nav-offset">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header Section */}
         <div className="flex flex-col gap-6">
@@ -224,7 +224,7 @@ const DashboardPage: React.FC = () => {
               <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                 {getGreeting()}
               </p>
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight gradient-text-animated">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight gradient-text-animated">
                 Welcome back{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : ''}
               </h1>
               <p className="text-muted-foreground">
@@ -270,7 +270,17 @@ const DashboardPage: React.FC = () => {
                 </span>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Horizontal scroll on mobile, grid on larger screens */}
+            <div className="md:hidden -mx-4 px-4">
+              <div className="flex gap-3 overflow-x-auto scroll-snap-x pb-2 mobile-scrollbar-hide">
+                {recentlyUsedItems.map((item, index) => (
+                  <div key={`recent-mobile-${item.id}`} className="scroll-snap-item w-[280px] flex-shrink-0">
+                    <ToolCard item={item} id={item.id} index={index} />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-4">
               {recentlyUsedItems.map((item, index) => (
                 <ToolCard key={`recent-${item.id}`} item={item} id={item.id} index={index} />
               ))}
@@ -292,7 +302,17 @@ const DashboardPage: React.FC = () => {
                 </span>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Horizontal scroll on mobile, grid on larger screens */}
+            <div className="md:hidden -mx-4 px-4">
+              <div className="flex gap-3 overflow-x-auto scroll-snap-x pb-2 mobile-scrollbar-hide">
+                {favoriteItems.map((item, index) => (
+                  <div key={`fav-mobile-${item.id}`} className="scroll-snap-item w-[280px] flex-shrink-0">
+                    <ToolCard item={item} id={item.id} index={index} />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-4">
               {favoriteItems.map((item, index) => (
                 <ToolCard key={`fav-${item.id}`} item={item} id={item.id} index={index} />
               ))}
@@ -315,7 +335,7 @@ const DashboardPage: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
                 {group.items.map((item: any, itemIndex) => (
                   <React.Fragment key={`${groupIndex}-${itemIndex}`}>
                     {/* Render top-level items */}

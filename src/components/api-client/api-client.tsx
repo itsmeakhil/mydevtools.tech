@@ -23,6 +23,10 @@ import {
     CollectionRequest,
 } from "./types"
 import { toast } from "sonner"
+import { useIsMobile } from "@/components/hooks/use-mobile"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import { FolderOpen } from "lucide-react"
 
 const createNewTab = (): ApiRequestState => ({
     id: crypto.randomUUID(),
@@ -56,6 +60,8 @@ export function ApiClient() {
     } = useEnvironments()
 
     const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0]
+    const isMobile = useIsMobile()
+    const [collectionsOpen, setCollectionsOpen] = React.useState(false)
 
     // Load state from localStorage
     React.useEffect(() => {
@@ -292,19 +298,47 @@ export function ApiClient() {
     }
 
     return (
-        <div className="flex h-[calc(100vh-4rem)] gap-4">
-            <div className="flex-1 flex flex-col gap-6 min-w-0">
-                <div className="flex justify-end gap-2">
-                    <EnvironmentManager
-                        environments={environments}
-                        activeEnvId={activeEnvId}
-                        setActiveEnvId={setActiveEnvId}
-                        addEnvironment={addEnvironment}
-                        updateEnvironment={updateEnvironment}
-                        deleteEnvironment={deleteEnvironment}
-                    />
-                    <CodeGenerator request={activeTab} />
-                    <ImportCurlDialog onImport={handleImportCurl} />
+        <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] gap-4 mobile-nav-offset">
+            <div className="flex-1 flex flex-col gap-4 md:gap-6 min-w-0">
+                <div className="flex flex-wrap justify-between gap-2">
+                    {/* Mobile Collections Button */}
+                    {isMobile && (
+                        <Sheet open={collectionsOpen} onOpenChange={setCollectionsOpen}>
+                            <SheetTrigger asChild>
+                                <Button variant="outline" size="sm" className="touch-target-sm">
+                                    <FolderOpen className="h-4 w-4 mr-2" />
+                                    Collections
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="bottom" className="h-[70vh] bottom-sheet">
+                                <div className="bottom-sheet-handle" />
+                                <CollectionsSidebar
+                                    collections={collections}
+                                    onAddFolder={addFolder}
+                                    onDelete={deleteItem}
+                                    onToggle={toggleFolder}
+                                    onLoadRequest={(request) => {
+                                        handleLoadRequest(request)
+                                        setCollectionsOpen(false)
+                                    }}
+                                    onCreateCollection={createCollection}
+                                    onRenameCollection={renameCollection}
+                                />
+                            </SheetContent>
+                        </Sheet>
+                    )}
+                    <div className="flex flex-wrap gap-2 ml-auto">
+                        <EnvironmentManager
+                            environments={environments}
+                            activeEnvId={activeEnvId}
+                            setActiveEnvId={setActiveEnvId}
+                            addEnvironment={addEnvironment}
+                            updateEnvironment={updateEnvironment}
+                            deleteEnvironment={deleteEnvironment}
+                        />
+                        <CodeGenerator request={activeTab} />
+                        <ImportCurlDialog onImport={handleImportCurl} />
+                    </div>
                 </div>
                 <Card className="overflow-hidden flex-1 flex flex-col">
                     <TabBar
@@ -314,7 +348,7 @@ export function ApiClient() {
                         onTabClose={handleCloseTab}
                         onTabAdd={handleAddTab}
                     />
-                    <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+                    <div className="p-4 md:p-6 space-y-4 md:space-y-6 flex-1 overflow-y-auto">
                         <RequestPanel
                             method={activeTab.method}
                             setMethod={(method) => updateActiveTab({ method })}
@@ -341,15 +375,18 @@ export function ApiClient() {
                     </div>
                 </Card>
             </div>
-            <CollectionsSidebar
-                collections={collections}
-                onAddFolder={addFolder}
-                onDelete={deleteItem}
-                onToggle={toggleFolder}
-                onLoadRequest={handleLoadRequest}
-                onCreateCollection={createCollection}
-                onRenameCollection={renameCollection}
-            />
-        </div >
+            {/* Desktop Collections Sidebar */}
+            {!isMobile && (
+                <CollectionsSidebar
+                    collections={collections}
+                    onAddFolder={addFolder}
+                    onDelete={deleteItem}
+                    onToggle={toggleFolder}
+                    onLoadRequest={handleLoadRequest}
+                    onCreateCollection={createCollection}
+                    onRenameCollection={renameCollection}
+                />
+            )}
+        </div>
     )
 }

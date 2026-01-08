@@ -121,7 +121,7 @@ export const TaskContainer = () => {
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   return (
-    <div className="h-screen bg-gradient-to-br from-background via-background to-muted/20 ml-0 mr-0 px-0 w-full flex flex-col overflow-hidden relative">
+    <div className="h-screen bg-gradient-to-br from-background via-background to-muted/20 ml-0 mr-0 px-0 w-full flex flex-col overflow-hidden relative mobile-nav-offset">
       <div className="flex flex-col gap-3 px-2 md:px-4 lg:px-6 py-2 md:py-4 flex-1 overflow-hidden">
         {/* Enhanced Header */}
         <Card className="border shadow-lg bg-card/50 backdrop-blur-sm">
@@ -387,12 +387,12 @@ export const TaskContainer = () => {
       </div>
 
       {/* Floating Action Button (FAB) - Mobile Only */}
-      <div className="md:hidden fixed bottom-6 right-6 z-50">
+      <div className="md:hidden">
         <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
           <DrawerTrigger asChild>
             <Button
               size="icon"
-              className="h-14 w-14 rounded-full shadow-xl bg-primary hover:bg-primary/90 text-primary-foreground transition-transform active:scale-95"
+              className="fab fab-pulse h-14 w-14 bg-primary hover:bg-primary/90 text-primary-foreground transition-transform active:scale-95"
             >
               <Plus className="h-6 w-6" />
               <span className="sr-only">Add Task</span>

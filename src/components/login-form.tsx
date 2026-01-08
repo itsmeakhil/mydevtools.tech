@@ -112,7 +112,7 @@ export function LoginForm() {
         type="button"
         onClick={() => handleLogin(new GoogleAuthProvider())}
         disabled={isLoading}
-        className="w-full h-12 text-base font-medium relative overflow-hidden group transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover:scale-[1.02] active:scale-[0.98]"
+        className="w-full h-12 text-base font-medium relative overflow-hidden group transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] touch-target"
         variant="default"
       >
         {isLoading ? (
@@ -145,7 +145,7 @@ export function LoginForm() {
         type="button"
         onClick={() => handleLogin(new GithubAuthProvider())}
         disabled={isLoading}
-        className="w-full h-12 text-base font-medium relative overflow-hidden group transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] bg-[#24292e] hover:bg-[#2f363d] text-white"
+        className="w-full h-12 text-base font-medium relative overflow-hidden group transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] bg-[#24292e] hover:bg-[#2f363d] text-white touch-target"
         variant="default"
       >
         {isLoading ? (
