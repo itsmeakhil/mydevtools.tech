@@ -188,9 +188,9 @@ export default function BookmarksManager() {
             </AnimatePresence>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col overflow-hidden bg-background">
-                {/* Toolbar - Sticky & Glassy */}
-                <div className="h-16 px-4 border-b border-border/40 flex items-center gap-4 bg-background/80 backdrop-blur-md sticky top-0 z-10">
+            <div className="flex-1 flex flex-col min-h-0 bg-background">
+                {/* Toolbar - Fixed height, not scrollable */}
+                <div className="shrink-0 h-16 px-4 border-b border-border/40 flex items-center gap-4 bg-background/80 backdrop-blur-md z-10">
                     {/* Mobile Menu Button */}
                     {isMobile && (
                         <Button
@@ -333,8 +333,8 @@ export default function BookmarksManager() {
                     </div>
                 </div>
 
-                {/* Content Header - Breadcrumb style */}
-                <div className="px-6 pt-6 pb-2">
+                {/* Content Header - Fixed, not scrollable */}
+                <div className="shrink-0 px-6 pt-6 pb-2">
                     <div className="flex items-end justify-between border-b border-border/40 pb-4">
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight text-foreground/90">{selectedFolderName}</h1>
@@ -350,13 +350,15 @@ export default function BookmarksManager() {
                     </div>
                 </div>
 
-                {/* Bookmarks Grid/List */}
-                <ScrollArea className="flex-1 p-4">
-                    <BookmarkGrid
-                        bookmarks={filteredBookmarks}
-                        viewMode={viewMode}
-                        onEdit={handleEditBookmark}
-                    />
+                {/* Bookmarks Grid/List - Only this section scrolls */}
+                <ScrollArea className="flex-1 min-h-0">
+                    <div className="p-4">
+                        <BookmarkGrid
+                            bookmarks={filteredBookmarks}
+                            viewMode={viewMode}
+                            onEdit={handleEditBookmark}
+                        />
+                    </div>
                 </ScrollArea>
             </div>
 
