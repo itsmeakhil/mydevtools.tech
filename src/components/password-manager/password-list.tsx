@@ -89,43 +89,96 @@ export function PasswordList() {
 
     if (isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                <p className="text-muted-foreground">Loading your passwords...</p>
+            <div className={cn(
+                "flex flex-col items-center justify-center text-center space-y-4",
+                isMobile ? "min-h-[60vh]" : "py-16"
+            )}>
+                <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent"></div>
+                <p className="text-sm text-muted-foreground">Loading your passwords...</p>
             </div>
         )
     }
 
     if (passwords.length === 0 && !searchTerm) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 text-center space-y-4 border-2 border-dashed rounded-lg border-muted/50 bg-muted/10">
-                <div className="p-4 bg-muted rounded-full">
-                    <Lock className="h-8 w-8 text-muted-foreground" />
+            <div className={cn(
+                "flex flex-col items-center justify-center text-center space-y-4",
+                isMobile
+                    ? "min-h-[50vh] px-8"
+                    : "py-16 border-2 border-dashed rounded-lg border-muted/50 bg-muted/10"
+            )}>
+                <div className={cn(
+                    "rounded-full flex items-center justify-center",
+                    isMobile ? "h-20 w-20 bg-primary/10" : "h-16 w-16 bg-muted"
+                )}>
+                    <Lock className={cn(
+                        "text-muted-foreground",
+                        isMobile ? "h-10 w-10 text-primary" : "h-8 w-8"
+                    )} />
                 </div>
-                <h3 className="text-lg font-semibold">Vault is Empty</h3>
-                <p className="text-muted-foreground max-w-sm">
-                    You haven't stored any passwords yet. Click the "Add Password" button above to get started.
-                </p>
+                <div className="space-y-2">
+                    <h3 className={cn("font-semibold", isMobile ? "text-xl" : "text-lg")}>Vault is Empty</h3>
+                    <p className="text-muted-foreground text-sm max-w-[280px]">
+                        {isMobile
+                            ? "Tap the + button to add your first password"
+                            : "You haven't stored any passwords yet. Click the \"Add Password\" button above to get started."
+                        }
+                    </p>
+                </div>
             </div>
         )
     }
 
     return (
-        <div className="space-y-6 mobile-nav-offset">
-            <div className={cn(
-                "flex gap-2 items-center z-40 transition-all duration-200",
-                isMobile ? "sticky top-0 bg-background/80 backdrop-blur-md py-2 -mx-4 px-4 border-b" : ""
-            )}>
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search vault..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-9 h-10 bg-background/50 backdrop-blur-sm"
-                    />
+        <div className={cn(
+            isMobile ? "pb-24" : "space-y-6 mobile-nav-offset"
+        )}>
+            {/* Mobile Header */}
+            {isMobile && (
+                <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl border-b">
+                    {/* App bar */}
+                    <div className="flex items-center justify-between px-4 py-3">
+                        <h1 className="text-xl font-bold">Passwords</h1>
+                        <div className="flex items-center gap-1">
+                            <ImportExportDialog />
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={handleLock}
+                                title="Lock Vault"
+                                className="h-9 w-9"
+                            >
+                                <Lock className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                    {/* Search bar */}
+                    <div className="px-4 pb-3">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search passwords..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-9 h-10 bg-muted/50 border-0 rounded-xl focus-visible:ring-1"
+                            />
+                        </div>
+                    </div>
                 </div>
-                {!isMobile && (
+            )}
+
+            {/* Desktop Search Bar */}
+            {!isMobile && (
+                <div className="flex gap-2 items-center z-40 transition-all duration-200">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search vault..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-9 h-10 bg-background/50 backdrop-blur-sm"
+                        />
+                    </div>
                     <div className="flex items-center gap-2 border rounded-lg p-1 bg-muted/20">
                         <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")}>
                             <ToggleGroupItem value="grid" size="sm" aria-label="Grid view">
@@ -136,19 +189,26 @@ export function PasswordList() {
                             </ToggleGroupItem>
                         </ToggleGroup>
                     </div>
-                )}
-                <ImportExportDialog />
-                <Button variant="outline" size="icon" onClick={handleLock} title="Lock Vault" className="h-10 w-10">
-                    <Lock className="h-4 w-4" />
-                </Button>
-            </div>
+                    <ImportExportDialog />
+                    <Button variant="outline" size="icon" onClick={handleLock} title="Lock Vault" className="h-10 w-10">
+                        <Lock className="h-4 w-4" />
+                    </Button>
+                </div>
+            )}
 
             {filteredPasswords.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                    No passwords found matching "{searchTerm}"
+                <div className={cn(
+                    "text-center text-muted-foreground",
+                    isMobile ? "py-16 px-8" : "py-12"
+                )}>
+                    <p className="text-sm">No passwords found matching "{searchTerm}"</p>
                 </div>
             ) : viewMode === "grid" ? (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className={cn(
+                    isMobile
+                        ? "px-4 pt-2 space-y-0"
+                        : "grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+                )}>
                     {filteredPasswords.map((entry) => (
                         isMobile ? (
                             <PasswordItemSwipeable

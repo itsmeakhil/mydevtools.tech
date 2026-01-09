@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Home, LayoutGrid, LogOut, User as UserIcon } from "lucide-react"
+import { Home, LayoutGrid, LogOut, User as UserIcon, Moon, Sun } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useSidebar } from "@/components/ui/sidebar"
 import {
@@ -18,6 +18,7 @@ import { signOut as firebaseSignOut } from "firebase/auth"
 import { auth } from "@/database/firebase"
 import { usePasswordStore } from "@/store/password-store"
 import { motion } from "framer-motion"
+import { useThemeAnimation } from "@space-man/react-theme-animation"
 
 // Navigation items configuration
 const navItems = [
@@ -32,6 +33,13 @@ export function MobileNav() {
     const { toggleSidebar, openMobile } = useSidebar()
     const { user } = useAuth()
     const { lockVault } = usePasswordStore()
+    const { theme, toggleTheme, ref } = useThemeAnimation()
+    const [mounted, setMounted] = useState(false)
+
+    // Avoid hydration mismatch for theme
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     // Determine active tab for indicator animation
     const getActiveTab = () => {
@@ -147,6 +155,21 @@ export function MobileNav() {
                     strokeWidth={openMobile ? 2.5 : 2}
                 />
                 <span className="mt-0.5">Tools</span>
+            </button>
+
+            {/* Theme Toggle */}
+            <button
+                ref={ref as any}
+                onClick={() => toggleTheme()}
+                className={cn(navItemStyles)}
+                aria-label="Toggle theme"
+            >
+                {mounted && theme === 'dark' ? (
+                    <Moon className="h-5 w-5" strokeWidth={2} />
+                ) : (
+                    <Sun className="h-5 w-5" strokeWidth={2} />
+                )}
+                <span className="mt-0.5">Theme</span>
             </button>
 
             {/* Profile / Login */}

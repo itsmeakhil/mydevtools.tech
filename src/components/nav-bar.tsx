@@ -20,10 +20,11 @@ export function NavBar() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* GitHub - hidden on mobile */}
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 md:h-9 md:w-9"
+              className="hidden md:flex h-8 w-8 md:h-9 md:w-9"
               asChild
             >
               <Link
@@ -35,7 +36,10 @@ export function NavBar() {
                 <span className="sr-only">GitHub</span>
               </Link>
             </Button>
-            <ModeToggle />
+            {/* Theme toggle - hidden on mobile (available in bottom nav) */}
+            <div className="hidden md:block">
+              <ModeToggle />
+            </div>
           </div>
         </div>
       </header>

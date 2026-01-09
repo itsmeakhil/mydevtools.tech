@@ -17,6 +17,8 @@ import { PasswordEntry } from "@/store/password-store"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { useIsMobile } from "@/components/hooks/use-mobile"
+import { motion } from "framer-motion"
 
 export function VaultLockScreen() {
     const { isUnlocked, setKey, setPasswords, setLoading: setPasswordsLoading } = usePasswordStore()
@@ -29,6 +31,7 @@ export function VaultLockScreen() {
     const [verifier, setVerifier] = useState<{ encrypted: string; iv: string } | null>(null)
     const [userId, setUserId] = useState<string | null>(null)
     const [shake, setShake] = useState(false)
+    const isMobile = useIsMobile()
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -190,12 +193,148 @@ export function VaultLockScreen() {
 
     if (mode === "loading") {
         return (
-            <div className="flex h-[60vh] items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="flex h-screen items-center justify-center bg-background">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
             </div>
         )
     }
 
+    // Mobile full-screen experience
+    if (isMobile) {
+        return (
+            <div
+                className={cn(
+                    "min-h-screen flex flex-col bg-background px-6 py-8 safe-area-inset",
+                    shake && "animate-shake"
+                )}
+                style={shake ? { animation: "shake 0.5s cubic-bezier(.36,.07,.19,.97) both" } : {}}
+            >
+                <style jsx>{`
+                    @keyframes shake {
+                        10%, 90% { transform: translate3d(-2px, 0, 0); }
+                        20%, 80% { transform: translate3d(3px, 0, 0); }
+                        30%, 50%, 70% { transform: translate3d(-5px, 0, 0); }
+                        40%, 60% { transform: translate3d(5px, 0, 0); }
+                    }
+                `}</style>
+
+                {/* Top spacer */}
+                <div className="flex-1 flex items-end justify-center pb-8">
+                    <motion.div
+                        className="flex flex-col items-center"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        {/* Lock Icon */}
+                        <motion.div
+                            className={cn(
+                                "h-24 w-24 rounded-full flex items-center justify-center mb-6",
+                                mode === "setup"
+                                    ? "bg-gradient-to-br from-green-500/20 to-emerald-500/10"
+                                    : "bg-gradient-to-br from-primary/20 to-primary/5"
+                            )}
+                            animate={loading ? { scale: [1, 0.95, 1] } : {}}
+                            transition={{ repeat: loading ? Infinity : 0, duration: 1 }}
+                        >
+                            {mode === "setup" ? (
+                                <ShieldCheck className="h-12 w-12 text-green-500" />
+                            ) : (
+                                <Lock className="h-12 w-12 text-primary" />
+                            )}
+                        </motion.div>
+
+                        {/* Title */}
+                        <h1 className="text-2xl font-bold text-center">
+                            {mode === "setup" ? "Create Your Vault" : "Welcome Back"}
+                        </h1>
+                        <p className="text-sm text-muted-foreground text-center mt-2 max-w-[280px]">
+                            {mode === "setup"
+                                ? "Set a master password to protect your credentials"
+                                : "Enter your master password to unlock"}
+                        </p>
+                    </motion.div>
+                </div>
+
+                {/* Form */}
+                <motion.form
+                    onSubmit={mode === "setup" ? handleSetup : handleUnlock}
+                    className="space-y-4"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                >
+                    <div className="space-y-2">
+                        <div className="relative">
+                            <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input
+                                id="password"
+                                type="password"
+                                placeholder="Master Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="pl-12 h-14 text-base rounded-2xl bg-muted/50 border-0 focus-visible:ring-2"
+                                autoFocus
+                            />
+                        </div>
+                    </div>
+
+                    {mode === "setup" && (
+                        <div className="space-y-2">
+                            <div className="relative">
+                                <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input
+                                    id="confirm-password"
+                                    type="password"
+                                    placeholder="Confirm Password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="pl-12 h-14 text-base rounded-2xl bg-muted/50 border-0 focus-visible:ring-2"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {error && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                        >
+                            <Alert variant="destructive" className="rounded-xl">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertDescription>{error}</AlertDescription>
+                            </Alert>
+                        </motion.div>
+                    )}
+
+                    <Button
+                        type="submit"
+                        className="w-full h-14 text-base rounded-2xl"
+                        size="lg"
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
+                        ) : (
+                            <Unlock className="mr-2 h-5 w-5" />
+                        )}
+                        {mode === "setup" ? "Create Vault" : "Unlock"}
+                    </Button>
+                </motion.form>
+
+                {/* Bottom spacer */}
+                <div className="flex-1 flex items-end justify-center pt-8 pb-4">
+                    <p className="text-xs text-muted-foreground text-center">
+                        {mode === "setup"
+                            ? "Your password is never stored and cannot be recovered"
+                            : "Secured with end-to-end encryption"}
+                    </p>
+                </div>
+            </div>
+        )
+    }
+
+    // Desktop card-based view (original)
     return (
         <div className="flex min-h-[80vh] items-center justify-center p-4">
             <Card className={cn(
@@ -285,3 +424,4 @@ export function VaultLockScreen() {
         </div>
     )
 }
+

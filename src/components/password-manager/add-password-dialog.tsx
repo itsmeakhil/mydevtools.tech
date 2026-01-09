@@ -251,7 +251,7 @@ export function AddPasswordDialog() {
                         Cancel
                     </Button>
                 )}
-                <Button type="submit" disabled={loading} className={cn(isMobile && "w-full")}>
+                <Button type="submit" disabled={loading} className={cn(isMobile && "w-full h-12 rounded-xl text-base")}>
                     {loading ? "Saving..." : "Save Password"}
                 </Button>
             </div>
@@ -263,19 +263,19 @@ export function AddPasswordDialog() {
             <Drawer open={open} onOpenChange={setOpen}>
                 <DrawerTrigger asChild>
                     <Button
-                        className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-xl z-50 p-0"
+                        className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-2xl z-50 p-0 bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
                         size="icon"
                     >
-                        <Plus className="h-6 w-6" />
+                        <Plus className="h-7 w-7" />
                         <span className="sr-only">Add Password</span>
                     </Button>
                 </DrawerTrigger>
-                <DrawerContent>
-                    <div className="mx-auto w-full max-w-sm max-h-[90vh] overflow-y-auto">
-                        <DrawerHeader>
-                            <DrawerTitle>Add New Password</DrawerTitle>
+                <DrawerContent className="max-h-[95vh]">
+                    <div className="flex flex-col h-full max-h-[95vh]">
+                        <DrawerHeader className="shrink-0 border-b pb-4">
+                            <DrawerTitle className="text-xl">Add New Password</DrawerTitle>
                         </DrawerHeader>
-                        <div className="px-4 pb-4">
+                        <div className="flex-1 overflow-y-auto px-4 pb-8">
                             {FormContent}
                         </div>
                     </div>
@@ -300,3 +300,4 @@ export function AddPasswordDialog() {
         </Dialog>
     )
 }
+
