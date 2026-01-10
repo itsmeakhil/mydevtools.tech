@@ -157,21 +157,6 @@ export function MobileNav() {
                 <span className="mt-0.5">Tools</span>
             </button>
 
-            {/* Theme Toggle */}
-            <button
-                ref={ref as any}
-                onClick={() => toggleTheme()}
-                className={cn(navItemStyles)}
-                aria-label="Toggle theme"
-            >
-                {mounted && theme === 'dark' ? (
-                    <Moon className="h-5 w-5" strokeWidth={2} />
-                ) : (
-                    <Sun className="h-5 w-5" strokeWidth={2} />
-                )}
-                <span className="mt-0.5">Theme</span>
-            </button>
-
             {/* Profile / Login */}
             {user ? (
                 <DropdownMenu>
@@ -217,6 +202,19 @@ export function MobileNav() {
                                 </div>
                             </div>
                         </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            ref={ref as any}
+                            onClick={() => toggleTheme()}
+                            className="cursor-pointer py-2.5"
+                        >
+                            {mounted && theme === 'dark' ? (
+                                <Moon className="mr-2 h-4 w-4" />
+                            ) : (
+                                <Sun className="mr-2 h-4 w-4" />
+                            )}
+                            <span>{mounted && theme === 'dark' ? 'Dark' : 'Light'} Theme</span>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             onClick={handleSignOut}
