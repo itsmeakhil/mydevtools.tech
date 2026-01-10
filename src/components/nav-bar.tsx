@@ -1,7 +1,6 @@
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { ModeToggle } from "./modeToggle";
 
 export function NavBar() {
   return (
@@ -14,13 +13,6 @@ export function NavBar() {
 
           <div className="flex flex-1 items-center justify-center px-2">
             {/* Search removed as per user request */}
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Theme toggle - hidden on mobile (available in bottom nav) */}
-            <div className="hidden md:block">
-              <ModeToggle />
-            </div>
           </div>
         </div>
       </header>
