@@ -51,7 +51,7 @@ export function PasswordItemSwipeable({
     }
 
     return (
-        <div className="relative overflow-hidden rounded-2xl mb-2">
+        <div className="relative overflow-hidden rounded-2xl">
             {/* Background Actions */}
             <motion.div
                 style={{ opacity: opacityRight, backgroundColor: bgRight }}

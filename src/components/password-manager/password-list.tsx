@@ -5,7 +5,7 @@ import { usePasswordStore } from "@/store/password-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Search, Copy, Eye, EyeOff, Trash2, ExternalLink, LayoutGrid, List, Lock, Pencil, MoreVertical } from "lucide-react"
+import { Search, Copy, Eye, EyeOff, Trash2, ExternalLink, LayoutGrid, List, Lock, Pencil, MoreVertical, FileJson } from "lucide-react"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { toast } from "sonner"
 import { doc, deleteDoc } from "firebase/firestore"
@@ -135,12 +135,16 @@ export function PasswordList() {
         )}>
             {/* Mobile Header */}
             {isMobile && (
-                <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl border-b">
+                <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl border-b pb-2">
                     {/* App bar */}
                     <div className="flex items-center justify-between px-4 py-3">
                         <h1 className="text-xl font-bold">Passwords</h1>
                         <div className="flex items-center gap-1">
-                            <ImportExportDialog />
+                            <ImportExportDialog>
+                                <Button variant="ghost" size="icon" className="h-9 w-9">
+                                    <FileJson className="h-5 w-5" />
+                                </Button>
+                            </ImportExportDialog>
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -148,12 +152,12 @@ export function PasswordList() {
                                 title="Lock Vault"
                                 className="h-9 w-9"
                             >
-                                <Lock className="h-4 w-4" />
+                                <Lock className="h-5 w-5" />
                             </Button>
                         </div>
                     </div>
                     {/* Search bar */}
-                    <div className="px-4 pb-3">
+                    <div className="px-4">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
@@ -206,7 +210,7 @@ export function PasswordList() {
             ) : viewMode === "grid" ? (
                 <div className={cn(
                     isMobile
-                        ? "px-4 pt-2 space-y-0"
+                        ? "px-4 pt-2 space-y-3"
                         : "grid gap-4 md:grid-cols-2 lg:grid-cols-3"
                 )}>
                     {filteredPasswords.map((entry) => (

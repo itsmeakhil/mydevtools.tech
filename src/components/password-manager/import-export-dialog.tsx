@@ -14,7 +14,11 @@ import { encryptData } from "@/lib/encryption"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
-export function ImportExportDialog() {
+interface ImportExportDialogProps {
+    children?: React.ReactNode
+}
+
+export function ImportExportDialog({ children }: ImportExportDialogProps) {
     const { passwords, encryptionKey, addPassword } = usePasswordStore()
     const [open, setOpen] = useState(false)
     const [importData, setImportData] = useState("")
@@ -106,9 +110,11 @@ export function ImportExportDialog() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                    <FileJson className="h-4 w-4" /> Import / Export
-                </Button>
+                {children || (
+                    <Button variant="outline" className="gap-2">
+                        <FileJson className="h-4 w-4" /> Import / Export
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
