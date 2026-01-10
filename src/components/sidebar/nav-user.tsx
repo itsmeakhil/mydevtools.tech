@@ -1,10 +1,14 @@
 'use client'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   ChevronsUpDown,
   LogOut,
-  User as UserIcon, // Adding a User icon for guest mode
+  Moon,
+  Sun,
+  User as UserIcon,
 } from 'lucide-react'
+import { useThemeAnimation } from '@space-man/react-theme-animation'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import {
   DropdownMenu,
@@ -32,6 +36,12 @@ interface NavUserProps {
 
 export function NavUser({ user, onSignout }: NavUserProps) {
   const { isMobile } = useSidebar()
+  const { theme, toggleTheme, ref } = useThemeAnimation()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Check if user is logged in (based on presence of name or email)
   const isLoggedIn = user.name || user.email
@@ -39,17 +49,17 @@ export function NavUser({ user, onSignout }: NavUserProps) {
   if (!isLoggedIn) {
     return (
       <Link href={"/login"}>
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton size='lg' className='text-muted-foreground'>
-            <UserIcon className='h-8 w-8' /> {/* Guest icon */}
-            <div className='grid flex-1 text-left text-sm leading-tight'>
-              <span className='truncate font-semibold'>Guest User</span>
-              <span className='truncate text-xs'>Not logged in</span>
-            </div>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size='lg' className='text-muted-foreground'>
+              <UserIcon className='h-8 w-8' /> {/* Guest icon */}
+              <div className='grid flex-1 text-left text-sm leading-tight'>
+                <span className='truncate font-semibold'>Guest User</span>
+                <span className='truncate text-xs'>Not logged in</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </Link>
     )
   }
@@ -121,6 +131,19 @@ export function NavUser({ user, onSignout }: NavUserProps) {
               </DropdownMenuItem>
             </DropdownMenuGroup> */}
             {/* <DropdownMenuSeparator /> */}
+            <DropdownMenuItem
+              ref={ref as any}
+              onClick={() => toggleTheme()}
+              className="cursor-pointer"
+            >
+              {mounted && theme === 'dark' ? (
+                <Moon className="mr-2 h-4 w-4" />
+              ) : (
+                <Sun className="mr-2 h-4 w-4" />
+              )}
+              {mounted && theme === 'dark' ? 'Dark' : 'Light'} Theme
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onSignout}>
               <LogOut />
               Log out
