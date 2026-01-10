@@ -301,19 +301,20 @@ const SidebarRail = React.forwardRef<
       title="Toggle Sidebar"
       className={cn(
         "absolute top-1/2 -translate-y-1/2 z-20 hidden sm:flex",
-        "h-8 w-8 items-center justify-center",
-        "rounded-full border border-border/50 bg-background shadow-md",
-        "text-muted-foreground hover:text-foreground hover:bg-accent",
+        "h-6 w-6 items-center justify-center",
+        "rounded-md border border-border/60 bg-background/80 backdrop-blur-sm",
+        "text-muted-foreground hover:text-foreground hover:bg-accent/80",
         "transition-all duration-200 ease-in-out",
-        "group-data-[side=left]:-right-4 group-data-[side=right]:-left-4",
+        "shadow-sm hover:shadow-md",
+        "group-data-[side=left]:-right-3 group-data-[side=right]:-left-3",
         className
       )}
       {...props}
     >
       {isCollapsed ? (
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className="h-3.5 w-3.5" />
       ) : (
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="h-3.5 w-3.5" />
       )}
     </button>
   )
