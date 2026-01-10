@@ -11,7 +11,7 @@ import { deriveKey, generateSalt, createKeyVerifier, verifyKey } from "@/lib/enc
 import { auth, db } from "@/database/firebase"
 import { doc, getDoc, setDoc, collection, getDocs } from "firebase/firestore"
 import { onAuthStateChanged } from "firebase/auth"
-import { loadKey, saveKey } from "@/lib/key-storage"
+import { loadKey, saveKey, clearKey } from "@/lib/key-storage"
 import { decryptData } from "@/lib/encryption"
 import { PasswordEntry } from "@/store/password-store"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -48,9 +48,10 @@ export function VaultLockScreen() {
 
     const fetchAndSetPasswords = async (uid: string, key: CryptoKey) => {
         try {
+            console.log("[Password Fetch] Starting to fetch passwords from Firestore...")
             setPasswordsLoading(true)
             const querySnapshot = await getDocs(collection(db, "user_passwords", uid, "entries"))
-
+            console.log(`[Password Fetch] Found ${querySnapshot.docs.length} encrypted password(s)`)
 
             const decryptionPromises = querySnapshot.docs.map(async (doc) => {
                 const data = doc.data()
@@ -65,7 +66,7 @@ export function VaultLockScreen() {
                         updatedAt: data.updatedAt
                     } as PasswordEntry
                 } catch (e) {
-                    console.error(`Failed to decrypt password ${doc.id}:`, e)
+                    console.error(`[Password Fetch] Failed to decrypt password ${doc.id}:`, e)
                     return null
                 }
             })
@@ -73,10 +74,17 @@ export function VaultLockScreen() {
             const results = await Promise.all(decryptionPromises)
             const loadedPasswords = results.filter((p): p is PasswordEntry => p !== null)
 
+            console.log(`[Password Fetch] Successfully decrypted ${loadedPasswords.length} password(s)`)
             setPasswords(loadedPasswords)
+
+            if (loadedPasswords.length === 0 && querySnapshot.docs.length > 0) {
+                console.warn("[Password Fetch] Warning: Found encrypted passwords but failed to decrypt any")
+                toast.error("Failed to decrypt passwords")
+            }
         } catch (error) {
-            console.error("Failed to fetch passwords:", error)
+            console.error("[Password Fetch] Failed to fetch passwords:", error)
             toast.error("Failed to load passwords")
+            throw error // Re-throw so calling code knows fetch failed
         } finally {
             setPasswordsLoading(false)
         }
@@ -95,17 +103,38 @@ export function VaultLockScreen() {
 
                 // Try to auto-unlock
                 try {
+                    console.log("[Auto-unlock] Starting auto-unlock attempt...")
                     const savedKey = await loadKey()
-                    if (savedKey) {
-                        const isValid = await verifyKey(savedKey, data.verifier.encrypted, data.verifier.iv)
-                        if (isValid) {
-                            setKey(savedKey)
-                            await fetchAndSetPasswords(uid, savedKey)
-                            return
-                        }
+
+                    if (!savedKey) {
+                        console.log("[Auto-unlock] No saved key found in IndexedDB - user needs to unlock manually")
+                        return
                     }
+
+                    console.log("[Auto-unlock] Saved key found, verifying...")
+                    const isValid = await verifyKey(savedKey, data.verifier.encrypted, data.verifier.iv)
+
+                    if (!isValid) {
+                        console.warn("[Auto-unlock] Saved key verification failed - clearing invalid key")
+                        await clearKey()
+                        return
+                    }
+
+                    console.log("[Auto-unlock] Key verified successfully, loading passwords...")
+                    setKey(savedKey)
+                    await fetchAndSetPasswords(uid, savedKey)
+                    console.log("[Auto-unlock] Auto-unlock completed successfully")
+                    toast.success("Vault unlocked automatically")
+                    return
                 } catch (e) {
-                    console.error("Auto-unlock failed:", e)
+                    console.error("[Auto-unlock] Auto-unlock failed with error:", e)
+                    toast.error("Auto-unlock failed. Please unlock manually.")
+                    // Clear potentially corrupted key
+                    try {
+                        await clearKey()
+                    } catch (clearErr) {
+                        console.error("[Auto-unlock] Failed to clear corrupted key:", clearErr)
+                    }
                 }
             } else {
                 setMode("setup")
@@ -113,6 +142,7 @@ export function VaultLockScreen() {
         } catch (err) {
             console.error("Error checking vault status:", err)
             setError("Failed to connect to server.")
+            toast.error("Failed to connect to server")
         }
     }
 
@@ -129,22 +159,41 @@ export function VaultLockScreen() {
         setError("")
 
         try {
+            console.log("[Manual Unlock] Deriving key from password...")
             const key = await deriveKey(password, vaultSalt)
             const isValid = await verifyKey(key, verifier.encrypted, verifier.iv)
 
             if (isValid) {
+                console.log("[Manual Unlock] Password verified, unlocking vault...")
                 setKey(key)
-                await saveKey(key)
-                if (userId) {
-                    await fetchAndSetPasswords(userId, key)
+
+                // Try to save key for auto-unlock, but don't fail if it doesn't work
+                try {
+                    await saveKey(key)
+                    console.log("[Manual Unlock] Key saved successfully for auto-unlock")
+                } catch (saveErr) {
+                    console.error("[Manual Unlock] Failed to save key (auto-unlock won't work on reload):", saveErr)
+                    toast.error("Vault unlocked, but auto-unlock may not work on reload")
                 }
+
+                // Load passwords
+                if (userId) {
+                    try {
+                        await fetchAndSetPasswords(userId, key)
+                    } catch (fetchErr) {
+                        console.error("[Manual Unlock] Failed to fetch passwords:", fetchErr)
+                        // Error already shown by fetchAndSetPasswords via toast
+                    }
+                }
+
                 setPassword("")
             } else {
+                console.warn("[Manual Unlock] Invalid password")
                 setError("Incorrect Master Password")
                 triggerShake()
             }
         } catch (err) {
-            console.error(err)
+            console.error("[Manual Unlock] Unlock failed:", err)
             setError("Failed to unlock vault")
         } finally {
             setLoading(false)
