@@ -1,9 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { Github } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./modeToggle";
 
 export function NavBar() {
@@ -20,22 +17,6 @@ export function NavBar() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* GitHub - hidden on mobile */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden md:flex h-8 w-8 md:h-9 md:w-9"
-              asChild
-            >
-              <Link
-                href="https://github.com/itsmeakhil/mydevtools.tech"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Github className="h-4 w-4 md:h-5 md:w-5" />
-                <span className="sr-only">GitHub</span>
-              </Link>
-            </Button>
             {/* Theme toggle - hidden on mobile (available in bottom nav) */}
             <div className="hidden md:block">
               <ModeToggle />
