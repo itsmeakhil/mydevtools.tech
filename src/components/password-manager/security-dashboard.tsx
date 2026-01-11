@@ -11,7 +11,7 @@ import { useIsMobile } from "@/components/hooks/use-mobile"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 
-export function SecurityDashboard() {
+export function SecurityDashboard({ minimal = true }: { minimal?: boolean }) {
     const { passwords } = usePasswordStore()
     const isMobile = useIsMobile()
     const [expanded, setExpanded] = useState(false)
@@ -77,7 +77,7 @@ export function SecurityDashboard() {
     }
 
     // Mobile compact view
-    if (isMobile) {
+    if (isMobile && minimal) {
         return (
             <div className="px-4 pt-4">
                 <div

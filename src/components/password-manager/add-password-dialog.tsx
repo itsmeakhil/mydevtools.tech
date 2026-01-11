@@ -19,7 +19,7 @@ import { collection, addDoc } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
-export function AddPasswordDialog() {
+export function AddPasswordDialog({ children }: { children?: React.ReactNode }) {
     const { encryptionKey, addPassword } = usePasswordStore()
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
@@ -262,13 +262,15 @@ export function AddPasswordDialog() {
         return (
             <Drawer open={open} onOpenChange={setOpen}>
                 <DrawerTrigger asChild>
-                    <Button
-                        className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-2xl z-50 p-0 bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-                        size="icon"
-                    >
-                        <Plus className="h-7 w-7" />
-                        <span className="sr-only">Add Password</span>
-                    </Button>
+                    {children ? children : (
+                        <Button
+                            className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-2xl z-50 p-0 bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                            size="icon"
+                        >
+                            <Plus className="h-7 w-7" />
+                            <span className="sr-only">Add Password</span>
+                        </Button>
+                    )}
                 </DrawerTrigger>
                 <DrawerContent className="max-h-[95vh]">
                     <div className="flex flex-col h-full max-h-[95vh]">
@@ -287,9 +289,11 @@ export function AddPasswordDialog() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="shadow-lg hover:shadow-xl transition-all">
-                    <Plus className="mr-2 h-4 w-4" /> Add Password
-                </Button>
+                {children ? children : (
+                    <Button className="shadow-lg hover:shadow-xl transition-all">
+                        <Plus className="mr-2 h-4 w-4" /> Add Password
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>

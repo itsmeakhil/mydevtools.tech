@@ -38,7 +38,6 @@ export default function PasswordManagerPage() {
                 </div>
             )}
 
-            <SecurityDashboard />
             <PasswordList />
 
             {/* Mobile FAB for add */}
