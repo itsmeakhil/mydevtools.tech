@@ -259,10 +259,9 @@ export default function TaskItem({
           onDragEnd={handleDragEnd}
           style={{ x }}
           className={cn(
-            "relative p-3 md:p-4 rounded-xl border transition-shadow duration-300 bg-card",
-            "hover:shadow-md hover:scale-[1.005]",
-            "hover:border-primary/30",
-            task.status === "completed" && "opacity-75 bg-muted/30",
+            "relative p-3 md:p-4 rounded-2xl border transition-all duration-300 bg-card",
+            "active:scale-[0.98]", // Subtle touch feedback
+            task.status === "completed" ? "opacity-60 bg-muted/40" : "shadow-sm border-muted-foreground/10",
             justCompleted && "animate-pulse ring-2 ring-green-500/50"
           )}
           onMouseEnter={() => setIsHovered(true)}
@@ -299,7 +298,7 @@ export default function TaskItem({
               <div className="flex items-start gap-2 flex-wrap">
                 <h3
                   className={cn(
-                    "block text-sm md:text-base font-semibold transition-all flex-1 min-w-[150px]",
+                    "block text-[15px] md:text-base font-semibold leading-tight transition-all flex-1 min-w-[150px]",
                     task.status === "completed"
                       ? "text-muted-foreground line-through decoration-muted-foreground/50"
                       : "text-foreground"
@@ -373,41 +372,50 @@ export default function TaskItem({
                 </div>
               )}
 
-              {/* Metadata */}
-              <div className="flex items-center gap-2 md:gap-4 text-xs text-muted-foreground flex-wrap">
-                {task.dueDate && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className={cn(
-                          "flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50",
-                          isOverdue && "text-red-500 bg-red-50 dark:bg-red-950/20 font-medium"
-                        )}>
-                          <Calendar className="h-3.5 w-3.5" />
-                          <span>
-                            {isOverdue
-                              ? "Overdue"
-                              : dueInDays === 0
-                                ? "Due today"
-                                : dueInDays === 1
-                                  ? "Due tomorrow"
-                                  : dueInDays !== null && dueInDays > 0
-                                    ? `Due in ${dueInDays} days`
-                                    : `Due ${Math.abs(dueInDays!)} days ago`
-                            }
-                          </span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Due: {task.dueDate}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+              {/* Tags & Metadata Row */}
+              <div className="flex flex-wrap items-center gap-2 mt-1">
+                {/* Priority Badge */}
+                {task.priority && task.priority !== "medium" && (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      PRIORITY_CONFIG[task.priority].color,
+                      PRIORITY_CONFIG[task.priority].bgColor,
+                      PRIORITY_CONFIG[task.priority].borderColor,
+                      "gap-1 px-1.5 py-0 border h-5 text-[10px] font-medium"
+                    )}
+                  >
+                    {PRIORITY_CONFIG[task.priority].label}
+                  </Badge>
                 )}
 
+                {/* Due Date */}
+                {task.dueDate && (
+                  <div className={cn(
+                    "flex items-center gap-1 px-1.5 py-0 h-5 rounded-md text-[10px] font-medium border",
+                    isOverdue
+                      ? "text-red-500 bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900/30"
+                      : "text-muted-foreground bg-muted/50 border-transparent"
+                  )}>
+                    <Calendar className="h-3 w-3" />
+                    <span>
+                      {isOverdue
+                        ? "Overdue"
+                        : dueInDays === 0
+                          ? "Today"
+                          : dueInDays === 1
+                            ? "Tmrw"
+                            : dueInDays !== null && dueInDays > 0
+                              ? `${dueInDays}d`
+                              : `${Math.abs(dueInDays!)}d ago`
+                      }
+                    </span>
+                  </div>
+                )}
+
+                {/* Time Estimate */}
                 {task.timeEstimate && (
-                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50">
-                    <span>⏱️</span>
+                  <div className="flex items-center gap-1 px-1.5 py-0 h-5 rounded-md bg-muted/50 text-[10px] text-muted-foreground font-medium">
                     <span>{task.timeEstimate}m</span>
                   </div>
                 )}
@@ -528,7 +536,7 @@ export default function TaskItem({
             </div>
           </div>
         </motion.div>
-      </li>
+      </li >
 
       <TaskEditDialog
         task={task}

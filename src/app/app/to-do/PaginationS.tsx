@@ -28,16 +28,14 @@ export default function PaginationDemo({
 
     for (let i = 1; i <= totalPages; i++) {
       if (
-        i === 1 || // Always show the first page
-        i === totalPages || // Always show the last page
-        (i >= currentPage - 1 && i <= currentPage + 1) // Show pages near the current page
+        i === 1 ||
+        i === totalPages ||
+        (i >= currentPage - 1 && i <= currentPage + 1)
       ) {
         pages.push(
           <PaginationItem key={i}>
             <PaginationLink
-              className="cursor-pointer bg-white text-black 
-                         hover:bg-gray-200 rounded-md px-3 py-1
-                         dark:bg-black dark:text-white dark:hover:bg-gray-800"
+              className="cursor-pointer"
               isActive={i === currentPage}
               onClick={() => onPageChange(i)}
             >
@@ -46,11 +44,11 @@ export default function PaginationDemo({
           </PaginationItem>
         );
       } else if (
-        (i === currentPage - 2 && i > 1) || // Add ellipsis before the current page range
-        (i === currentPage + 2 && i < totalPages) // Add ellipsis after the current page range
+        (i === currentPage - 2 && i > 1) ||
+        (i === currentPage + 2 && i < totalPages)
       ) {
         pages.push(
-          <PaginationEllipsis key={`ellipsis-${i}`} className="cursor-pointer" />
+          <PaginationEllipsis key={`ellipsis-${i}`} />
         );
       }
     }
@@ -59,22 +57,18 @@ export default function PaginationDemo({
   };
 
   return (
-    <Pagination className="bg-white dark:bg-black rounded-md p-2">
+    <Pagination className="p-2">
       <PaginationContent>
         <PaginationItem>
           <PaginationPrevious
-            className="cursor-pointer bg-white text-black 
-                       hover:bg-gray-200 rounded-md px-3 py-1
-                       dark:bg-black dark:text-white dark:hover:bg-gray-800"
+            className="cursor-pointer"
             onClick={onPreviousPage}
           />
         </PaginationItem>
         {renderPageNumbers()}
         <PaginationItem>
           <PaginationNext
-            className="cursor-pointer bg-white text-black 
-                       hover:bg-gray-200 rounded-md px-3 py-1
-                       dark:bg-black dark:text-white dark:hover:bg-gray-800"
+            className="cursor-pointer"
             onClick={onNextPage}
           />
         </PaginationItem>
