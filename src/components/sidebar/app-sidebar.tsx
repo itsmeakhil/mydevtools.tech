@@ -74,7 +74,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible='icon' variant='floating' {...props}>
-      <SidebarHeader className="border-b border-border/40 pb-3">
+      <SidebarHeader className="border-b border-border/40 pb-3 hidden md:flex">
         <div
           className="flex items-center space-x-3 px-3 py-3 transition-all duration-200 hover:cursor-pointer hover:bg-accent/50 rounded-lg bg-accent/10 border border-transparent hover:border-border/50 group-data-[state=collapsed]:bg-transparent group-data-[state=collapsed]:border-none group-data-[state=collapsed]:p-0 group-data-[state=collapsed]:justify-center"
           onClick={() => router.push('/dashboard')}
@@ -101,7 +101,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
         </div>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="mt-2 md:mt-0">
         {sidebarData.navGroups.map((props) => (
           <NavGroup key={props.title} {...props} />
         ))}
