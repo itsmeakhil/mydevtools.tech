@@ -98,7 +98,7 @@ export function EmailValidator() {
     const filteredBulkResults = useMemo(() => {
         if (!searchQuery) return bulkResults;
         const query = searchQuery.toLowerCase();
-        return bulkResults.filter(r => 
+        return bulkResults.filter(r =>
             r.email.toLowerCase().includes(query) ||
             r.status.toLowerCase().includes(query)
         );
@@ -253,9 +253,22 @@ export function EmailValidator() {
         setDragActive(false);
     };
 
-    const exportToExcel = () => {
+    const exportToExcel = (validOnly: boolean = false) => {
+        const dataToExport = validOnly
+            ? bulkResults.filter(r => r.status === "VALID")
+            : bulkResults;
+
+        if (dataToExport.length === 0) {
+            toast({
+                title: "No Data to Export",
+                description: validOnly ? "No valid emails found to export." : "No results to export.",
+                variant: "destructive",
+            });
+            return;
+        }
+
         const ws = XLSX.utils.json_to_sheet(
-            bulkResults.map((r) => ({
+            dataToExport.map((r) => ({
                 Email: r.email,
                 Status: r.status,
                 Score: r.score,
@@ -269,7 +282,12 @@ export function EmailValidator() {
         );
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Results");
-        XLSX.writeFile(wb, "email_validation_results.xlsx");
+        XLSX.writeFile(wb, validOnly ? "valid_emails.xlsx" : "email_validation_results.xlsx");
+
+        toast({
+            title: "Export Successful",
+            description: `Exported ${dataToExport.length} ${validOnly ? "valid " : ""}email(s).`,
+        });
     };
 
     const downloadTemplate = () => {
@@ -452,37 +470,37 @@ export function EmailValidator() {
                                     </CardHeader>
                                     <CardContent>
                                         <div className="grid gap-3 sm:grid-cols-2">
-                                            <ValidationItem 
-                                                label="Syntax Valid" 
+                                            <ValidationItem
+                                                label="Syntax Valid"
                                                 value={result.validations.syntax}
                                                 tooltip="Checks if the email address follows the correct format (e.g., user@domain.com)"
                                             />
-                                            <ValidationItem 
-                                                label="Domain Exists" 
+                                            <ValidationItem
+                                                label="Domain Exists"
                                                 value={result.validations.domain_exists}
                                                 tooltip="Verifies that the domain name in the email address actually exists"
                                             />
-                                            <ValidationItem 
-                                                label="MX Records Found" 
+                                            <ValidationItem
+                                                label="MX Records Found"
                                                 value={result.validations.mx_records}
                                                 tooltip="Checks if the domain has mail exchange (MX) records configured to receive emails"
                                             />
-                                            <ValidationItem 
-                                                label="Mailbox Exists" 
+                                            <ValidationItem
+                                                label="Mailbox Exists"
                                                 value={result.validations.mailbox_exists}
                                                 tooltip="Verifies that the specific mailbox/account exists on the mail server"
                                             />
-                                            <ValidationItem 
-                                                label="Disposable Email" 
-                                                value={result.validations.is_disposable} 
-                                                isWarning 
+                                            <ValidationItem
+                                                label="Disposable Email"
+                                                value={result.validations.is_disposable}
+                                                isWarning
                                                 warningCondition={result.validations.is_disposable}
                                                 tooltip="Indicates if this email belongs to a temporary/disposable email service (may be risky)"
                                             />
-                                            <ValidationItem 
-                                                label="Role Based Email" 
-                                                value={result.validations.is_role_based} 
-                                                isWarning 
+                                            <ValidationItem
+                                                label="Role Based Email"
+                                                value={result.validations.is_role_based}
+                                                isWarning
                                                 warningCondition={result.validations.is_role_based}
                                                 tooltip="Identifies if this is a role-based email (e.g., support@, info@) rather than a personal address"
                                             />
@@ -589,8 +607,11 @@ export function EmailValidator() {
                                             }}>
                                                 New Verification
                                             </Button>
-                                            <Button size="sm" onClick={exportToExcel}>
-                                                <IconDownload className="mr-2 h-4 w-4" /> Export Report
+                                            <Button size="sm" onClick={() => exportToExcel(false)}>
+                                                <IconDownload className="mr-2 h-4 w-4" /> Export All
+                                            </Button>
+                                            <Button size="sm" variant="outline" onClick={() => exportToExcel(true)} disabled={bulkStats.valid === 0}>
+                                                <IconCircleCheck className="mr-2 h-4 w-4 text-green-500" /> Export Valid Only ({bulkStats.valid})
                                             </Button>
                                         </div>
                                     </div>
