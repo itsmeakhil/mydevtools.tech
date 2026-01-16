@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,9 @@ import {
     IconUpload,
     IconDownload,
     IconCircleCheck,
-    IconCircleX
+    IconCircleX,
+    IconCopy,
+    IconSearch
 } from "@tabler/icons-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -29,8 +31,10 @@ import {
 } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
 import * as XLSX from "xlsx";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 
 interface EmailValidation {
     email: string;
@@ -68,8 +72,19 @@ export function EmailValidator() {
     const [bulkLoading, setBulkLoading] = useState(false);
     const [progress, setProgress] = useState(0);
     const [activeTab, setActiveTab] = useState("single");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [dragActive, setDragActive] = useState(false);
+    const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
+    const { copyToClipboard, isCopied } = useCopyToClipboard();
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValidFormat = useMemo(() => {
+        if (!email) return null;
+        return emailRegex.test(email);
+    }, [email]);
 
     // Stats for Bulk Validation
     const bulkStats = {
@@ -79,11 +94,36 @@ export function EmailValidator() {
         invalid: bulkResults.filter(r => r.status === "INVALID").length,
     };
 
+    // Filter bulk results based on search query
+    const filteredBulkResults = useMemo(() => {
+        if (!searchQuery) return bulkResults;
+        const query = searchQuery.toLowerCase();
+        return bulkResults.filter(r => 
+            r.email.toLowerCase().includes(query) ||
+            r.status.toLowerCase().includes(query)
+        );
+    }, [bulkResults, searchQuery]);
+
+    const handleClear = () => {
+        setEmail("");
+        setResult(null);
+        setSearchQuery("");
+    };
+
     const handleValidate = async () => {
         if (!email) {
             toast({
                 title: "Error",
                 description: "Please enter an email address",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (!isValidFormat) {
+            toast({
+                title: "Invalid Email Format",
+                description: "Please enter a valid email address",
                 variant: "destructive",
             });
             return;
@@ -121,6 +161,7 @@ export function EmailValidator() {
     };
 
     const processFile = (file: File) => {
+        setUploadedFileName(file.name);
         const reader = new FileReader();
         reader.onload = async (evt) => {
             try {
@@ -141,6 +182,7 @@ export function EmailValidator() {
                         description: "Please ensure your Excel has an 'email' column.",
                         variant: "destructive",
                     });
+                    setUploadedFileName(null);
                     return;
                 }
 
@@ -149,6 +191,7 @@ export function EmailValidator() {
                 setActiveTab("bulk");
                 setResult(null);
                 setProgress(0);
+                setSearchQuery("");
 
                 const batchSize = 100;
                 const totalBatches = Math.ceil(emails.length / batchSize);
@@ -192,6 +235,7 @@ export function EmailValidator() {
     const onDrop = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
+        setDragActive(false);
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             processFile(e.dataTransfer.files[0]);
         }
@@ -200,6 +244,13 @@ export function EmailValidator() {
     const onDragOver = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
+        setDragActive(true);
+    };
+
+    const onDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragActive(false);
     };
 
     const exportToExcel = () => {
@@ -238,9 +289,9 @@ export function EmailValidator() {
         }
     };
 
-    const ValidationItem = ({ label, value, isWarning = false, warningCondition = false }: any) => {
+    const ValidationItem = ({ label, value, isWarning = false, warningCondition = false, tooltip }: any) => {
         const isActuallyWarning = isWarning && warningCondition;
-        return (
+        const content = (
             <div className={`flex items-center justify-between p-3.5 rounded-lg border transition-all ${isActuallyWarning
                 ? "bg-yellow-500/5 border-yellow-500/30 text-yellow-700 dark:text-yellow-400"
                 : "bg-card border-border/50 hover:border-border"
@@ -253,6 +304,23 @@ export function EmailValidator() {
                 )}
             </div>
         );
+
+        if (tooltip) {
+            return (
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            {content}
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                            <p className="text-xs">{tooltip}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            );
+        }
+
+        return content;
     };
 
     return (
@@ -274,23 +342,39 @@ export function EmailValidator() {
                 <TabsContent value="single" className="space-y-6 focus-visible:outline-none">
                     <Card className="border-border/40 bg-background/50 backdrop-blur-sm shadow-sm">
                         <CardHeader>
-                            <CardTitle className="text-lg font-medium">Single Email Verification</CardTitle>
-                            <CardDescription>Enter an email address to check its deliverability and reputation.</CardDescription>
+                            <CardTitle className="text-lg font-medium text-center">Single Email Verification</CardTitle>
+                            <CardDescription className="text-center">Enter an email address to check its deliverability and reputation.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex gap-3 max-w-xl">
-                                <Input
-                                    placeholder="Enter email address..."
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    onKeyDown={(e) => e.key === "Enter" && handleValidate()}
-                                    className="h-11"
-                                />
-                                <Button onClick={handleValidate} disabled={loading} className="h-11 px-6">
+                            <div className="flex gap-3 max-w-xl mx-auto">
+                                <div className="relative flex-1">
+                                    <Input
+                                        type="email"
+                                        placeholder="Enter email address..."
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        onKeyDown={(e) => e.key === "Enter" && handleValidate()}
+                                        className={`h-11 pr-10 ${isValidFormat === false ? "border-red-500 focus-visible:ring-red-500" : isValidFormat === true ? "border-green-500 focus-visible:ring-green-500" : ""}`}
+                                        autoFocus
+                                    />
+                                    {email && (
+                                        <button
+                                            onClick={handleClear}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-muted transition-colors"
+                                            aria-label="Clear email"
+                                        >
+                                            <IconX className="h-4 w-4 text-muted-foreground" />
+                                        </button>
+                                    )}
+                                </div>
+                                <Button onClick={handleValidate} disabled={loading || !email || isValidFormat === false} className="h-11 px-6">
                                     {loading ? <IconLoader2 className="h-4 w-4 animate-spin mr-2" /> : <IconCheck className="h-4 w-4 mr-2" />}
                                     {loading ? "Validating..." : "Validate"}
                                 </Button>
                             </div>
+                            {isValidFormat === false && (
+                                <p className="text-sm text-red-500 mt-2 text-center">Please enter a valid email address</p>
+                            )}
                         </CardContent>
                     </Card>
 
@@ -340,7 +424,24 @@ export function EmailValidator() {
                                             <Badge variant="outline" className={`px-4 py-1 text-sm font-medium ${getStatusColor(result.status)}`}>
                                                 {result.status}
                                             </Badge>
-                                            <span className="text-sm font-medium text-muted-foreground truncate max-w-[200px]">{result.email}</span>
+                                            <div className="flex items-center gap-2 group">
+                                                <span className="text-sm font-medium text-muted-foreground truncate max-w-[200px]">{result.email}</span>
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                onClick={() => copyToClipboard(result.email, "Email copied!")}
+                                                            >
+                                                                <IconCopy className={`h-3.5 w-3.5 ${isCopied ? "text-green-500" : ""}`} />
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>Copy email</TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -351,12 +452,40 @@ export function EmailValidator() {
                                     </CardHeader>
                                     <CardContent>
                                         <div className="grid gap-3 sm:grid-cols-2">
-                                            <ValidationItem label="Syntax Valid" value={result.validations.syntax} />
-                                            <ValidationItem label="Domain Exists" value={result.validations.domain_exists} />
-                                            <ValidationItem label="MX Records Found" value={result.validations.mx_records} />
-                                            <ValidationItem label="Mailbox Exists" value={result.validations.mailbox_exists} />
-                                            <ValidationItem label="Disposable Email" value={result.validations.is_disposable} isWarning warningCondition={result.validations.is_disposable} />
-                                            <ValidationItem label="Role Based Email" value={result.validations.is_role_based} isWarning warningCondition={result.validations.is_role_based} />
+                                            <ValidationItem 
+                                                label="Syntax Valid" 
+                                                value={result.validations.syntax}
+                                                tooltip="Checks if the email address follows the correct format (e.g., user@domain.com)"
+                                            />
+                                            <ValidationItem 
+                                                label="Domain Exists" 
+                                                value={result.validations.domain_exists}
+                                                tooltip="Verifies that the domain name in the email address actually exists"
+                                            />
+                                            <ValidationItem 
+                                                label="MX Records Found" 
+                                                value={result.validations.mx_records}
+                                                tooltip="Checks if the domain has mail exchange (MX) records configured to receive emails"
+                                            />
+                                            <ValidationItem 
+                                                label="Mailbox Exists" 
+                                                value={result.validations.mailbox_exists}
+                                                tooltip="Verifies that the specific mailbox/account exists on the mail server"
+                                            />
+                                            <ValidationItem 
+                                                label="Disposable Email" 
+                                                value={result.validations.is_disposable} 
+                                                isWarning 
+                                                warningCondition={result.validations.is_disposable}
+                                                tooltip="Indicates if this email belongs to a temporary/disposable email service (may be risky)"
+                                            />
+                                            <ValidationItem 
+                                                label="Role Based Email" 
+                                                value={result.validations.is_role_based} 
+                                                isWarning 
+                                                warningCondition={result.validations.is_role_based}
+                                                tooltip="Identifies if this is a role-based email (e.g., support@, info@) rather than a personal address"
+                                            />
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -367,19 +496,28 @@ export function EmailValidator() {
 
                 <TabsContent value="bulk" className="space-y-6 focus-visible:outline-none">
                     {!bulkLoading && bulkResults.length === 0 && (
-                        <Card className="border-dashed border-2 bg-muted/20 hover:bg-muted/40 transition-colors">
+                        <Card className={`border-dashed border-2 transition-all ${dragActive ? "border-primary bg-primary/5 scale-[1.02]" : "bg-muted/20 hover:bg-muted/40"}`}>
                             <CardContent className="flex flex-col items-center justify-center py-12 px-4 text-center cursor-pointer"
                                 onDragOver={onDragOver}
                                 onDrop={onDrop}
+                                onDragLeave={onDragLeave}
                             >
-                                <div className="bg-background p-4 rounded-full shadow-sm mb-4">
-                                    <IconUpload className="h-8 w-8 text-primary" />
+                                <div className={`bg-background p-4 rounded-full shadow-sm mb-4 transition-transform ${dragActive ? "scale-110" : ""}`}>
+                                    <IconUpload className={`h-8 w-8 text-primary transition-transform ${dragActive ? "animate-bounce" : ""}`} />
                                 </div>
-                                <h3 className="text-lg font-semibold mb-2">Drag and drop your Excel file here</h3>
+                                <h3 className="text-lg font-semibold mb-2">
+                                    {dragActive ? "Drop your file here" : "Drag and drop your Excel file here"}
+                                </h3>
                                 <p className="text-muted-foreground text-sm max-w-sm mb-6">
                                     Upload a .xlsx file containing an 'email' column to validate up to 1000 emails at once.
                                 </p>
-                                <div className="flex gap-3">
+                                {uploadedFileName && (
+                                    <div className="mb-4 px-4 py-2 bg-muted rounded-md text-sm">
+                                        <span className="text-muted-foreground">File: </span>
+                                        <span className="font-medium">{uploadedFileName}</span>
+                                    </div>
+                                )}
+                                <div className="flex gap-3 flex-wrap justify-center">
                                     <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".xlsx,.xls" className="hidden" />
                                     <Button onClick={() => fileInputRef.current?.click()}>
                                         Select File
@@ -430,19 +568,37 @@ export function EmailValidator() {
                             </div>
 
                             <Card className="border-border/40 bg-background/50 backdrop-blur-sm overflow-hidden">
-                                <div className="p-4 border-b border-border/40 flex justify-between items-center bg-muted/20">
-                                    <h3 className="font-medium">Detailed Results</h3>
-                                    <div className="flex gap-2">
-                                        <Button variant="outline" size="sm" onClick={() => {
-                                            setBulkResults([]);
-                                            setActiveTab("single");
-                                        }}>
-                                            New Verification
-                                        </Button>
-                                        <Button size="sm" onClick={exportToExcel}>
-                                            <IconDownload className="mr-2 h-4 w-4" /> Export Report
-                                        </Button>
+                                <div className="p-4 border-b border-border/40 bg-muted/20">
+                                    <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+                                        <h3 className="font-medium">Detailed Results</h3>
+                                        <div className="flex gap-2 w-full sm:w-auto">
+                                            <div className="relative flex-1 sm:flex-initial sm:w-64">
+                                                <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Input
+                                                    placeholder="Search emails..."
+                                                    value={searchQuery}
+                                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                                    className="pl-9 h-9"
+                                                />
+                                            </div>
+                                            <Button variant="outline" size="sm" onClick={() => {
+                                                setBulkResults([]);
+                                                setSearchQuery("");
+                                                setUploadedFileName(null);
+                                                setActiveTab("single");
+                                            }}>
+                                                New Verification
+                                            </Button>
+                                            <Button size="sm" onClick={exportToExcel}>
+                                                <IconDownload className="mr-2 h-4 w-4" /> Export Report
+                                            </Button>
+                                        </div>
                                     </div>
+                                    {searchQuery && (
+                                        <p className="text-sm text-muted-foreground mt-2">
+                                            Showing {filteredBulkResults.length} of {bulkResults.length} results
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="max-h-[500px] overflow-auto">
                                     <Table>
@@ -455,29 +611,51 @@ export function EmailValidator() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {bulkResults.map((r, i) => (
-                                                <TableRow key={i}>
-                                                    <TableCell className="font-medium">{r.email}</TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="outline" className={`capitalize ${getStatusColor(r.status)}`}>
-                                                            {r.status.toLowerCase().replace('_', ' ')}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-center">
-                                                        <span className={`font-mono font-bold ${r.score > 80 ? "text-green-500" : r.score > 50 ? "text-yellow-500" : "text-red-500"}`}>
-                                                            {r.score}
-                                                        </span>
-                                                    </TableCell>
-                                                    <TableCell className="text-center">
-                                                        <div className="flex justify-center gap-1.5">
-                                                            <div title="Syntax" className={`h-2 w-2 rounded-full ${r.validations.syntax ? "bg-green-500" : "bg-red-500"}`} />
-                                                            <div title="Domain" className={`h-2 w-2 rounded-full ${r.validations.domain_exists ? "bg-green-500" : "bg-red-500"}`} />
-                                                            <div title="MX" className={`h-2 w-2 rounded-full ${r.validations.mx_records ? "bg-green-500" : "bg-red-500"}`} />
-                                                            <div title="Mailbox" className={`h-2 w-2 rounded-full ${r.validations.mailbox_exists ? "bg-green-500" : "bg-red-500"}`} />
-                                                        </div>
+                                            {filteredBulkResults.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                                                        No results found matching "{searchQuery}"
                                                     </TableCell>
                                                 </TableRow>
-                                            ))}
+                                            ) : (
+                                                filteredBulkResults.map((r, i) => (
+                                                    <TableRow key={i}>
+                                                        <TableCell className="font-medium">{r.email}</TableCell>
+                                                        <TableCell>
+                                                            <Badge variant="outline" className={`capitalize ${getStatusColor(r.status)}`}>
+                                                                {r.status.toLowerCase().replace('_', ' ')}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            <span className={`font-mono font-bold ${r.score > 80 ? "text-green-500" : r.score > 50 ? "text-yellow-500" : "text-red-500"}`}>
+                                                                {r.score}
+                                                            </span>
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            <TooltipProvider>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <div className="flex justify-center gap-1.5 cursor-help">
+                                                                            <div className={`h-2 w-2 rounded-full ${r.validations.syntax ? "bg-green-500" : "bg-red-500"}`} />
+                                                                            <div className={`h-2 w-2 rounded-full ${r.validations.domain_exists ? "bg-green-500" : "bg-red-500"}`} />
+                                                                            <div className={`h-2 w-2 rounded-full ${r.validations.mx_records ? "bg-green-500" : "bg-red-500"}`} />
+                                                                            <div className={`h-2 w-2 rounded-full ${r.validations.mailbox_exists ? "bg-green-500" : "bg-red-500"}`} />
+                                                                        </div>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>
+                                                                        <div className="text-xs space-y-1">
+                                                                            <div>Syntax: {r.validations.syntax ? "✓" : "✗"}</div>
+                                                                            <div>Domain: {r.validations.domain_exists ? "✓" : "✗"}</div>
+                                                                            <div>MX: {r.validations.mx_records ? "✓" : "✗"}</div>
+                                                                            <div>Mailbox: {r.validations.mailbox_exists ? "✓" : "✗"}</div>
+                                                                        </div>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
                                         </TableBody>
                                     </Table>
                                 </div>
