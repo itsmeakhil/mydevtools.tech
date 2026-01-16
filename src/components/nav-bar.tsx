@@ -20,6 +20,7 @@ const routeConfig: Record<string, { title: string; icon: React.ElementType }> = 
   '/app/bookmarks': { title: 'Bookmarks', icon: Bookmark },
   '/app/api-client': { title: 'API Client', icon: Globe },
   '/app/nosql-explorer': { title: 'NoSQL Explorer', icon: Database },
+  '/app/email-validator': { title: 'Email Validator', icon: Globe },
 };
 
 export function NavBar() {
