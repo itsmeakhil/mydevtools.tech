@@ -6,6 +6,7 @@ import {
   IconNotes,
   IconDatabase,
   IconBookmark,
+  IconMailCheck,
 } from '@tabler/icons-react'
 import { type SidebarData } from '../types'
 
@@ -58,6 +59,12 @@ export const sidebarData: SidebarData = {
           icon: IconDatabase,
           description: 'Explore MongoDB databases.',
           hiddenOnMobile: true
+        },
+        {
+          title: 'Email Validator',
+          url: '/app/email-validator',
+          icon: IconMailCheck,
+          description: 'Verify and validate email addresses.',
         },
 
       ],
