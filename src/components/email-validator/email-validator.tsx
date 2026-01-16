@@ -274,11 +274,11 @@ export function EmailValidator() {
                 <TabsContent value="single" className="space-y-6 focus-visible:outline-none">
                     <Card className="border-border/40 bg-background/50 backdrop-blur-sm shadow-sm">
                         <CardHeader>
-                            <CardTitle className="text-lg font-medium">Single Email Verification</CardTitle>
-                            <CardDescription>Enter an email address to check its deliverability and reputation.</CardDescription>
+                            <CardTitle className="text-lg font-medium text-center">Single Email Verification</CardTitle>
+                            <CardDescription className="text-center">Enter an email address to check its deliverability and reputation.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex gap-3 max-w-xl">
+                            <div className="flex gap-3 max-w-xl mx-auto">
                                 <Input
                                     placeholder="Enter email address..."
                                     value={email}
