@@ -71,6 +71,7 @@ export function EmailValidator() {
     const [bulkResults, setBulkResults] = useState<BulkResult[]>([]);
     const [bulkLoading, setBulkLoading] = useState(false);
     const [progress, setProgress] = useState(0);
+    const [totalBatches, setTotalBatches] = useState(0);
     const [activeTab, setActiveTab] = useState("single");
     const [searchQuery, setSearchQuery] = useState("");
     const [dragActive, setDragActive] = useState(false);
@@ -87,18 +88,22 @@ export function EmailValidator() {
     }, [email]);
 
     // Stats for Bulk Validation
-    const bulkStats = {
-        total: bulkResults.length,
-        valid: bulkResults.filter(r => r.status === "VALID").length,
-        risky: bulkResults.filter(r => r.status === "DISPOSABLE" || r.status === "CATCH_ALL").length,
-        invalid: bulkResults.filter(r => r.status === "INVALID").length,
-    };
+    const bulkStats = useMemo(() => {
+        const valid = bulkResults.filter(r => r.status === "VALID").length;
+        const risky = bulkResults.filter(r => r.status === "DISPOSABLE" || r.status === "CATCH_ALL").length;
+        return {
+            total: bulkResults.length,
+            valid,
+            risky,
+            invalid: bulkResults.length - valid - risky,
+        };
+    }, [bulkResults]);
 
     // Filter bulk results based on search query
     const filteredBulkResults = useMemo(() => {
         if (!searchQuery) return bulkResults;
         const query = searchQuery.toLowerCase();
-        return bulkResults.filter(r => 
+        return bulkResults.filter(r =>
             r.email.toLowerCase().includes(query) ||
             r.status.toLowerCase().includes(query)
         );
@@ -171,10 +176,12 @@ export function EmailValidator() {
                 const ws = wb.Sheets[wsname];
                 const data = XLSX.utils.sheet_to_json(ws) as any[];
 
-                const emails = data
+                const allEmails = data
                     .map((row) => row.email || row.Email || row.EMAIL)
-                    .filter((email) => email && typeof email === "string")
-                    .slice(0, 1000);
+                    .filter((email) => email && typeof email === "string");
+
+                const totalEmails = allEmails.length;
+                const emails = allEmails.slice(0, 4000);
 
                 if (emails.length === 0) {
                     toast({
@@ -186,18 +193,28 @@ export function EmailValidator() {
                     return;
                 }
 
+                if (totalEmails > 4000) {
+                    toast({
+                        title: "File Too Large",
+                        description: `Found ${totalEmails} emails. Only the first 4000 will be validated.`,
+                        variant: "destructive",
+                    });
+                }
+
                 setBulkLoading(true);
                 setBulkResults([]);
                 setActiveTab("bulk");
                 setResult(null);
                 setProgress(0);
+                setTotalBatches(0);
                 setSearchQuery("");
 
-                const batchSize = 100;
-                const totalBatches = Math.ceil(emails.length / batchSize);
+                const batchSize = 500;
+                const batches = Math.ceil(emails.length / batchSize);
+                setTotalBatches(batches);
                 let allResults: BulkResult[] = [];
 
-                for (let i = 0; i < totalBatches; i++) {
+                for (let i = 0; i < batches; i++) {
                     const batch = emails.slice(i * batchSize, (i + 1) * batchSize);
                     const response = await fetch("/api/validate-email", {
                         method: "POST",
@@ -210,7 +227,7 @@ export function EmailValidator() {
                     const data = await response.json();
                     allResults = [...allResults, ...data.results];
                     setBulkResults([...allResults]);
-                    setProgress(Math.round(((i + 1) / totalBatches) * 100));
+                    setProgress(Math.round(((i + 1) / batches) * 100));
                 }
 
                 toast({
@@ -253,9 +270,22 @@ export function EmailValidator() {
         setDragActive(false);
     };
 
-    const exportToExcel = () => {
+    const exportToExcel = (validOnly: boolean = false) => {
+        const dataToExport = validOnly
+            ? bulkResults.filter(r => r.status === "VALID")
+            : bulkResults;
+
+        if (dataToExport.length === 0) {
+            toast({
+                title: "No Data to Export",
+                description: validOnly ? "No valid emails found to export." : "No results to export.",
+                variant: "destructive",
+            });
+            return;
+        }
+
         const ws = XLSX.utils.json_to_sheet(
-            bulkResults.map((r) => ({
+            dataToExport.map((r) => ({
                 Email: r.email,
                 Status: r.status,
                 Score: r.score,
@@ -269,7 +299,12 @@ export function EmailValidator() {
         );
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Results");
-        XLSX.writeFile(wb, "email_validation_results.xlsx");
+        XLSX.writeFile(wb, validOnly ? "valid_emails.xlsx" : "email_validation_results.xlsx");
+
+        toast({
+            title: "Export Successful",
+            description: `Exported ${dataToExport.length} ${validOnly ? "valid " : ""}email(s).`,
+        });
     };
 
     const downloadTemplate = () => {
@@ -452,37 +487,37 @@ export function EmailValidator() {
                                     </CardHeader>
                                     <CardContent>
                                         <div className="grid gap-3 sm:grid-cols-2">
-                                            <ValidationItem 
-                                                label="Syntax Valid" 
+                                            <ValidationItem
+                                                label="Syntax Valid"
                                                 value={result.validations.syntax}
                                                 tooltip="Checks if the email address follows the correct format (e.g., user@domain.com)"
                                             />
-                                            <ValidationItem 
-                                                label="Domain Exists" 
+                                            <ValidationItem
+                                                label="Domain Exists"
                                                 value={result.validations.domain_exists}
                                                 tooltip="Verifies that the domain name in the email address actually exists"
                                             />
-                                            <ValidationItem 
-                                                label="MX Records Found" 
+                                            <ValidationItem
+                                                label="MX Records Found"
                                                 value={result.validations.mx_records}
                                                 tooltip="Checks if the domain has mail exchange (MX) records configured to receive emails"
                                             />
-                                            <ValidationItem 
-                                                label="Mailbox Exists" 
+                                            <ValidationItem
+                                                label="Mailbox Exists"
                                                 value={result.validations.mailbox_exists}
                                                 tooltip="Verifies that the specific mailbox/account exists on the mail server"
                                             />
-                                            <ValidationItem 
-                                                label="Disposable Email" 
-                                                value={result.validations.is_disposable} 
-                                                isWarning 
+                                            <ValidationItem
+                                                label="Disposable Email"
+                                                value={result.validations.is_disposable}
+                                                isWarning
                                                 warningCondition={result.validations.is_disposable}
                                                 tooltip="Indicates if this email belongs to a temporary/disposable email service (may be risky)"
                                             />
-                                            <ValidationItem 
-                                                label="Role Based Email" 
-                                                value={result.validations.is_role_based} 
-                                                isWarning 
+                                            <ValidationItem
+                                                label="Role Based Email"
+                                                value={result.validations.is_role_based}
+                                                isWarning
                                                 warningCondition={result.validations.is_role_based}
                                                 tooltip="Identifies if this is a role-based email (e.g., support@, info@) rather than a personal address"
                                             />
@@ -509,7 +544,7 @@ export function EmailValidator() {
                                     {dragActive ? "Drop your file here" : "Drag and drop your Excel file here"}
                                 </h3>
                                 <p className="text-muted-foreground text-sm max-w-sm mb-6">
-                                    Upload a .xlsx file containing an 'email' column to validate up to 1000 emails at once.
+                                    Upload a .xlsx file containing an 'email' column to validate up to 4000 emails in batches of 500.
                                 </p>
                                 {uploadedFileName && (
                                     <div className="mb-4 px-4 py-2 bg-muted rounded-md text-sm">
@@ -539,7 +574,7 @@ export function EmailValidator() {
                                         <IconLoader2 className="h-12 w-12 animate-spin text-primary relative z-10" />
                                     </div>
                                     <h3 className="text-xl font-semibold">Validating Emails...</h3>
-                                    <p className="text-muted-foreground text-sm">Processing batch {Math.ceil(progress / 100 * (1000 / 100))}...</p>
+                                    <p className="text-muted-foreground text-sm">Processing batch {Math.ceil((progress / 100) * totalBatches) || 1} of {totalBatches || 1}...</p>
                                 </div>
                                 <Progress value={progress} className="h-2 w-full" />
                             </div>
@@ -589,8 +624,11 @@ export function EmailValidator() {
                                             }}>
                                                 New Verification
                                             </Button>
-                                            <Button size="sm" onClick={exportToExcel}>
-                                                <IconDownload className="mr-2 h-4 w-4" /> Export Report
+                                            <Button size="sm" onClick={() => exportToExcel(false)}>
+                                                <IconDownload className="mr-2 h-4 w-4" /> Export All
+                                            </Button>
+                                            <Button size="sm" variant="outline" onClick={() => exportToExcel(true)} disabled={bulkStats.valid === 0}>
+                                                <IconCircleCheck className="mr-2 h-4 w-4 text-green-500" /> Export Valid Only ({bulkStats.valid})
                                             </Button>
                                         </div>
                                     </div>

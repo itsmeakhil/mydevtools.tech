@@ -43,7 +43,11 @@ const createItemId = (groupIndex: number, itemIndex: number, subIndex: number | 
 };
 
 // Helper function to find an item by its ID
-const findItemById = (id: string): ToolItem | undefined => {
+const findItemById = (id: string | undefined | null): ToolItem | undefined => {
+  if (!id || typeof id !== 'string') {
+    return undefined;
+  }
+  
   const [groupIndexStr, itemIndexStr, subIndexStr] = id.split('-');
   const groupIndex = parseInt(groupIndexStr);
   const itemIndex = parseInt(itemIndexStr);
