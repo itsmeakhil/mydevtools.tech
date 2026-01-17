@@ -17,7 +17,10 @@ import {
     IconCircleCheck,
     IconCircleX,
     IconCopy,
-    IconSearch
+    IconSearch,
+    IconChevronDown,
+    IconFileSpreadsheet,
+    IconFileTypeCsv
 } from "@tabler/icons-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -32,6 +35,12 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { motion } from "framer-motion";
 import * as XLSX from "xlsx";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
@@ -170,15 +179,50 @@ export function EmailValidator() {
         const reader = new FileReader();
         reader.onload = async (evt) => {
             try {
-                const bstr = evt.target?.result;
-                const wb = XLSX.read(bstr, { type: "binary" });
-                const wsname = wb.SheetNames[0];
-                const ws = wb.Sheets[wsname];
-                const data = XLSX.utils.sheet_to_json(ws) as any[];
+                const content = evt.target?.result;
+                let data: any[] = [];
+
+                const fileExtension = file.name.split('.').pop()?.toLowerCase();
+
+                if (fileExtension === 'csv') {
+                    // Parse CSV file
+                    const csvText = content as string;
+                    const lines = csvText.split(/\r?\n/).filter(line => line.trim());
+
+                    if (lines.length === 0) {
+                        throw new Error('Empty CSV file');
+                    }
+
+                    // Get headers from first line
+                    const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''));
+                    const emailColumnIndex = headers.findIndex(h =>
+                        h.toLowerCase() === 'email' || h.toLowerCase() === 'emails'
+                    );
+
+                    if (emailColumnIndex === -1) {
+                        // If no email header, treat each line as an email (single column CSV or plain list)
+                        data = lines.slice(headers.some(h => h.includes('@')) ? 0 : 1).map(line => {
+                            const value = line.split(',')[0]?.trim().replace(/^["']|["']$/g, '');
+                            return { email: value };
+                        });
+                    } else {
+                        // Parse rows using the email column
+                        data = lines.slice(1).map(line => {
+                            const values = line.split(',').map(v => v.trim().replace(/^["']|["']$/g, ''));
+                            return { email: values[emailColumnIndex] };
+                        });
+                    }
+                } else {
+                    // Parse Excel file (xlsx, xls)
+                    const wb = XLSX.read(content, { type: "binary" });
+                    const wsname = wb.SheetNames[0];
+                    const ws = wb.Sheets[wsname];
+                    data = XLSX.utils.sheet_to_json(ws) as any[];
+                }
 
                 const allEmails = data
                     .map((row) => row.email || row.Email || row.EMAIL)
-                    .filter((email) => email && typeof email === "string");
+                    .filter((email) => email && typeof email === "string" && email.includes('@'));
 
                 const totalEmails = allEmails.length;
                 const emails = allEmails.slice(0, 4000);
@@ -284,8 +328,9 @@ export function EmailValidator() {
             return;
         }
 
-        const ws = XLSX.utils.json_to_sheet(
-            dataToExport.map((r) => ({
+        const sheetData = validOnly
+            ? dataToExport.map((r) => ({ Email: r.email }))
+            : dataToExport.map((r) => ({
                 Email: r.email,
                 Status: r.status,
                 Score: r.score,
@@ -295,15 +340,74 @@ export function EmailValidator() {
                 Mailbox: r.validations.mailbox_exists ? "Yes" : "No",
                 Disposable: r.validations.is_disposable ? "Yes" : "No",
                 RoleBased: r.validations.is_role_based ? "Yes" : "No",
-            }))
-        );
+            }));
+
+        const ws = XLSX.utils.json_to_sheet(sheetData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Results");
+        XLSX.utils.book_append_sheet(wb, ws, validOnly ? "Valid Emails" : "Results");
         XLSX.writeFile(wb, validOnly ? "valid_emails.xlsx" : "email_validation_results.xlsx");
 
         toast({
             title: "Export Successful",
-            description: `Exported ${dataToExport.length} ${validOnly ? "valid " : ""}email(s).`,
+            description: `Exported ${dataToExport.length} ${validOnly ? "valid " : ""}email(s) to Excel.`,
+        });
+    };
+
+    const exportToCsv = (validOnly: boolean = false) => {
+        const dataToExport = validOnly
+            ? bulkResults.filter(r => r.status === "VALID")
+            : bulkResults;
+
+        if (dataToExport.length === 0) {
+            toast({
+                title: "No Data to Export",
+                description: validOnly ? "No valid emails found to export." : "No results to export.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        // Create CSV content
+        let csvRows: string[];
+        if (validOnly) {
+            // Only email column for valid exports
+            csvRows = [
+                "Email",
+                ...dataToExport.map(r => `"${r.email}"`)
+            ];
+        } else {
+            // Full details for all exports
+            const headers = ["Email", "Status", "Score", "Syntax", "Domain", "MX", "Mailbox", "Disposable", "RoleBased"];
+            csvRows = [
+                headers.join(","),
+                ...dataToExport.map(r => [
+                    `"${r.email}"`,
+                    r.status,
+                    r.score,
+                    r.validations.syntax ? "Valid" : "Invalid",
+                    r.validations.domain_exists ? "Yes" : "No",
+                    r.validations.mx_records ? "Yes" : "No",
+                    r.validations.mailbox_exists ? "Yes" : "No",
+                    r.validations.is_disposable ? "Yes" : "No",
+                    r.validations.is_role_based ? "Yes" : "No",
+                ].join(","))
+            ];
+        }
+
+        const csvContent = csvRows.join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = validOnly ? "valid_emails.csv" : "email_validation_results.csv";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        toast({
+            title: "Export Successful",
+            description: `Exported ${dataToExport.length} ${validOnly ? "valid " : ""}email(s) to CSV.`,
         });
     };
 
@@ -541,10 +645,10 @@ export function EmailValidator() {
                                     <IconUpload className={`h-8 w-8 text-primary transition-transform ${dragActive ? "animate-bounce" : ""}`} />
                                 </div>
                                 <h3 className="text-lg font-semibold mb-2">
-                                    {dragActive ? "Drop your file here" : "Drag and drop your Excel file here"}
+                                    {dragActive ? "Drop your file here" : "Drag and drop your file here"}
                                 </h3>
                                 <p className="text-muted-foreground text-sm max-w-sm mb-6">
-                                    Upload a .xlsx file containing an 'email' column to validate up to 4000 emails in batches of 500.
+                                    Upload a .xlsx, .xls, or .csv file containing an 'email' column to validate up to 4000 emails.
                                 </p>
                                 {uploadedFileName && (
                                     <div className="mb-4 px-4 py-2 bg-muted rounded-md text-sm">
@@ -553,7 +657,7 @@ export function EmailValidator() {
                                     </div>
                                 )}
                                 <div className="flex gap-3 flex-wrap justify-center">
-                                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".xlsx,.xls" className="hidden" />
+                                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".xlsx,.xls,.csv" className="hidden" />
                                     <Button onClick={() => fileInputRef.current?.click()}>
                                         Select File
                                     </Button>
@@ -624,12 +728,38 @@ export function EmailValidator() {
                                             }}>
                                                 New Verification
                                             </Button>
-                                            <Button size="sm" onClick={() => exportToExcel(false)}>
-                                                <IconDownload className="mr-2 h-4 w-4" /> Export All
-                                            </Button>
-                                            <Button size="sm" variant="outline" onClick={() => exportToExcel(true)} disabled={bulkStats.valid === 0}>
-                                                <IconCircleCheck className="mr-2 h-4 w-4 text-green-500" /> Export Valid Only ({bulkStats.valid})
-                                            </Button>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button size="sm">
+                                                        <IconDownload className="mr-2 h-4 w-4" /> Export All
+                                                        <IconChevronDown className="ml-2 h-3 w-3" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => exportToExcel(false)}>
+                                                        <IconFileSpreadsheet className="mr-2 h-4 w-4" /> Excel (.xlsx)
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => exportToCsv(false)}>
+                                                        <IconFileTypeCsv className="mr-2 h-4 w-4" /> CSV (.csv)
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button size="sm" variant="outline" disabled={bulkStats.valid === 0}>
+                                                        <IconCircleCheck className="mr-2 h-4 w-4 text-green-500" /> Export Valid ({bulkStats.valid})
+                                                        <IconChevronDown className="ml-2 h-3 w-3" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => exportToExcel(true)}>
+                                                        <IconFileSpreadsheet className="mr-2 h-4 w-4" /> Excel (.xlsx)
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => exportToCsv(true)}>
+                                                        <IconFileTypeCsv className="mr-2 h-4 w-4" /> CSV (.csv)
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </div>
                                     </div>
                                     {searchQuery && (
