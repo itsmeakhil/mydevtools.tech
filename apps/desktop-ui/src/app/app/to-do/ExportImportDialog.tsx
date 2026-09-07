@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { useStatuses } from "./hooks/useStatuses";
 import { downloadFile } from "@/lib/desktop/save-file";
+import { downloadWorkbook } from "@/lib/csv-excel-json-utils";
 
 interface ExportImportDialogProps {
   open: boolean;
@@ -144,7 +145,7 @@ export default function ExportImportDialog({
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Tasks");
 
-      XLSX.writeFile(workbook, `tasks-export-${new Date().toISOString().split("T")[0]}.xlsx`);
+      await downloadWorkbook(workbook, `tasks-export-${new Date().toISOString().split("T")[0]}.xlsx`);
       toast.success(t("toastExportedExcel", { count: filteredTasks.length }));
     } catch (error) {
       console.error("Excel export error:", error);

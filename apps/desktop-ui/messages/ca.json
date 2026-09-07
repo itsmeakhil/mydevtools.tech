@@ -3426,8 +3426,7 @@
       "swift": "Swift (Codable)"
     },
     "editorLoading": "S'està carregant l'editor…",
-    "detectedFormats": "Detected formats",
-    "download": "Download"
+    "detectedFormats": "Detected formats"
   },
   "ImageToBase64": {
     "title": "Imatge a Base64",

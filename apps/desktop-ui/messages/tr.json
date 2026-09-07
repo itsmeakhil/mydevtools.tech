@@ -3426,8 +3426,7 @@
       "swift": "Swift (Codable)"
     },
     "editorLoading": "Editör yükleniyor…",
-    "detectedFormats": "Detected formats",
-    "download": "Download"
+    "detectedFormats": "Detected formats"
   },
   "ImageToBase64": {
     "title": "Görselden Base64'e",

@@ -11,6 +11,7 @@ import { IconDownload } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { downloadFile } from "@/lib/desktop/save-file";
+import { downloadWorkbook } from "@/lib/csv-excel-json-utils";
 
 interface ExportDialogProps {
     open: boolean;
@@ -84,11 +85,11 @@ export function ExportDialog({ open, onOpenChange, documents, fields }: ExportDi
             XLSX.utils.book_append_sheet(workbook, worksheet, t("sheetName"));
 
             if (format === "csv") {
-                XLSX.writeFile(workbook, filename, { bookType: "csv" });
+                await downloadWorkbook(workbook, filename, "csv");
             } else if (format === "tsv") {
-                XLSX.writeFile(workbook, filename, { bookType: "txt" }); // txt = tab-separated
+                await downloadWorkbook(workbook, filename, "txt"); // txt = tab-separated
             } else {
-                XLSX.writeFile(workbook, filename);
+                await downloadWorkbook(workbook, filename);
             }
 
             toast.success(t("success", { filename }));

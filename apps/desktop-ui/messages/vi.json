@@ -3426,8 +3426,7 @@
       "swift": "Swift (Codable)"
     },
     "editorLoading": "Đang tải trình soạn thảo…",
-    "detectedFormats": "Detected formats",
-    "download": "Download"
+    "detectedFormats": "Detected formats"
   },
   "ImageToBase64": {
     "title": "Ảnh sang Base64",

@@ -3426,8 +3426,7 @@
       "swift": "Swift (Codable)"
     },
     "editorLoading": "Загрузка редактора…",
-    "detectedFormats": "Detected formats",
-    "download": "Download"
+    "detectedFormats": "Detected formats"
   },
   "ImageToBase64": {
     "title": "Изображение в Base64",

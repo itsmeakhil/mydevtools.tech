@@ -3158,8 +3158,7 @@
       "dart": "Dart",
       "swift": "Swift (Codable)"
     },
-    "detectedFormats": "Detected formats",
-    "download": "Download"
+    "detectedFormats": "Detected formats"
   },
   "SecureFiles": {
     "title": "Files",
