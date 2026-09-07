@@ -4890,7 +4890,9 @@
     "copy": "コピー",
     "headSnippet": "HTML head スニペット",
     "downloadIco": "favicon.ico をダウンロード",
-    "downloadZip": "すべてダウンロード (.zip)"
+    "downloadZip": "すべてダウンロード (.zip)",
+    "loadError": "画像を読み込めませんでした",
+    "saveError": "ファイルを保存できませんでした"
   },
   "JsonDiff": {
     "title": "JSON差分",

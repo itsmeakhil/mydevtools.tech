@@ -4890,7 +4890,9 @@
     "copy": "Salin",
     "headSnippet": "Cuplikan HTML head",
     "downloadIco": "Unduh favicon.ico",
-    "downloadZip": "Unduh semua (.zip)"
+    "downloadZip": "Unduh semua (.zip)",
+    "loadError": "Gagal memuat gambar",
+    "saveError": "Gagal menyimpan file"
   },
   "JsonDiff": {
     "title": "Diff JSON",

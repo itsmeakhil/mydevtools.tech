@@ -4890,7 +4890,9 @@
     "copy": "Kopírovat",
     "headSnippet": "Úryvek HTML head",
     "downloadIco": "Stáhnout favicon.ico",
-    "downloadZip": "Stáhnout vše (.zip)"
+    "downloadZip": "Stáhnout vše (.zip)",
+    "loadError": "Obrázek se nepodařilo načíst",
+    "saveError": "Soubor se nepodařilo uložit"
   },
   "JsonDiff": {
     "title": "Porovnání JSON",

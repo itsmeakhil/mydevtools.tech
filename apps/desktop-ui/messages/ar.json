@@ -4890,7 +4890,9 @@
     "copy": "نسخ",
     "headSnippet": "مقتطف HTML head",
     "downloadIco": "تنزيل favicon.ico",
-    "downloadZip": "تنزيل الكل (.zip)"
+    "downloadZip": "تنزيل الكل (.zip)",
+    "loadError": "تعذّر تحميل الصورة",
+    "saveError": "تعذّر حفظ الملف"
   },
   "JsonDiff": {
     "title": "فرق JSON",

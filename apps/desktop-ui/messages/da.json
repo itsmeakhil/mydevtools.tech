@@ -4890,7 +4890,9 @@
     "copy": "Kopiér",
     "headSnippet": "HTML head-uddrag",
     "downloadIco": "Download favicon.ico",
-    "downloadZip": "Download alle (.zip)"
+    "downloadZip": "Download alle (.zip)",
+    "loadError": "Billedet kunne ikke indlæses",
+    "saveError": "Filen kunne ikke gemmes"
   },
   "JsonDiff": {
     "title": "JSON-diff",

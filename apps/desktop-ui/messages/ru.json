@@ -4890,7 +4890,9 @@
     "copy": "Копировать",
     "headSnippet": "Фрагмент для head HTML",
     "downloadIco": "Скачать favicon.ico",
-    "downloadZip": "Скачать всё (.zip)"
+    "downloadZip": "Скачать всё (.zip)",
+    "loadError": "Не удалось загрузить изображение",
+    "saveError": "Не удалось сохранить файл"
   },
   "JsonDiff": {
     "title": "Сравнение JSON",

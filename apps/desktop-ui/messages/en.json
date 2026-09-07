@@ -4977,7 +4977,9 @@
     "copy": "Copy",
     "headSnippet": "HTML head snippet",
     "downloadIco": "Download favicon.ico",
-    "downloadZip": "Download all (.zip)"
+    "downloadZip": "Download all (.zip)",
+    "loadError": "Failed to load image",
+    "saveError": "Could not save the file"
   },
   "JsonDiff": {
     "title": "JSON Diff",

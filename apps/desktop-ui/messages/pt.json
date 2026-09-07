@@ -4890,7 +4890,9 @@
     "copy": "Copiar",
     "headSnippet": "Fragmento para o head HTML",
     "downloadIco": "Descarregar favicon.ico",
-    "downloadZip": "Descarregar tudo (.zip)"
+    "downloadZip": "Descarregar tudo (.zip)",
+    "loadError": "Falha ao carregar a imagem",
+    "saveError": "Não foi possível guardar o ficheiro"
   },
   "JsonDiff": {
     "title": "Diff de JSON",

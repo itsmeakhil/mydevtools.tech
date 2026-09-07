@@ -4890,7 +4890,9 @@
     "copy": "کپی",
     "headSnippet": "قطعه‌کد HTML head",
     "downloadIco": "دانلود favicon.ico",
-    "downloadZip": "دانلود همه (.zip)"
+    "downloadZip": "دانلود همه (.zip)",
+    "loadError": "بارگذاری تصویر ناموفق بود",
+    "saveError": "ذخیره فایل ممکن نشد"
   },
   "JsonDiff": {
     "title": "تفاوت JSON",

@@ -4890,7 +4890,9 @@
     "copy": "Kopyala",
     "headSnippet": "HTML head parçacığı",
     "downloadIco": "favicon.ico indir",
-    "downloadZip": "Tümünü indir (.zip)"
+    "downloadZip": "Tümünü indir (.zip)",
+    "loadError": "Görsel yüklenemedi",
+    "saveError": "Dosya kaydedilemedi"
   },
   "JsonDiff": {
     "title": "JSON Fark",

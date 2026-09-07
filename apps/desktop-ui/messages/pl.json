@@ -4890,7 +4890,9 @@
     "copy": "Kopiuj",
     "headSnippet": "Fragment head HTML",
     "downloadIco": "Pobierz favicon.ico",
-    "downloadZip": "Pobierz wszystko (.zip)"
+    "downloadZip": "Pobierz wszystko (.zip)",
+    "loadError": "Nie udało się wczytać obrazu",
+    "saveError": "Nie udało się zapisać pliku"
   },
   "JsonDiff": {
     "title": "Porównywarka JSON",

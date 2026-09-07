@@ -4890,7 +4890,9 @@
     "copy": "Kopier",
     "headSnippet": "HTML head-utdrag",
     "downloadIco": "Last ned favicon.ico",
-    "downloadZip": "Last ned alle (.zip)"
+    "downloadZip": "Last ned alle (.zip)",
+    "loadError": "Kunne ikke laste inn bildet",
+    "saveError": "Kunne ikke lagre filen"
   },
   "JsonDiff": {
     "title": "JSON-diff",

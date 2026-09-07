@@ -4890,7 +4890,9 @@
     "copy": "Kopieer",
     "headSnippet": "HTML head-snipper",
     "downloadIco": "Laai favicon.ico af",
-    "downloadZip": "Laai alles af (.zip)"
+    "downloadZip": "Laai alles af (.zip)",
+    "loadError": "Kon nie die prent laai nie",
+    "saveError": "Kon nie die lêer stoor nie"
   },
   "JsonDiff": {
     "title": "JSON Diff",

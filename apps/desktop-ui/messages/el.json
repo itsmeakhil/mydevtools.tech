@@ -4890,7 +4890,9 @@
     "copy": "Αντιγραφή",
     "headSnippet": "Απόσπασμα HTML head",
     "downloadIco": "Λήψη favicon.ico",
-    "downloadZip": "Λήψη όλων (.zip)"
+    "downloadZip": "Λήψη όλων (.zip)",
+    "loadError": "Αποτυχία φόρτωσης εικόνας",
+    "saveError": "Δεν ήταν δυνατή η αποθήκευση του αρχείου"
   },
   "JsonDiff": {
     "title": "Διαφορές JSON",
