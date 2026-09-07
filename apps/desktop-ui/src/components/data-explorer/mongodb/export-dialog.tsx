@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { IconDownload } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { downloadFile } from "@/lib/desktop/save-file";
 
 interface ExportDialogProps {
     open: boolean;
@@ -57,12 +58,7 @@ export function ExportDialog({ open, onOpenChange, documents, fields }: ExportDi
                     return newDoc;
                 });
                 const blob = new Blob([JSON.stringify(rows, null, 2)], { type: "application/json" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = filename;
-                a.click();
-                URL.revokeObjectURL(url);
+                downloadFile(blob, filename);
                 toast.success(t("success", { filename }));
                 onOpenChange(false);
                 return;

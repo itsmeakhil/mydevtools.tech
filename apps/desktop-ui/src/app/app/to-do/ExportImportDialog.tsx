@@ -16,6 +16,7 @@ import { Project } from "@/app/app/to-do/types/Project";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { useStatuses } from "./hooks/useStatuses";
+import { downloadFile } from "@/lib/desktop/save-file";
 
 interface ExportImportDialogProps {
   open: boolean;
@@ -66,12 +67,7 @@ export default function ExportImportDialog({
     const filteredTasks = getFilteredTasks();
     const dataStr = JSON.stringify(filteredTasks, null, 2);
     const dataBlob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `tasks-export-${new Date().toISOString().split("T")[0]}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadFile(dataBlob, `tasks-export-${new Date().toISOString().split("T")[0]}.json`);
     toast.success(t("toastExportedJson", { count: filteredTasks.length }));
   };
 
@@ -115,12 +111,7 @@ export default function ExportImportDialog({
     const csvContent = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `tasks-export-${new Date().toISOString().split("T")[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadFile(blob, `tasks-export-${new Date().toISOString().split("T")[0]}.csv`);
     toast.success(t("toastExportedCsv", { count: filteredTasks.length }));
   };
 

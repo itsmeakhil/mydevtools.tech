@@ -6,28 +6,30 @@
  * downloads (file-saver included) are silently dropped in the desktop app.
  * On desktop we therefore ask for a path with the native Save dialog and write
  * the bytes ourselves; on web the anchor download stays the only option.
- *
- * Returns false when the user dismissed the Save dialog; throws when the write
- * itself fails, so callers can surface the reason.
  */
+import { toast } from "sonner"
 import { isDesktop } from "./is-desktop"
 
-export async function saveFile(
-  data: Uint8Array | string,
-  filename: string,
-  mime = "application/octet-stream",
-): Promise<boolean> {
+export type SaveData = Uint8Array | ArrayBuffer | Blob | string
+
+/**
+ * Returns false when the user dismissed the Save dialog; throws when the write
+ * itself fails, so callers can surface their own reason. Prefer
+ * {@link downloadFile} unless you need that distinction.
+ */
+export async function saveFile(data: SaveData, filename: string, mime?: string): Promise<boolean> {
   if (isDesktop()) {
     const { save } = await import("@tauri-apps/plugin-dialog")
     const path = await save({ defaultPath: filename })
     if (!path) return false
     const { writeFile, writeTextFile } = await import("@tauri-apps/plugin-fs")
     if (typeof data === "string") await writeTextFile(path, data)
-    else await writeFile(path, data)
+    else await writeFile(path, new Uint8Array(await toArrayBuffer(data)))
     return true
   }
 
-  const url = URL.createObjectURL(new Blob([data as BlobPart], { type: mime }))
+  const blob = data instanceof Blob ? data : new Blob([data as BlobPart], { type: mime })
+  const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
   a.href = url
   a.download = filename
@@ -35,4 +37,17 @@ export async function saveFile(
   // Revoke on the next tick — revoking synchronously can race the download.
   setTimeout(() => URL.revokeObjectURL(url), 0)
   return true
+}
+
+/** Fire-and-forget {@link saveFile}: a failed write surfaces as a toast. */
+export function downloadFile(data: SaveData, filename: string, mime?: string): void {
+  void saveFile(data, filename, mime).catch((err: unknown) => {
+    toast.error(err instanceof Error ? err.message : String(err))
+  })
+}
+
+function toArrayBuffer(data: Exclude<SaveData, string>): Promise<ArrayBuffer> | ArrayBuffer {
+  if (data instanceof Blob) return data.arrayBuffer()
+  if (data instanceof ArrayBuffer) return data
+  return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer
 }
