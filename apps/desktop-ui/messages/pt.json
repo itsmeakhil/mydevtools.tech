@@ -3433,8 +3433,7 @@
       "swift": "Swift (Codable)"
     },
     "editorLoading": "A carregar o editor…",
-    "detectedFormats": "Detected formats",
-    "download": "Download"
+    "detectedFormats": "Detected formats"
   },
   "ImageToBase64": {
     "title": "Imagem para Base64",
@@ -4897,7 +4896,9 @@
     "copy": "Copiar",
     "headSnippet": "Fragmento para o head HTML",
     "downloadIco": "Descarregar favicon.ico",
-    "downloadZip": "Descarregar tudo (.zip)"
+    "downloadZip": "Descarregar tudo (.zip)",
+    "loadError": "Falha ao carregar a imagem",
+    "saveError": "Não foi possível guardar o ficheiro"
   },
   "JsonDiff": {
     "title": "Diff de JSON",

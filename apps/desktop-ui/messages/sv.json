@@ -3433,8 +3433,7 @@
       "swift": "Swift (Codable)"
     },
     "editorLoading": "Läser in redigeraren…",
-    "detectedFormats": "Detected formats",
-    "download": "Download"
+    "detectedFormats": "Detected formats"
   },
   "ImageToBase64": {
     "title": "Bild till Base64",
@@ -4897,7 +4896,9 @@
     "copy": "Kopiera",
     "headSnippet": "HTML head-utdrag",
     "downloadIco": "Ladda ner favicon.ico",
-    "downloadZip": "Ladda ner alla (.zip)"
+    "downloadZip": "Ladda ner alla (.zip)",
+    "loadError": "Bilden kunde inte läsas in",
+    "saveError": "Filen kunde inte sparas"
   },
   "JsonDiff": {
     "title": "JSON-diff",

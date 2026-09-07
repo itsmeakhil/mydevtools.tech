@@ -3433,8 +3433,7 @@
       "swift": "Swift (Codable)"
     },
     "editorLoading": "Đang tải trình soạn thảo…",
-    "detectedFormats": "Detected formats",
-    "download": "Download"
+    "detectedFormats": "Detected formats"
   },
   "ImageToBase64": {
     "title": "Ảnh sang Base64",
@@ -4897,7 +4896,9 @@
     "copy": "Sao chép",
     "headSnippet": "Đoạn mã HTML head",
     "downloadIco": "Tải favicon.ico",
-    "downloadZip": "Tải tất cả (.zip)"
+    "downloadZip": "Tải tất cả (.zip)",
+    "loadError": "Không tải được hình ảnh",
+    "saveError": "Không lưu được tệp"
   },
   "JsonDiff": {
     "title": "JSON Diff",

@@ -3433,8 +3433,7 @@
       "swift": "Swift (Codable)"
     },
     "editorLoading": "Editör yükleniyor…",
-    "detectedFormats": "Detected formats",
-    "download": "Download"
+    "detectedFormats": "Detected formats"
   },
   "ImageToBase64": {
     "title": "Görselden Base64'e",
@@ -4897,7 +4896,9 @@
     "copy": "Kopyala",
     "headSnippet": "HTML head parçacığı",
     "downloadIco": "favicon.ico indir",
-    "downloadZip": "Tümünü indir (.zip)"
+    "downloadZip": "Tümünü indir (.zip)",
+    "loadError": "Görsel yüklenemedi",
+    "saveError": "Dosya kaydedilemedi"
   },
   "JsonDiff": {
     "title": "JSON Fark",

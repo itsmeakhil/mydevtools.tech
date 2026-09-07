@@ -3433,8 +3433,7 @@
       "swift": "Swift (Codable)"
     },
     "editorLoading": "Memuat editor…",
-    "detectedFormats": "Detected formats",
-    "download": "Download"
+    "detectedFormats": "Detected formats"
   },
   "ImageToBase64": {
     "title": "Gambar ke Base64",
@@ -4897,7 +4896,9 @@
     "copy": "Salin",
     "headSnippet": "Cuplikan HTML head",
     "downloadIco": "Unduh favicon.ico",
-    "downloadZip": "Unduh semua (.zip)"
+    "downloadZip": "Unduh semua (.zip)",
+    "loadError": "Gagal memuat gambar",
+    "saveError": "Gagal menyimpan file"
   },
   "JsonDiff": {
     "title": "Diff JSON",

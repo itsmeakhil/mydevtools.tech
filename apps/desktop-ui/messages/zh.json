@@ -3433,8 +3433,7 @@
       "swift": "Swift (Codable)"
     },
     "editorLoading": "正在加载编辑器…",
-    "detectedFormats": "Detected formats",
-    "download": "Download"
+    "detectedFormats": "Detected formats"
   },
   "ImageToBase64": {
     "title": "图片转 Base64",
@@ -4897,7 +4896,9 @@
     "copy": "复制",
     "headSnippet": "HTML head 代码片段",
     "downloadIco": "下载 favicon.ico",
-    "downloadZip": "下载全部 (.zip)"
+    "downloadZip": "下载全部 (.zip)",
+    "loadError": "无法加载图片",
+    "saveError": "无法保存文件"
   },
   "JsonDiff": {
     "title": "JSON 对比",

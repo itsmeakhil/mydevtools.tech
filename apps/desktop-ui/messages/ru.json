@@ -3433,8 +3433,7 @@
       "swift": "Swift (Codable)"
     },
     "editorLoading": "Загрузка редактора…",
-    "detectedFormats": "Detected formats",
-    "download": "Download"
+    "detectedFormats": "Detected formats"
   },
   "ImageToBase64": {
     "title": "Изображение в Base64",
@@ -4897,7 +4896,9 @@
     "copy": "Копировать",
     "headSnippet": "Фрагмент для head HTML",
     "downloadIco": "Скачать favicon.ico",
-    "downloadZip": "Скачать всё (.zip)"
+    "downloadZip": "Скачать всё (.zip)",
+    "loadError": "Не удалось загрузить изображение",
+    "saveError": "Не удалось сохранить файл"
   },
   "JsonDiff": {
     "title": "Сравнение JSON",

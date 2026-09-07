@@ -3433,8 +3433,7 @@
       "swift": "Swift (Codable)"
     },
     "editorLoading": "Laai redigeerder…",
-    "detectedFormats": "Detected formats",
-    "download": "Download"
+    "detectedFormats": "Detected formats"
   },
   "ImageToBase64": {
     "title": "Beeld na Base64",
@@ -4897,7 +4896,9 @@
     "copy": "Kopieer",
     "headSnippet": "HTML head-snipper",
     "downloadIco": "Laai favicon.ico af",
-    "downloadZip": "Laai alles af (.zip)"
+    "downloadZip": "Laai alles af (.zip)",
+    "loadError": "Kon nie die prent laai nie",
+    "saveError": "Kon nie die lêer stoor nie"
   },
   "JsonDiff": {
     "title": "JSON Diff",

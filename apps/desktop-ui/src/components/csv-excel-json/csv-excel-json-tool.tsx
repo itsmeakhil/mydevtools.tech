@@ -17,13 +17,13 @@ import { ToolPinButton } from "@/components/tools/tool-header";
 import { ToolShell } from "@/components/tools/tool-shell";
 import { IOPanel, ToolTextArea } from "@/components/tools/io-panel";
 import { cn } from "@/lib/utils";
+import { downloadFile } from "@/lib/desktop/save-file";
 import {
   csvTextToRows,
   excelBufferToRows,
   parseJsonToRows,
   rowsToCSV,
   rowsToXlsxFile,
-  triggerDownload,
 } from "@/lib/csv-excel-json-utils";
 
 const SAMPLE_JSON = `[
@@ -101,10 +101,7 @@ export function CsvExcelJsonTool() {
     try {
       const rows = parseJsonToRows(jsonText);
       const csv = rowsToCSV(rows);
-      triggerDownload(
-        new Blob([csv], { type: "text/csv;charset=utf-8" }),
-        t("filenames.csv")
-      );
+      downloadFile(csv, t("filenames.csv"), "text/csv;charset=utf-8");
       toast.success(t("toastExportedCsv"));
     } catch (e) {
       const msg = e instanceof Error ? e.message : t("errors.exportFailed");

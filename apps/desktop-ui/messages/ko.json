@@ -3433,8 +3433,7 @@
       "swift": "Swift (Codable)"
     },
     "editorLoading": "편집기 로드 중…",
-    "detectedFormats": "Detected formats",
-    "download": "Download"
+    "detectedFormats": "Detected formats"
   },
   "ImageToBase64": {
     "title": "이미지 → Base64",
@@ -4897,7 +4896,9 @@
     "copy": "복사",
     "headSnippet": "HTML head 스니펫",
     "downloadIco": "favicon.ico 다운로드",
-    "downloadZip": "모두 다운로드 (.zip)"
+    "downloadZip": "모두 다운로드 (.zip)",
+    "loadError": "이미지를 불러오지 못했습니다",
+    "saveError": "파일을 저장하지 못했습니다"
   },
   "JsonDiff": {
     "title": "JSON 비교",

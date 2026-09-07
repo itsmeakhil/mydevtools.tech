@@ -3433,8 +3433,7 @@
       "swift": "Swift (Codable)"
     },
     "editorLoading": "Ładowanie edytora…",
-    "detectedFormats": "Detected formats",
-    "download": "Download"
+    "detectedFormats": "Detected formats"
   },
   "ImageToBase64": {
     "title": "Obraz do Base64",
@@ -4897,7 +4896,9 @@
     "copy": "Kopiuj",
     "headSnippet": "Fragment head HTML",
     "downloadIco": "Pobierz favicon.ico",
-    "downloadZip": "Pobierz wszystko (.zip)"
+    "downloadZip": "Pobierz wszystko (.zip)",
+    "loadError": "Nie udało się wczytać obrazu",
+    "saveError": "Nie udało się zapisać pliku"
   },
   "JsonDiff": {
     "title": "Porównywarka JSON",

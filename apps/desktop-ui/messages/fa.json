@@ -3433,8 +3433,7 @@
       "swift": "Swift (Codable)"
     },
     "editorLoading": "در حال بارگذاری ویرایشگر…",
-    "detectedFormats": "Detected formats",
-    "download": "Download"
+    "detectedFormats": "Detected formats"
   },
   "ImageToBase64": {
     "title": "تصویر به Base64",
@@ -4897,7 +4896,9 @@
     "copy": "کپی",
     "headSnippet": "قطعه‌کد HTML head",
     "downloadIco": "دانلود favicon.ico",
-    "downloadZip": "دانلود همه (.zip)"
+    "downloadZip": "دانلود همه (.zip)",
+    "loadError": "بارگذاری تصویر ناموفق بود",
+    "saveError": "ذخیره فایل ممکن نشد"
   },
   "JsonDiff": {
     "title": "تفاوت JSON",
