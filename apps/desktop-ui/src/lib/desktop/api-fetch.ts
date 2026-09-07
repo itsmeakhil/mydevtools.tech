@@ -20,8 +20,8 @@ function notInDesktopResponse(path: string): Response {
  * Desktop-aware fetch for same-origin `/api/...` paths.
  *
  * On desktop it routes `/api/backend/*` (and `/api/v1/*`) paths to the Rust
- * local router. There is no server, so outside the Tauri window every path
- * here fails with a 501 instead of hitting Next's 404 page.
+ * local router. Off desktop those two prefixes have nowhere to go and fail
+ * with a 501; anything else is a plain `fetch` pass-through.
  */
 /**
  * Send an api-client request and return the `/api/proxy` envelope directly.
@@ -47,16 +47,25 @@ export async function sendProxyRequest(input: unknown, signal?: AbortSignal): Pr
     const { invoke } = await import("@tauri-apps/api/core");
     return (await invoke("http_request", { input })) as ProxyEnvelope;
   }
-  void signal;
-  return { status: 0, error: NOT_IN_DESKTOP };
+  const res = await fetch("/api/proxy", {
+    method: "POST",
+    credentials: "include",
+    signal,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  return res.json();
 }
 
 export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
   if (!isDesktop()) {
-    // This app has no HTTP API routes — `/api/...` is the Tauri local router's
-    // contract only. Outside the desktop window those paths hit Next's 404
-    // page, and its HTML would surface verbatim in a toast. Fail legibly.
-    return notInDesktopResponse(path);
+    // Store paths have no HTTP equivalent — they are the Rust local router's
+    // contract. Outside the desktop window they hit Next's 404 page, whose
+    // HTML would surface verbatim in a toast, so fail legibly instead.
+    if (path.startsWith("/api/v1/") || path.startsWith("/api/backend/")) {
+      return notInDesktopResponse(path);
+    }
+    return fetch(path, init);
   }
   const method = (init?.method || "GET").toUpperCase();
   const body = typeof init?.body === "string" ? init.body : undefined;
